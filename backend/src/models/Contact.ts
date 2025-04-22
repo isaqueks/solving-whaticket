@@ -43,6 +43,10 @@ class Contact extends Model<Contact> {
   @Column
   profilePicUrl: string;
 
+  @Column
+  @AllowNull(true)
+  taxId: string;
+
   @Default(false)
   @Column
   isGroup: boolean;

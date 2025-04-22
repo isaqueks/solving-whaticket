@@ -1,8 +1,10 @@
 const { resolve } = require("path");
 
+const isProduction = process.env.NODE_ENV === "production";
+
 module.exports = {
-  "config": resolve(__dirname, "dist", "config", "database.js"),
-  "modules-path": resolve(__dirname, "dist", "models"),
-  "migrations-path": resolve(__dirname, "dist", "database", "migrations"),
-  "seeders-path": resolve(__dirname, "dist", "database", "seeds")
+  "config": resolve(__dirname, isProduction ? "dist" : "src", "config", "database.js"),
+  "modules-path": resolve(__dirname, isProduction ? "dist" : "src", "models"),
+  "migrations-path": resolve(__dirname, isProduction ? "dist" : "src", "database", "migrations"),
+  "seeders-path": resolve(__dirname, isProduction ? "dist" : "src", "database", "seeds")
 };

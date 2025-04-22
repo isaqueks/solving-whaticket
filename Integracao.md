@@ -1,0 +1,3 @@
+- [ ] Compartilhar contatos
+- [ ] Tag para colaborador vincular à cliente
+- [ ] Automatizar fluxo boleto
