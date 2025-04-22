@@ -27,7 +27,8 @@ const ListContactsService = async ({
           `%${searchParam.toLowerCase().trim()}%`
         )
       },
-      { number: { [Op.like]: `%${searchParam.toLowerCase().trim()}%` } }
+      { number: { [Op.like]: `%${searchParam.toLowerCase().trim()}%` } },
+      { taxId: { [Op.like]: `%${searchParam.toLowerCase().trim()}%` } }
     ],
     companyId: {
       [Op.eq]: companyId
