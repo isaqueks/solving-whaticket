@@ -374,6 +374,9 @@ const ContactListItems = () => {
                 {i18n.t("contactListItems.table.email")}
               </TableCell>
               <TableCell align="center">
+                CPF/CNPJ
+              </TableCell>
+              <TableCell align="center">
                 {i18n.t("contactListItems.table.actions")}
               </TableCell>
             </TableRow>
@@ -400,6 +403,7 @@ const ContactListItems = () => {
                   <TableCell>{contact.name}</TableCell>
                   <TableCell align="center">{contact.number}</TableCell>
                   <TableCell align="center">{contact.email}</TableCell>
+                  <TableCell align="center">{contact.taxId}</TableCell>
                   <TableCell align="center">
                     <IconButton
                       size="small"
