@@ -5,7 +5,7 @@ module.exports = {
   up: (queryInterface: QueryInterface) => {
     return Promise.all([
 
-      queryInterface.addColumn("Contact", "taxId", {
+      queryInterface.addColumn("Contacts", "taxId", {
         type: DataTypes.STRING(16),
         allowNull: true,
       }),
@@ -15,7 +15,7 @@ module.exports = {
 
   down: (queryInterface: QueryInterface) => {
     return Promise.all([
-      queryInterface.removeColumn("Contact", "taxId"),
+      queryInterface.removeColumn("Contacts", "taxId"),
     ]);
   }
 
