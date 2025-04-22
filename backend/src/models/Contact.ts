@@ -43,8 +43,8 @@ class Contact extends Model<Contact> {
   @Column
   profilePicUrl: string;
 
-  @Column
   @AllowNull(true)
+  @Column
   taxId: string;
 
   @Default(false)
