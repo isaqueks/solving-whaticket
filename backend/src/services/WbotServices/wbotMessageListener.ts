@@ -975,6 +975,12 @@ export const verifyMessage = async (
     lastMessage: body
   });
 
+  console.log(JSON.stringify({
+    msg,
+    ticket,
+    contact
+  }, null, 2))
+
 
   await CreateMessageService({ messageData, companyId: ticket.companyId });
 
