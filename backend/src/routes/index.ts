@@ -32,10 +32,12 @@ import promptRoutes from "./promptRouter";
 import queueIntegrationRoutes from "./queueIntegrationRoutes";
 import forgotsRoutes from "./forgotPasswordRoutes";
 import versionRouter from "./versionRoutes";
+import webhookRoutes from "./webhookRoutes";
 const routes = Router();
 
 routes.use(userRoutes);
 routes.use("/auth", authRoutes);
+routes.use("/webhook", webhookRoutes);
 routes.use(settingRoutes);
 routes.use(contactRoutes);
 routes.use(ticketRoutes);
