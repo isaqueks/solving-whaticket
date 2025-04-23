@@ -48,6 +48,8 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
   for (const item of data.data) {
     await CreateOrUpdateContactService({
       ...item,
+      email: item.email || '',
+      taxId: item.taxId || '',
       companyId: data.companyId,
       isGroup: false
     });
