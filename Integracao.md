@@ -1,4 +1,4 @@
 - [X] Compartilhar contatos
-- [ ] Receber webhook whatsapp no sistema principal
+- [X] Receber webhook whatsapp no sistema principal
 - [ ] Tag para colaborador vincular à cliente
 - [ ] Automatizar fluxo boleto

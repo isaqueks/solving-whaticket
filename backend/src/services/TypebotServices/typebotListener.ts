@@ -148,6 +148,7 @@ const typebotListener = async ({
                 await wbot.sendMessage(`${number}@c.us`, { text: typebotUnknownMessage });
             } else {
                 for (const message of messages) {
+                    console.log(JSON.stringify(message, null, 2))
                     if (message.type === 'text') {
                         let formattedText = '';
                         let linkPreview = false;
@@ -291,6 +292,7 @@ const typebotListener = async ({
                         await wbot.sendPresenceUpdate('paused', msg.key.remoteJid)
 
 
+                        console.log(formattedText)
                         await wbot.sendMessage(msg.key.remoteJid, { text: formattedText });
                     }
 
