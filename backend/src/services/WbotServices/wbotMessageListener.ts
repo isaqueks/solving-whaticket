@@ -975,12 +975,24 @@ export const verifyMessage = async (
     lastMessage: body
   });
 
-  console.log(JSON.stringify({
-    msg,
-    ticket,
-    contact
-  }, null, 2))
+  // console.log(JSON.stringify({
+  //   msg,
+  //   ticket,
+  //   contact
+  // }, null, 2))
 
+  if (process.env.MESSAGE_WEBHOOK) {
+    await fetch(`${process.env.MESSAGE_WEBHOOK}?wppName=${ticket.whatsapp.name}`, {
+      body: JSON.stringify({
+        type: 'receveid_message',
+        message: msg,
+        extra: {
+          ticket,
+          contact
+        }
+      })
+    });
+  }
 
   await CreateMessageService({ messageData, companyId: ticket.companyId });
 
