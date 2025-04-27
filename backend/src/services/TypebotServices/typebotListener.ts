@@ -6,6 +6,7 @@ import { getBodyMessage } from "../WbotServices/wbotMessageListener";
 import { logger } from "../../utils/logger";
 import { isNil } from "lodash";
 import UpdateTicketService from "../TicketServices/UpdateTicketService";
+import ListQueuesService from "../QueueService/ListQueuesService";
 
 
 type Session = WASocket & {
@@ -19,6 +20,18 @@ interface Request {
     typebot: QueueIntegrations;
 }
 
+
+const transferQueue = async (
+    queueId: number,
+    ticket: Ticket,
+  ): Promise<void> => {
+    await UpdateTicketService({
+      ticketData: { queueId: queueId, useIntegration: false, promptId: null },
+      ticketId: ticket.id,
+      companyId: ticket.companyId
+    });
+  };
+  
 
 const typebotListener = async ({
     wbot,
@@ -116,6 +129,8 @@ const typebotListener = async ({
 
         //let body = getConversationMessage(msg);
 
+        let finish = false;
+        let transfer = false;
 
         if (body !== typebotKeywordFinish && body !== typebotKeywordRestart) {
             let requestContinue
@@ -159,12 +174,24 @@ const typebotListener = async ({
                                 if (element.text) {
                                     text = element.text;
                                 }
+                                if (richText.type === 'variable') {
+                                    text += '\n';
+                                }
+                                if (richText.type === 'blockquote') {
+                                    text = `> ${text}`;
+                                }
                                 if (element.type && element.children) {
                                     for (const subelement of element.children) {
                                         let text = '';
 
                                         if (subelement.text) {
                                             text = subelement.text;
+                                        }
+                                        if (element.type === 'variable') {
+                                            text += '\n';
+                                        }
+                                        if (element.type === 'blockquote') {
+                                            text = `> ${text}`;
                                         }
 
                                         if (subelement.type && subelement.children) {
@@ -173,6 +200,12 @@ const typebotListener = async ({
 
                                                 if (subelement2.text) {
                                                     text = subelement2.text;
+                                                }
+                                                if (subelement.type === 'variable') {
+                                                    text += '\n';
+                                                }
+                                                if (subelement.type === 'blockquote') {
+                                                    text = `> ${text}`;
                                                 }
 
                                                 if (subelement2.bold) {
@@ -293,6 +326,14 @@ const typebotListener = async ({
 
 
                         console.log(formattedText)
+                        if (formattedText.trim().includes('\\FINISH')) {
+                            finish = true;
+                            formattedText = formattedText.replace('\\FINISH', '').trim();
+                        }
+                        else if (formattedText.trim().includes('\\TRANSFER')) {
+                            transfer = true;
+                            formattedText = formattedText.replace('\\TRANSFER', '').trim();
+                        }
                         await wbot.sendMessage(msg.key.remoteJid, { text: formattedText });
                     }
 
@@ -402,6 +443,45 @@ const typebotListener = async ({
             })
 
             return;
+        }
+
+        if (finish) {
+            await UpdateTicketService({
+                ticketData: {
+                    status: "closed",
+                    useIntegration: false,
+                    integrationId: null                   
+                },
+                ticketId: ticket.id,
+                companyId: ticket.companyId
+            })
+        }
+        if (transfer) {
+            const queues = await ListQueuesService({ companyId: typebot.companyId });
+            const q = queues.find(q => q.name.toLowerCase() == 'atendente') || queues.find(q => !q.integrationId);
+            if (!q) {
+                await UpdateTicketService({
+                    ticketData: {
+                        status: "closed",
+                        useIntegration: false,
+                        integrationId: null,
+                    },
+                    ticketId: ticket.id,
+                    companyId: ticket.companyId
+                })
+            }
+            else {
+                await UpdateTicketService({
+                    ticketData: {
+                        status: "pending",
+                        useIntegration: false,
+                        integrationId: null,
+                        queueId: q.id
+                    },
+                    ticketId: ticket.id,
+                    companyId: ticket.companyId
+                })
+            }
         }
     } catch (error) {
         logger.info("Error on typebotListener: ", error);

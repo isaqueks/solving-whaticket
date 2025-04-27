@@ -151,11 +151,12 @@ const UpdateTicketService = async ({
         await SendWhatsAppMessage({ body, ticket });
       }
       await ticket.update({
-        promptId: null,
-        integrationId: null,
-        useIntegration: false,
-        typebotStatus: false,
-        typebotSessionId: null
+        promptId,
+        integrationId,
+        useIntegration,
+        typebotStatus: useIntegration ? undefined : false,
+        typebotSessionId: useIntegration ? undefined : null,
+        
       })
 
       ticketTraking.finishedAt = moment().toDate();

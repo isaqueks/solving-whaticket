@@ -4,8 +4,6 @@ import { head, isNil } from "lodash";
 import path, { join } from "path";
 import { promisify } from "util";
 
-import { map_msg } from "../../utils/global";
-
 import {
   downloadMediaMessage,
   extractMessageContent,
@@ -975,29 +973,6 @@ export const verifyMessage = async (
     lastMessage: body
   });
 
-  // console.log(JSON.stringify({
-  //   msg,
-  //   ticket,
-  //   contact
-  // }, null, 2))
-
-  if (process.env.MESSAGE_WEBHOOK) {
-    await fetch(`${process.env.MESSAGE_WEBHOOK}?wppName=${ticket.whatsapp.name}`, {
-      method: "POST",
-      body: JSON.stringify({
-        type: 'receveid_message',
-        message: msg,
-        extra: {
-          ticket,
-          contact
-        }
-      }),
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-      }
-    });
-  }
 
   await CreateMessageService({ messageData, companyId: ticket.companyId });
 
@@ -1196,35 +1171,34 @@ const verifyQueue = async (
     const textMessage = {
       text: formatBody(`\u200e${greetingMessage}\n\n${options}`, contact),
     };
-    let lastMsg = map_msg.get(contact.number)
+    // let lastMsg = map_msg.get(contact.number)
+    const lastMsg = await Message.findOne({
+      where: {
+        remoteJid: `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+        fromMe: true
+      },
+      order: [["createdAt", "DESC"]],
+      limit: 1
+    })
     let invalidOption = "Opção inválida, por favor, escolha uma opção válida."
     
 
     // console.log('getBodyMessage(msg)', getBodyMessage(msg))
     console.log('textMessage2', textMessage)
-     console.log("lastMsg::::::::::::':", contact.number)
     // map_msg.set(contact.number, lastMsg);
-    if (!lastMsg?.msg || getBodyMessage(msg).includes('#') || textMessage.text === 'concluido' || lastMsg.msg !== textMessage.text && !lastMsg.invalid_option) {
+    if (!lastMsg || getBodyMessage(msg).includes('#') || textMessage.text === 'concluido' || lastMsg.body !== textMessage.text) {
       const sendMsg = await wbot.sendMessage(
         `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
         textMessage
       );
-      lastMsg ?? (lastMsg = {});
-      lastMsg.msg = textMessage.text;
-      lastMsg.invalid_option = false;
-      map_msg.set(contact.number, lastMsg);
       await verifyMessage(sendMsg, ticket, ticket.contact);
 
-    } else if (lastMsg.msg !== invalidOption && !lastMsg.invalid_option) {
+    } else if (lastMsg.body !== invalidOption) {
       textMessage.text = invalidOption
       const sendMsg = await wbot.sendMessage(
         `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
         textMessage
       );
-      lastMsg ?? (lastMsg = {});
-      lastMsg.invalid_option = true;
-      lastMsg.msg = textMessage.text;
-      map_msg.set(contact.number, lastMsg);
       await verifyMessage(sendMsg, ticket, ticket.contact);
     }
 
