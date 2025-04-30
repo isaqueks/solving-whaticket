@@ -250,7 +250,7 @@ const UpdateTicketService = async ({
     });
 
     await ticket.reload({
-      include: [{ all: true }]
+      include: ['contact', 'tags']
     });
 
     if (status !== undefined && ["pending"].indexOf(status) > -1) {
