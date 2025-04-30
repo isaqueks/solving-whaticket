@@ -76,6 +76,7 @@ const CreateTicketService = async ({
   }
 
   if (attachedToEmail) {
+    console.log('A')
     const user = await User.findOne({
       where: {
         companyId,
@@ -84,6 +85,7 @@ const CreateTicketService = async ({
     });
 
     if (user) {
+      console.log('U')
       const tag = await Tag.findOne({
         where: {
           name: user.name,
@@ -92,10 +94,14 @@ const CreateTicketService = async ({
       });
 
       if (tag && !_ticket.tags.find(t => t.id === tag.id)) {
+        console.log('T')
         await TicketTag.create({
           ticketId: id,
           tagId: tag.id
         })
+      }
+      else {
+        console.log({ tag, _ticket })
       }
     }
   }
