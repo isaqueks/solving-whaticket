@@ -18,6 +18,10 @@ import { isNil } from "lodash";
 import Whatsapp from "../../models/Whatsapp";
 import { Op } from "sequelize";
 import AppError from "../../errors/AppError";
+import { id } from "date-fns/locale";
+import Tag from "../../models/Tag";
+import TicketTag from "../../models/TicketTag";
+import User from "../../models/User";
 
 interface TicketData {
   status?: string;
@@ -245,7 +249,9 @@ const UpdateTicketService = async ({
       queueOptionId
     });
 
-    await ticket.reload();
+    await ticket.reload({
+      include: [{ all: true }]
+    });
 
     if (status !== undefined && ["pending"].indexOf(status) > -1) {
       ticketTraking.update({
@@ -264,6 +270,37 @@ const UpdateTicketService = async ({
         whatsappId,
         userId: ticket.userId
       });
+
+      if (ticket.contact.attachedToEmail) {
+        console.log('A')
+        const user = await User.findOne({
+          where: {
+            companyId,
+            email: ticket.contact.attachedToEmail
+          }
+        });
+    
+        if (user) {
+          console.log('U')
+          const tag = await Tag.findOne({
+            where: {
+              name: user.name,
+              companyId
+            }
+          });
+    
+          if (tag && !ticket.tags.find(t => t.id === tag.id)) {
+            console.log('T')
+            await TicketTag.create({
+              ticketId: id,
+              tagId: tag.id
+            })
+          }
+          else {
+            console.log({ tag, ticket })
+          }
+        }
+      }
     }
 
     await ticketTraking.save();
