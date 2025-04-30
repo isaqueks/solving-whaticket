@@ -47,6 +47,10 @@ class Contact extends Model<Contact> {
   @Column
   taxId: string;
 
+  @AllowNull(true)
+  @Column
+  attachedToEmail: string;
+
   @Default(false)
   @Column
   isGroup: boolean;
