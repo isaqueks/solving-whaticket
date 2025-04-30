@@ -292,7 +292,7 @@ const UpdateTicketService = async ({
           if (tag && !ticket.tags.find(t => t.id === tag.id)) {
             console.log('T')
             await TicketTag.create({
-              ticketId: id,
+              ticketId: ticket.id,
               tagId: tag.id
             })
           }
