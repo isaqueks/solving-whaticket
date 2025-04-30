@@ -260,16 +260,6 @@ const UpdateTicketService = async ({
         startedAt: null,
         userId: null
       });
-    }
-
-    if (status !== undefined && ["open"].indexOf(status) > -1) {
-      ticketTraking.update({
-        startedAt: moment().toDate(),
-        ratingAt: null,
-        rated: false,
-        whatsappId,
-        userId: ticket.userId
-      });
 
       if (ticket.contact.attachedToEmail) {
         console.log('A')
@@ -301,6 +291,16 @@ const UpdateTicketService = async ({
           }
         }
       }
+    }
+
+    if (status !== undefined && ["open"].indexOf(status) > -1) {
+      ticketTraking.update({
+        startedAt: moment().toDate(),
+        ratingAt: null,
+        rated: false,
+        whatsappId,
+        userId: ticket.userId
+      });
     }
 
     await ticketTraking.save();
