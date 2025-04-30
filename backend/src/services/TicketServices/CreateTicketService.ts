@@ -6,6 +6,8 @@ import ShowContactService from "../ContactServices/ShowContactService";
 import { getIO } from "../../libs/socket";
 import GetDefaultWhatsAppByUser from "../../helpers/GetDefaultWhatsAppByUser";
 import ShowWhatsAppService from "../WhatsappService/ShowWhatsAppService";
+import User from "../../models/User";
+import Tag from "../../models/Tag";
 
 interface Request {
   contactId: number;
@@ -40,9 +42,10 @@ const CreateTicketService = async ({
 
   await CheckContactOpenTickets(contactId, whatsappId);
 
-  const { isGroup } = await ShowContactService(contactId, companyId);
+  const { isGroup, attachedToEmail } = await ShowContactService(contactId, companyId);
 
-  const [{ id }] = await Ticket.findOrCreate({
+
+  const [_ticket] = await Ticket.findOrCreate({
     where: {
       contactId,
       companyId,
@@ -58,8 +61,33 @@ const CreateTicketService = async ({
     }
   });
 
+  const { id } = _ticket;
+
+
+  if (attachedToEmail) {
+    const user = await User.findOne({
+      where: {
+        companyId,
+        email: attachedToEmail
+      }
+    });
+
+    if (user) {
+      const tag = await Tag.findOne({
+        where: {
+          name: user.name,
+          companyId
+        }
+      });
+
+      if (tag && !_ticket.tags.find(t => t.id === tag.id)) {
+        _ticket.tags.push(tag);
+      }
+    }
+  }
+
   await Ticket.update(
-    { companyId, queueId, userId, whatsappId: defaultWhatsapp.id, status: "open" },
+    { companyId, queueId, userId, whatsappId: defaultWhatsapp.id, status: "open", tags: _ticket.tags },
     { where: { id } }
   );
 
@@ -68,6 +96,7 @@ const CreateTicketService = async ({
   if (!ticket) {
     throw new AppError("ERR_CREATING_TICKET");
   }
+
 
   const io = getIO();
 
