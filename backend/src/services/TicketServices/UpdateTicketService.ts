@@ -253,7 +253,36 @@ const UpdateTicketService = async ({
       include: ['contact', 'tags']
     });
 
-    console.log({ status, ticket })
+    if (ticket.contact.attachedToEmail) {
+      console.log('A')
+      const user = await User.findOne({
+        where: {
+          companyId,
+          email: ticket.contact.attachedToEmail
+        }
+      });
+  
+      if (user) {
+        console.log('U')
+        const tag = await Tag.findOne({
+          where: {
+            name: user.name,
+            companyId
+          }
+        });
+  
+        if (tag && !ticket.tags.find(t => t.id === tag.id)) {
+          console.log('T')
+          await TicketTag.create({
+            ticketId: ticket.id,
+            tagId: tag.id
+          })
+        }
+        else {
+          console.log({ tag, ticket })
+        }
+      }
+    }
 
     if (status !== undefined && ["pending"].indexOf(status) > -1) {
       ticketTraking.update({
@@ -262,37 +291,6 @@ const UpdateTicketService = async ({
         startedAt: null,
         userId: null
       });
-
-      if (ticket.contact.attachedToEmail) {
-        console.log('A')
-        const user = await User.findOne({
-          where: {
-            companyId,
-            email: ticket.contact.attachedToEmail
-          }
-        });
-    
-        if (user) {
-          console.log('U')
-          const tag = await Tag.findOne({
-            where: {
-              name: user.name,
-              companyId
-            }
-          });
-    
-          if (tag && !ticket.tags.find(t => t.id === tag.id)) {
-            console.log('T')
-            await TicketTag.create({
-              ticketId: ticket.id,
-              tagId: tag.id
-            })
-          }
-          else {
-            console.log({ tag, ticket })
-          }
-        }
-      }
     }
 
     if (status !== undefined && ["open"].indexOf(status) > -1) {
