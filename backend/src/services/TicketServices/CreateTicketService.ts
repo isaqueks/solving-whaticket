@@ -8,6 +8,7 @@ import GetDefaultWhatsAppByUser from "../../helpers/GetDefaultWhatsAppByUser";
 import ShowWhatsAppService from "../WhatsappService/ShowWhatsAppService";
 import User from "../../models/User";
 import Tag from "../../models/Tag";
+import TicketTag from "../../models/TicketTag";
 
 interface Request {
   contactId: number;
@@ -63,6 +64,16 @@ const CreateTicketService = async ({
 
   const { id } = _ticket;
 
+  await Ticket.update(
+    { companyId, queueId, userId, whatsappId: defaultWhatsapp.id, status: "open" },
+    { where: { id } }
+  );
+
+  const ticket = await Ticket.findByPk(id, { include: ["contact", "queue"] });
+
+  if (!ticket) {
+    throw new AppError("ERR_CREATING_TICKET");
+  }
 
   if (attachedToEmail) {
     const user = await User.findOne({
@@ -81,22 +92,13 @@ const CreateTicketService = async ({
       });
 
       if (tag && !_ticket.tags.find(t => t.id === tag.id)) {
-        _ticket.tags.push(tag);
+        await TicketTag.create({
+          ticketId: id,
+          tagId: tag.id
+        })
       }
     }
   }
-
-  await Ticket.update(
-    { companyId, queueId, userId, whatsappId: defaultWhatsapp.id, status: "open", tags: _ticket.tags },
-    { where: { id } }
-  );
-
-  const ticket = await Ticket.findByPk(id, { include: ["contact", "queue"] });
-
-  if (!ticket) {
-    throw new AppError("ERR_CREATING_TICKET");
-  }
-
 
   const io = getIO();
 
