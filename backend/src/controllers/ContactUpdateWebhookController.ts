@@ -21,6 +21,7 @@ type StoreData = {
     number: string;
     taxId?: string;
     email?: string;
+    attachedToEmail?: string;
   }[];
   companyId: number;
 };

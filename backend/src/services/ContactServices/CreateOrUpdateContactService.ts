@@ -17,6 +17,7 @@ interface Request {
   extraInfo?: ExtraInfo[];
   whatsappId?: number;
   taxId?: string;
+  attachedToEmail?: string;
 }
 
 const CreateOrUpdateContactService = async ({
@@ -28,6 +29,7 @@ const CreateOrUpdateContactService = async ({
   taxId,
   companyId,
   extraInfo = [],
+  attachedToEmail,
   whatsappId
 }: Request): Promise<Contact> => {
   const number = isGroup ? rawNumber : rawNumber.replace(/[^0-9]/g, "");
@@ -43,7 +45,7 @@ const CreateOrUpdateContactService = async ({
   });
 
   if (contact) {
-    contact.update({ profilePicUrl, email, taxId });
+    contact.update({ profilePicUrl, email, taxId, attachedToEmail });
     console.log(contact.whatsappId)
     if (isNil(contact.whatsappId === null)) {
       contact.update({
@@ -64,7 +66,8 @@ const CreateOrUpdateContactService = async ({
       extraInfo,
       companyId,
       taxId,
-      whatsappId
+      whatsappId,
+      attachedToEmail
     });
 
     io.to(`company-${companyId}-mainchannel`).emit(`company-${companyId}-contact`, {
