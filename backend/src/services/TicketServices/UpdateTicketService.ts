@@ -253,6 +253,8 @@ const UpdateTicketService = async ({
       include: ['contact', 'tags']
     });
 
+    console.log({ status, ticket })
+
     if (status !== undefined && ["pending"].indexOf(status) > -1) {
       ticketTraking.update({
         whatsappId,
