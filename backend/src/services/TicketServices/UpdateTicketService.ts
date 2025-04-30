@@ -330,6 +330,7 @@ const UpdateTicketService = async ({
 
     return { ticket, oldStatus, oldUserId };
   } catch (err) {
+    console.error(err)
     Sentry.captureException(err);
   }
 };
