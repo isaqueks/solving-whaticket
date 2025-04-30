@@ -6,7 +6,7 @@ module.exports = {
     return Promise.all([
 
       queryInterface.addColumn("Contacts", "attachedToEmail", {
-        type: DataTypes.STRING(16),
+        type: DataTypes.STRING(255),
         allowNull: true,
       }),
 
