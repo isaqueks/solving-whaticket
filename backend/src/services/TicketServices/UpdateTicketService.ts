@@ -94,7 +94,6 @@ const UpdateTicketService = async ({
     const oldQueueId = ticket.queueId;
 
     if (ticket.contact.attachedToEmail) {
-      console.log('A')
       const user = await User.findOne({
         where: {
           companyId,
@@ -103,7 +102,6 @@ const UpdateTicketService = async ({
       });
   
       if (user) {
-        console.log('U')
         const tag = await Tag.findOne({
           where: {
             name: user.name,
@@ -112,19 +110,12 @@ const UpdateTicketService = async ({
         });
   
         if (tag && !ticket.tags.find(t => t.id === tag.id)) {
-          console.log('T')
           await TicketTag.create({
             ticketId: ticket.id,
             tagId: tag.id
           })
         }
-        else {
-          console.log({ tag, ticket })
-        }
       }
-    }
-    else {
-      console.log('NOEMAIL')
     }
 
     if (oldStatus === "closed" || Number(whatsappId) !== ticket.whatsappId) {
