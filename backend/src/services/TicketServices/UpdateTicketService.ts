@@ -123,6 +123,9 @@ const UpdateTicketService = async ({
         }
       }
     }
+    else {
+      console.log('NOEMAIL')
+    }
 
     if (oldStatus === "closed" || Number(whatsappId) !== ticket.whatsappId) {
       // let otherTicket = await Ticket.findOne({
