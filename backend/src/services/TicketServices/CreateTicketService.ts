@@ -75,36 +75,36 @@ const CreateTicketService = async ({
     throw new AppError("ERR_CREATING_TICKET");
   }
 
-  // if (attachedToEmail) {
-  //   console.log('A')
-  //   const user = await User.findOne({
-  //     where: {
-  //       companyId,
-  //       email: attachedToEmail
-  //     }
-  //   });
+  if (attachedToEmail) {
+    console.log('A')
+    const user = await User.findOne({
+      where: {
+        companyId,
+        email: attachedToEmail
+      }
+    });
 
-  //   if (user) {
-  //     console.log('U')
-  //     const tag = await Tag.findOne({
-  //       where: {
-  //         name: user.name,
-  //         companyId
-  //       }
-  //     });
+    if (user) {
+      console.log('U')
+      const tag = await Tag.findOne({
+        where: {
+          name: user.name,
+          companyId
+        }
+      });
 
-  //     if (tag && !_ticket.tags.find(t => t.id === tag.id)) {
-  //       console.log('T')
-  //       await TicketTag.create({
-  //         ticketId: id,
-  //         tagId: tag.id
-  //       })
-  //     }
-  //     else {
-  //       console.log({ tag, _ticket })
-  //     }
-  //   }
-  // }
+      if (tag && !_ticket.tags.find(t => t.id === tag.id)) {
+        console.log('T')
+        await TicketTag.create({
+          ticketId: id,
+          tagId: tag.id
+        })
+      }
+      else {
+        console.log({ tag, _ticket })
+      }
+    }
+  }
 
   const io = getIO();
 
