@@ -1,3 +1,4 @@
+import { Op } from "sequelize";
 import { getIO } from "../../libs/socket";
 import Contact from "../../models/Contact";
 import ContactCustomField from "../../models/ContactCustomField";
@@ -37,9 +38,13 @@ const CreateOrUpdateContactService = async ({
   const io = getIO();
   let contact: Contact | null;
 
+  const numRegex = /^(55[0-9][0-9])9([0-9]*)/;
+
   contact = await Contact.findOne({
     where: {
-      number,
+      number: numRegex.test(number) ? {
+        [Op.or]: [number, number.replace(numRegex, "$1$2")]
+      } : number,
       companyId
     }
   });
