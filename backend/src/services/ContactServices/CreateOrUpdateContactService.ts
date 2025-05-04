@@ -45,7 +45,7 @@ const CreateOrUpdateContactService = async ({
   });
 
   if (contact) {
-    contact.update({ profilePicUrl, email, taxId, attachedToEmail });
+    contact.update({ name, profilePicUrl, email, taxId, attachedToEmail });
     console.log(contact.whatsappId)
     if (isNil(contact.whatsappId === null)) {
       contact.update({
