@@ -64,7 +64,7 @@ const CreateOrUpdateContactService = async ({
   } else {
     contact = await Contact.create({
       name,
-      number,
+      number: numRegex.test(number) ? number.replace(numRegex, "$1$2") : number,
       profilePicUrl,
       email,
       isGroup,
