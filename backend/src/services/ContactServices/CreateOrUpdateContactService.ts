@@ -43,7 +43,7 @@ const CreateOrUpdateContactService = async ({
   contact = await Contact.findOne({
     where: {
       number: numRegex.test(number) ? {
-        [Op.or]: [number, number.replace(numRegex, "$1$2")]
+        [Op.or]: [number.replace(numRegex, "$1$2"), number]
       } : number,
       companyId
     }
