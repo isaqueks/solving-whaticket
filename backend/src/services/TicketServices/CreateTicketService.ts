@@ -64,6 +64,21 @@ const CreateTicketService = async ({
 
   const { id } = _ticket;
 
+  let attachedUser: User = null;
+
+  if (_ticket.contact?.attachedToEmail) {
+    attachedUser = await User.findOne({
+      where: {
+        companyId,
+        email: _ticket.contact.attachedToEmail
+      }
+    });
+
+    if (attachedUser) {
+      userId = attachedUser.id;
+    }
+  }
+
   await Ticket.update(
     { companyId, queueId, userId, whatsappId: defaultWhatsapp.id, status: "open" },
     { where: { id } }
@@ -73,31 +88,6 @@ const CreateTicketService = async ({
 
   if (!ticket) {
     throw new AppError("ERR_CREATING_TICKET");
-  }
-
-  if (attachedToEmail) {
-    const user = await User.findOne({
-      where: {
-        companyId,
-        email: attachedToEmail
-      }
-    });
-
-    if (user) {
-      const tag = await Tag.findOne({
-        where: {
-          name: user.name,
-          companyId
-        }
-      });
-
-      if (tag && !_ticket.tags.find(t => t.id === tag.id)) {
-        await TicketTag.create({
-          ticketId: id,
-          tagId: tag.id
-        })
-      }
-    }
   }
 
   const io = getIO();

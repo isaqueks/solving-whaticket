@@ -93,28 +93,18 @@ const UpdateTicketService = async ({
     const oldUserId = ticket.user?.id;
     const oldQueueId = ticket.queueId;
 
+    let attachedUser: User = null;
+
     if (ticket.contact.attachedToEmail) {
-      const user = await User.findOne({
+      attachedUser = await User.findOne({
         where: {
           companyId,
           email: ticket.contact.attachedToEmail
         }
       });
-  
-      if (user) {
-        const tag = await Tag.findOne({
-          where: {
-            name: user.name,
-            companyId
-          }
-        });
-  
-        if (tag && !ticket.tags.find(t => t.id === tag.id)) {
-          await TicketTag.create({
-            ticketId: ticket.id,
-            tagId: tag.id
-          })
-        }
+
+      if (attachedUser) {
+        userId = attachedUser.id;
       }
     }
 
