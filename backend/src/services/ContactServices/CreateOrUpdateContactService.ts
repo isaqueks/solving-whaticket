@@ -33,12 +33,13 @@ const CreateOrUpdateContactService = async ({
   attachedToEmail,
   whatsappId
 }: Request): Promise<Contact> => {
-  const number = isGroup ? rawNumber : rawNumber.replace(/[^0-9]/g, "");
+  const GP = isGroup || rawNumber.length > 13;
+  const number = GP ? rawNumber : rawNumber.replace(/[^0-9|-]/g, "");
 
   const io = getIO();
   let contact: Contact | null;
 
-  const numRegex = /^(55[0-9][0-9])9([0-9]*)/;
+  const numRegex = /^(55[0-9][0-9])9([0-9]{8})$/;
 
   contact = await Contact.findOne({
     where: {

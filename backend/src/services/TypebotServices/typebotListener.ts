@@ -52,7 +52,7 @@ const typebotListener = async ({
         typebotRestartMessage
     } = typebot;
 
-    const number = msg.key.remoteJid.replace(/\D/g, '');
+    const number = msg.key.remoteJid.replace(/[^0-9|-]/g, '');
 
     let body = getBodyMessage(msg);
 
