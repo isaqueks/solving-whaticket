@@ -65,7 +65,7 @@ export class GetTickerByNumberController {
       });
     }
 
-    return ticket;
+    res.status(200).json(ticket);
 
   }
 
