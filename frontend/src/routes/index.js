@@ -54,13 +54,13 @@ const Routes = () => {
       <AuthProvider>
         <TicketsContextProvider>
           <Switch>
-            <Route exact path="/embed/:phoneNumber" component={Embed} />
             <Route exact path="/login" component={Login} />
             <Route exact path="/signup" component={Signup} />
 			<Route exact path="/forgetpsw" component={ForgetPassword} /> 
             {/* <Route exact path="/create-company" component={Companies} /> */}
             <WhatsAppsProvider>
               <LoggedInLayout>
+                <Route exact path="/embed/:phoneNumber" component={Embed} isPrivate />
                 <Route exact path="/" component={Dashboard} isPrivate />
                 <Route
                   exact
