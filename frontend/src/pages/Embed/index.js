@@ -24,10 +24,10 @@ export function Embed(props) {
   return (<>
     {ticket ? (
       <div>
-        <Ticket ticketId={ticket.id} />
+        <Ticket ticketId={ticket.uuid} />
       </div>
     ) : (
-      <p>Carrehando...</p>
+      <p>Carregando...</p>
     )}
   </>);
   
