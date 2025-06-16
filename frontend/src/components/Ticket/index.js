@@ -56,8 +56,11 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const Ticket = () => {
-  const { ticketId } = useParams();
+const Ticket = (props) => {
+  const params = useParams();
+
+  const ticketId = props?.ticketId || params.ticketId;
+
   const history = useHistory();
   const classes = useStyles();
 

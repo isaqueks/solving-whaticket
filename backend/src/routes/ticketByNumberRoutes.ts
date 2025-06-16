@@ -6,7 +6,7 @@ const getTicketByNumberRoutes = express.Router();
 
 const controller = new GetTickerByNumberController();
 
-getTicketByNumberRoutes.get("/ticker-by-number", isAuth, controller.get);
+getTicketByNumberRoutes.get("/ticket-by-number", isAuth, controller.get);
 
 
 

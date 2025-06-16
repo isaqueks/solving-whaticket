@@ -37,6 +37,7 @@ import Files from "../pages/Files/";
 import Prompts from "../pages/Prompts";
 import QueueIntegration from "../pages/QueueIntegration";
 import ForgetPassword from "../pages/ForgetPassWord/"; // Reset PassWd
+import { Embed } from "../pages/Embed";
 
 const Routes = () => {
   const [showCampaigns, setShowCampaigns] = useState(false);
@@ -53,6 +54,7 @@ const Routes = () => {
       <AuthProvider>
         <TicketsContextProvider>
           <Switch>
+            <Route exact path="/embed/:phoneNumber" component={Embed} />
             <Route exact path="/login" component={Login} />
             <Route exact path="/signup" component={Signup} />
 			<Route exact path="/forgetpsw" component={ForgetPassword} /> 
