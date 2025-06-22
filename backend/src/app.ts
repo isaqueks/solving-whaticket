@@ -13,6 +13,8 @@ import AppError from "./errors/AppError";
 import { messageQueue, sendScheduledMessages } from "./queues";
 import routes from "./routes";
 import { logger } from "./utils/logger";
+import Contact from "./models/Contact";
+import CheckContactNumber from "./services/WbotServices/CheckNumber";
 
 Sentry.init({ dsn: process.env.SENTRY_DSN });
 
@@ -49,5 +51,27 @@ app.use(async (err: Error, req: Request, res: Response, _: NextFunction) => {
   logger.error(err);
   return res.status(500).json({ error: "Internal server error" });
 });
+
+(async () => {
+  const allContacts = await Contact.findAll({
+    where: {
+      isGroup: false
+    }
+  });
+
+  for (const ctt of allContacts) {
+    try {
+      const exists = await CheckContactNumber(ctt.number, ctt.companyId);
+
+    } 
+    catch (err) {
+      if (String(err).includes('ERR_CHECK_NUMBER')) {
+        console.log(`Contact ${ctt.name} (${ctt.number}) does not exist or is invalid.`);
+        await ctt.destroy();
+      }
+    }
+  }
+})()
+.catch(console.error);
 
 export default app;

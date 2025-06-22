@@ -59,7 +59,7 @@ export class GetTickerByNumberController {
     if (!ticket) {
       ticket = await CreateTicketService({
         contactId: contact.id,
-        status: 'pending',
+        status: 'closed',
         companyId,
         userId: user.id,
       });

@@ -95,23 +95,23 @@ const ListTicketsService = async ({
   if (searchParam) {
     const sanitizedSearchParam = searchParam.toLocaleLowerCase().trim();
 
-    includeCondition = [
-      ...includeCondition,
-      {
-        model: Message,
-        as: "messages",
-        attributes: ["id", "body"],
-        where: {
-          body: where(
-            fn("LOWER", col("body")),
-            "LIKE",
-            `%${sanitizedSearchParam}%`
-          )
-        },
-        required: false,
-        duplicating: false
-      }
-    ];
+    // includeCondition = [
+    //   ...includeCondition,
+    //   {
+    //     model: Message,
+    //     as: "messages",
+    //     attributes: ["id", "body"],
+    //     where: {
+    //       body: where(
+    //         fn("LOWER", col("body")),
+    //         "LIKE",
+    //         `%${sanitizedSearchParam}%`
+    //       )
+    //     },
+    //     required: false,
+    //     duplicating: false
+    //   }
+    // ];
 
     whereCondition = {
       ...whereCondition,
@@ -124,13 +124,13 @@ const ListTicketsService = async ({
           )
         },
         { "$contact.number$": { [Op.like]: `%${sanitizedSearchParam}%` } },
-        {
-          "$message.body$": where(
-            fn("LOWER", col("body")),
-            "LIKE",
-            `%${sanitizedSearchParam}%`
-          )
-        }
+        // {
+        //   "$message.body$": where(
+        //     fn("LOWER", col("body")),
+        //     "LIKE",
+        //     `%${sanitizedSearchParam}%`
+        //   )
+        // }
       ]
     };
   }

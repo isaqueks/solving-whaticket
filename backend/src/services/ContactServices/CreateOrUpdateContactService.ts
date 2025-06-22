@@ -3,6 +3,7 @@ import { getIO } from "../../libs/socket";
 import Contact from "../../models/Contact";
 import ContactCustomField from "../../models/ContactCustomField";
 import { isNil } from "lodash";
+import CheckContactNumber from "../WbotServices/CheckNumber";
 interface ExtraInfo extends ContactCustomField {
   name: string;
   value: string;
@@ -63,6 +64,11 @@ const CreateOrUpdateContactService = async ({
       contact
     });
   } else {
+    const exists = await CheckContactNumber(numRegex.test(number) ? number.replace(numRegex, "$1$2") : number, companyId);
+    if (!exists) {
+      throw new Error(`Contact with number ${number} does not exist on WhatsApp.`);
+    }
+
     contact = await Contact.create({
       name,
       number: numRegex.test(number) ? number.replace(numRegex, "$1$2") : number,

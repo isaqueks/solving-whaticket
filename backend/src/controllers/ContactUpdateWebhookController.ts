@@ -13,6 +13,7 @@ import ContactListItem from "../models/ContactListItem";
 
 import AppError from "../errors/AppError";
 import CreateOrUpdateContactService from "../services/ContactServices/CreateOrUpdateContactService";
+import CheckContactNumber from "../services/WbotServices/CheckNumber";
 
 
 type StoreData = {
@@ -47,13 +48,18 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
   }
 
   for (const item of data.data) {
-    await CreateOrUpdateContactService({
-      ...item,
-      email: item.email || '',
-      taxId: item.taxId || '',
-      companyId: data.companyId,
-      isGroup: false
-    });
+    try {
+      await CreateOrUpdateContactService({
+        ...item,
+        email: item.email || '',
+        taxId: item.taxId || '',
+        companyId: data.companyId,
+        isGroup: false
+      });
+    }
+    catch (err) {
+      console.error(err);
+    }
   }
 
   // const io = getIO();
