@@ -25,13 +25,14 @@ const useStyles = makeStyles(theme => ({
 	},
 }));
 
-const TicketActionButtons = ({ ticket }) => {
+const TicketActionButtons = ({ ticket, small }) => {
 	const classes = useStyles();
 	const history = useHistory();
 	const [anchorEl, setAnchorEl] = useState(null);
 	const [loading, setLoading] = useState(false);
 	const ticketOptionsMenuOpen = Boolean(anchorEl);
 	const { user } = useContext(AuthContext);
+	const smallMode = !!small;
 
 	const handleOpenTicketOptionsMenu = e => {
 		setAnchorEl(e.currentTarget);
@@ -50,10 +51,12 @@ const TicketActionButtons = ({ ticket }) => {
 			});
 
 			setLoading(false);
-			if (status === "open") {
-				history.push(`/tickets/${ticket.id}`);
-			} else {
-				history.push("/tickets");
+			if (!smallMode) {
+				if (status === "open") {
+					history.push(`/tickets/${ticket.id}`);
+				} else {
+					history.push("/tickets");
+				}
 			}
 		} catch (err) {
 			setLoading(false);

@@ -33,7 +33,7 @@ export function Embed(props) {
 
   return (<>
     {(ticket) ? (
-        <Ticket ticketId={ticket.uuid} />
+        <Ticket ticketId={ticket.uuid} small={true} />
     ) : (
       <p>Carregando...</p>
     )}

@@ -70,6 +70,7 @@ const Ticket = (props) => {
   const [loading, setLoading] = useState(true);
   const [contact, setContact] = useState({});
   const [ticket, setTicket] = useState({});
+  const smallMode = !!props.small;
 
   const socketManager = useContext(SocketContext);
 
@@ -85,7 +86,9 @@ const Ticket = (props) => {
           const queueAllowed = queues.find((q) => q.id === queueId);
           if (queueAllowed === undefined && profile !== "admin") {
             toast.error("Acesso não permitido");
-            history.push("/tickets");
+            if (!smallMode) {
+              history.push("/tickets");
+            }
             return;
           }
 
@@ -115,7 +118,12 @@ const Ticket = (props) => {
 
       if (data.action === "delete" && data.ticketId === ticket.id) {
         // toast.success("Ticket deleted sucessfully.");
-        history.push("/tickets");
+        if (!smallMode) {
+          history.push("/tickets");
+        }
+        else {
+          toast.warn("O ticket foi deletado.");
+        }
       }
     });
 
@@ -179,7 +187,7 @@ const Ticket = (props) => {
       >
         <TicketHeader loading={loading}>
           {renderTicketInfo()}
-          <TicketActionButtons ticket={ticket} />
+          <TicketActionButtons ticket={ticket} small={smallMode} />
         </TicketHeader>
         <Paper>
           <TagsContainer ticket={ticket} />
