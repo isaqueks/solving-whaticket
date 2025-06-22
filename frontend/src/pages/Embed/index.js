@@ -32,7 +32,7 @@ export function Embed(props) {
   }, [phoneNumber]);
 
   return (<>
-    {(ticket && ticket.status === 'open') ? (
+    {(ticket) ? (
         <Ticket ticketId={ticket.uuid} />
     ) : (
       <p>Carregando...</p>
