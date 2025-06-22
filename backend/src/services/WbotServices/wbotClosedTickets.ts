@@ -89,7 +89,7 @@ export const ClosedAllOpenTickets = async (companyId: number): Promise<void> => 
             closeTicket(showTicket, showTicket.status, bodyExpiresMessageInactive);
 
             if (expiresInactiveMessage !== "" && expiresInactiveMessage !== undefined) {
-              const sentMessage = await SendWhatsAppMessage({ body: bodyExpiresMessageInactive, ticket: showTicket });
+              const sentMessage = await SendWhatsAppMessage({ body: bodyExpiresMessageInactive, ticket: showTicket, userId: showTicket.userId });
 
               await verifyMessage(sentMessage, showTicket, showTicket.contact);
             }

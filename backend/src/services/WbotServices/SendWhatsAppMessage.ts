@@ -7,23 +7,39 @@ import Ticket from "../../models/Ticket";
 
 import formatBody from "../../helpers/Mustache";
 import { map_msg } from "../../utils/global";
+import UpdateTicketService from "../TicketServices/UpdateTicketService";
 
 interface Request {
   body: string;
   ticket: Ticket;
+  userId: number;
   quotedMsg?: Message;
 }
 
 const SendWhatsAppMessage = async ({
   body,
   ticket,
-  quotedMsg
+  quotedMsg,
+  userId
 }: Request): Promise<WAMessage> => {
   let options = {};
   const wbot = await GetTicketWbot(ticket);
   const number = `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"
     }`;
   console.log("number", number);
+
+    if (ticket.status !== 'open') {
+      const res = await UpdateTicketService({
+        ticketId: ticket.id,
+        companyId: ticket.companyId,
+        ticketData: {
+          userId: userId,
+          status: 'open',
+        }
+      });
+      ticket = res.ticket;
+    }
+
   if (quotedMsg) {
     const chatMessages = await Message.findOne({
       where: {

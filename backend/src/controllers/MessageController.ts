@@ -76,7 +76,7 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
       })
     );
   } else {
-    const send = await SendWhatsAppMessage({ body, ticket, quotedMsg });
+    const send = await SendWhatsAppMessage({ body, ticket, quotedMsg, userId: +req.user.id });
   }
 
   return res.send();
@@ -160,7 +160,7 @@ export const send = async (req: Request, res: Response): Promise<Response> => {
         })
       );
     } else {
-      await SendWhatsAppMessage({ body: formatBody(body, contact), ticket });
+      await SendWhatsAppMessage({ body: formatBody(body, contact), ticket, userId: +req.user.id });
 
       await ticket.update({
         lastMessage: body,

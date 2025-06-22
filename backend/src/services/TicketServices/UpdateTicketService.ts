@@ -145,7 +145,7 @@ const UpdateTicketService = async ({
           let bodyRatingMessage = `\u200e${ratingTxt}\n\n`;
           bodyRatingMessage +=
             "Digite de 1 à 3 para qualificar nosso atendimento:\n*1* - _Insatisfeito_\n*2* - _Satisfeito_\n*3* - _Muito Satisfeito_\n\n";
-          await SendWhatsAppMessage({ body: bodyRatingMessage, ticket });
+          await SendWhatsAppMessage({ body: bodyRatingMessage, ticket, userId: ticket.userId });
 
           await ticketTraking.update({
             ratingAt: moment().toDate()
@@ -167,7 +167,7 @@ const UpdateTicketService = async ({
 
       if (!isNil(complationMessage) && complationMessage !== "") {
         const body = `\u200e${complationMessage}`;
-        await SendWhatsAppMessage({ body, ticket });
+        await SendWhatsAppMessage({ body, ticket, userId: ticket.userId });
       }
       await ticket.update({
         promptId,

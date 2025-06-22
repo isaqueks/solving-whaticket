@@ -1403,7 +1403,7 @@ export const handleRating = async (
 
   if (complationMessage) {
     const body = formatBody(`\u200e${complationMessage}`, ticket.contact);
-    await SendWhatsAppMessage({ body, ticket });
+    await SendWhatsAppMessage({ body, ticket, userId: ticket.userId });
   }
 
   await ticketTraking.update({
