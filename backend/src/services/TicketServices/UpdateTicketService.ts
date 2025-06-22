@@ -155,7 +155,7 @@ const UpdateTicketService = async ({
             .to(`queue-${ticket.queueId}-open`)
             .to(ticketId.toString())
             .emit(`company-${ticket.companyId}-ticket`, {
-              action: "delete",
+              action: "update",
               ticketId: ticket.id
             });
 
@@ -295,7 +295,7 @@ const UpdateTicketService = async ({
         .to(`queue-${ticket.queueId}-${oldStatus}`)
         .to(`user-${oldUserId}`)
         .emit(`company-${companyId}-ticket`, {
-          action: "delete",
+          action: "update",
           ticketId: ticket.id
         });
     }
