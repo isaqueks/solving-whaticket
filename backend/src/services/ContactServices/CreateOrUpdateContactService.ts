@@ -4,6 +4,9 @@ import Contact from "../../models/Contact";
 import ContactCustomField from "../../models/ContactCustomField";
 import { isNil } from "lodash";
 import CheckContactNumber from "../WbotServices/CheckNumber";
+import CreateTicketService from "../TicketServices/CreateTicketService";
+import GetDefaultWhatsApp from "../../helpers/GetDefaultWhatsApp";
+import User from "../../models/User";
 interface ExtraInfo extends ContactCustomField {
   name: string;
   value: string;
@@ -64,8 +67,8 @@ const CreateOrUpdateContactService = async ({
       contact
     });
   } else {
-    const exists = await CheckContactNumber(numRegex.test(number) ? number.replace(numRegex, "$1$2") : number, companyId);
-    if (!exists) {
+    const onWhatsapp = await CheckContactNumber(numRegex.test(number) ? number.replace(numRegex, "$1$2") : number, companyId);
+    if (!onWhatsapp) {
       throw new Error(`Contact with number ${number} does not exist on WhatsApp.`);
     }
 
@@ -82,10 +85,28 @@ const CreateOrUpdateContactService = async ({
       attachedToEmail
     });
 
-    io.to(`company-${companyId}-mainchannel`).emit(`company-${companyId}-contact`, {
-      action: "create",
-      contact
+    const correspondingUser = await User.findOne({
+      where: {
+        companyId,
+        email: attachedToEmail
+      }
     });
+
+    if (correspondingUser) {
+      const defaultWhatsapp = await GetDefaultWhatsApp(companyId);
+      await CreateTicketService({
+        contactId: contact.id,
+        status: 'closed',
+        companyId,
+        whatsappId: String(defaultWhatsapp.id),
+        userId: correspondingUser.id
+      });
+    }
+
+    // io.to(`company-${companyId}-mainchannel`).emit(`company-${companyId}-contact`, {
+    //   action: "create",
+    //   contact
+    // });
   }
 
   return contact;
