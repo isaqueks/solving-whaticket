@@ -42,6 +42,7 @@ export const RefreshTokenService = async (
 
     return { user, newToken, refreshToken };
   } catch (err) {
+    console.error(err);
     res.clearCookie("jrt");
     throw new AppError("ERR_SESSION_EXPIRED", 401);
   }

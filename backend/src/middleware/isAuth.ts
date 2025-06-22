@@ -31,6 +31,7 @@ const isAuth = (req: Request, res: Response, next: NextFunction): void => {
       companyId
     };
   } catch (err) {
+    console.error(err);
     throw new AppError("Invalid token. We'll try to assign a new one on next request", 403 );
   }
 
