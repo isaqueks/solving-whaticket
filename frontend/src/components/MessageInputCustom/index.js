@@ -259,6 +259,9 @@ const ActionButtons = (props) => {
     handleUploadAudio,
     handleStartRecording,
   } = props;
+
+  const isOpen = () => !!ticketStatus;
+
   const classes = useStyles();
   if (inputMessage) {
     return (
@@ -306,7 +309,7 @@ const ActionButtons = (props) => {
       <IconButton
         aria-label="showRecorder"
         component="span"
-        disabled={loading || ticketStatus !== "open"}
+        disabled={loading || !isOpen()}
         onClick={handleStartRecording}
       >
         <MicIcon className={classes.sendMessageIcons} />
@@ -335,6 +338,8 @@ const CustomInput = (props) => {
   const { user } = useContext(AuthContext);
 
   const { list: listQuickMessages } = useQuickMessages();
+
+  const isOpen = () => !!ticketStatus;
 
   useEffect(() => {
     async function fetchData() {
@@ -384,13 +389,13 @@ const CustomInput = (props) => {
   };
 
   const onPaste = (e) => {
-    if (ticketStatus === "open") {
+    if (isOpen()) {
       handleInputPaste(e);
     }
   };
 
   const renderPlaceholder = () => {
-    if (ticketStatus === "open") {
+    if (isOpen()) {
       return i18n.t("messagesInput.placeholderOpen");
     }
     return i18n.t("messagesInput.placeholderClosed");
@@ -478,6 +483,8 @@ const MessageInputCustom = (props) => {
   const { user } = useContext(AuthContext);
 
   const [signMessage, setSignMessage] = useLocalStorage("signOption", true);
+
+  const isOpen = () => !!ticketStatus/* === "open"*/;
 
   useEffect(() => {
     inputRef.current.focus();
@@ -654,7 +661,7 @@ const MessageInputCustom = (props) => {
   };
 
   const disableOption = () => {
-    return loading || recording || ticketStatus !== "open";
+    return loading || recording || !isOpen();
   };
 
   const renderReplyingMessage = (message) => {
@@ -678,7 +685,7 @@ const MessageInputCustom = (props) => {
         <IconButton
           aria-label="showRecorder"
           component="span"
-          disabled={loading || ticketStatus !== "open"}
+          disabled={loading || !isOpen()}
           onClick={() => setReplyingMessage(null)}
         >
           <ClearIcon className={classes.sendMessageIcons} />

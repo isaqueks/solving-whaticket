@@ -2,12 +2,22 @@ import React, { useContext, useEffect, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 import api from "../../services/api";
 import Ticket from "../../components/Ticket";
+import { makeStyles } from "@material-ui/core";
 
+
+const useStyles = makeStyles(theme => ({
+	centerAll: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '100%',
+  },
+}));
 
 export function Embed(props) {
   const { phoneNumber } = useParams();
   const [ ticket, setTicket ] = useState(null);
-
+  const classes = useStyles();
 
   useEffect(() => {
 
@@ -22,10 +32,8 @@ export function Embed(props) {
   }, [phoneNumber]);
 
   return (<>
-    {ticket ? (
-      <div>
+    {(ticket && ticket.status === 'open') ? (
         <Ticket ticketId={ticket.uuid} />
-      </div>
     ) : (
       <p>Carregando...</p>
     )}
