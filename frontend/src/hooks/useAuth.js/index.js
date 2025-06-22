@@ -133,7 +133,16 @@ const useAuth = () => {
         if (Math.round(dias) < 5) {
           toast.warn(`Sua assinatura vence em ${Math.round(dias)} ${Math.round(dias) === 1 ? 'dia' : 'dias'} `);
         }
-        history.push("/tickets");
+
+        let redirectPath = localStorage.getItem("redirectPath");
+        if (redirectPath) {
+          localStorage.removeItem("redirectPath");
+        }
+        else {
+          redirectPath = "/tickets";
+        }
+
+        history.push(redirectPath);
         setLoading(false);
       } else {
         toastError(`Opss! Sua assinatura venceu ${vencimento}.

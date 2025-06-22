@@ -8,6 +8,7 @@ const Route = ({ component: Component, isPrivate = false, ...rest }) => {
 	const { isAuth, loading } = useContext(AuthContext);
 
 	if (!isAuth && isPrivate) {
+		localStorage.setItem("redirectPath", window.location.pathname);
 		return (
 			<>
 				{loading && <BackdropLoading />}
