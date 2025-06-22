@@ -296,7 +296,7 @@ const UpdateTicketService = async ({
         .to(`user-${oldUserId}`)
         .emit(`company-${companyId}-ticket`, {
           action: "update",
-          ticketId: ticket.id
+          ticket
         });
     }
 
