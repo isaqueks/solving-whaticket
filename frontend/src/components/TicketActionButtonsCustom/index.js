@@ -30,7 +30,7 @@ const useStyles = makeStyles(theme => ({
 	},
 }));
 
-const TicketActionButtonsCustom = ({ ticket }) => {
+const TicketActionButtonsCustom = ({ ticket, small }) => {
 	const classes = useStyles();
 	const history = useHistory();
 	const [anchorEl, setAnchorEl] = useState(null);
@@ -38,6 +38,7 @@ const TicketActionButtonsCustom = ({ ticket }) => {
 	const ticketOptionsMenuOpen = Boolean(anchorEl);
 	const { user } = useContext(AuthContext);
 	const { setCurrentTicket } = useContext(TicketsContext);
+	const smallMode = !!small;
 
 	const customTheme = createTheme({
 		palette: {
@@ -68,8 +69,10 @@ const TicketActionButtonsCustom = ({ ticket }) => {
 			if (status === "open") {
 				setCurrentTicket({ ...ticket, code: "#open" });
 			} else {
-				setCurrentTicket({ id: null, code: null })
-				history.push("/tickets");
+				setCurrentTicket({ id: null, code: null });
+				if (!smallMode) {
+					history.push("/tickets");
+				}
 			}
 		} catch (err) {
 			setLoading(false);
