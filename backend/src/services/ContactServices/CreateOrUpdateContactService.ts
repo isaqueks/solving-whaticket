@@ -44,12 +44,25 @@ const CreateOrUpdateContactService = async ({
   let contact: Contact | null;
 
   const numRegex = /^(55[0-9][0-9])9([0-9]{8})$/;
+  const oldNumRegex = /^(55[0-9][0-9])([0-9]{8})$/;
+
+        const nums = [number];
+
+        if (!GP) {
+
+          if (numRegex.test(number)) {
+            nums.push(number.replace(numRegex, "$1$2"));
+          }
+          else if (oldNumRegex.test(number)) {
+            nums.push(number.replace(numRegex, "$19$2"));
+          }
+      }
 
   contact = await Contact.findOne({
     where: {
-      number: numRegex.test(number) ? {
-        [Op.or]: [number.replace(numRegex, "$1$2"), number]
-      } : number,
+      number: {
+        [Op.or]: nums
+      },
       companyId
     }
   });
@@ -71,10 +84,6 @@ const CreateOrUpdateContactService = async ({
     let n = null;
 
     if (!GP) {
-      const nums = [n];
-      if (numRegex.test(number)) {
-        nums.push(number.replace(numRegex, "$1$2"));
-      }
 
       for (const nn of nums) {
         try {
