@@ -67,16 +67,34 @@ const CreateOrUpdateContactService = async ({
       contact
     });
   } else {
+
+    let n = null;
+
     if (!GP) {
-      const onWhatsapp = await CheckContactNumber(numRegex.test(number) ? number.replace(numRegex, "$1$2") : number, companyId);
-      if (!onWhatsapp) {
+      const nums = [n];
+      if (numRegex.test(number)) {
+        nums.push(number.replace(numRegex, "$1$2"));
+      }
+
+      for (const nn of nums) {
+        try {
+          const onWhatsapp = await CheckContactNumber(nn, companyId);
+          if (!onWhatsapp) {
+            throw new Error(`Contact with number ${number} does not exist on WhatsApp.`);
+          }
+          n = nn;
+          break;
+        }
+        catch{}
+      }
+      if (!n) {
         throw new Error(`Contact with number ${number} does not exist on WhatsApp.`);
       }
     }
 
     contact = await Contact.create({
       name,
-      number: numRegex.test(number) ? number.replace(numRegex, "$1$2") : number,
+      number: n,
       profilePicUrl,
       email,
       isGroup,
