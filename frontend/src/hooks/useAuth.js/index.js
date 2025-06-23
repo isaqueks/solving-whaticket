@@ -64,6 +64,7 @@ const useAuth = () => {
         try {
           const { data } = await api.post("/auth/refresh_token");
           api.defaults.headers.Authorization = `Bearer ${data.token}`;
+          localStorage.setItem("token", JSON.stringify(data.token));
           setIsAuth(true);
           setUser(data.user);
         } catch (err) {
