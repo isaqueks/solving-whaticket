@@ -67,9 +67,11 @@ const CreateOrUpdateContactService = async ({
       contact
     });
   } else {
-    const onWhatsapp = await CheckContactNumber(numRegex.test(number) ? number.replace(numRegex, "$1$2") : number, companyId);
-    if (!onWhatsapp) {
-      throw new Error(`Contact with number ${number} does not exist on WhatsApp.`);
+    if (!GP) {
+      const onWhatsapp = await CheckContactNumber(numRegex.test(number) ? number.replace(numRegex, "$1$2") : number, companyId);
+      if (!onWhatsapp) {
+        throw new Error(`Contact with number ${number} does not exist on WhatsApp.`);
+      }
     }
 
     contact = await Contact.create({
@@ -84,6 +86,8 @@ const CreateOrUpdateContactService = async ({
       whatsappId,
       attachedToEmail
     });
+
+    if (!GP) {
 
     const correspondingUser = await User.findOne({
       where: {
@@ -102,6 +106,7 @@ const CreateOrUpdateContactService = async ({
         userId: correspondingUser.id
       });
     }
+  }
 
     // io.to(`company-${companyId}-mainchannel`).emit(`company-${companyId}-contact`, {
     //   action: "create",
