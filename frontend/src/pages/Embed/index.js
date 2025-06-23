@@ -17,6 +17,7 @@ const useStyles = makeStyles(theme => ({
 export function Embed(props) {
   const { phoneNumber } = useParams();
   const [ ticket, setTicket ] = useState(null);
+  const [ error, setError ] = useState(null);
   const classes = useStyles();
 
   useEffect(() => {
@@ -27,6 +28,7 @@ export function Embed(props) {
     })
     .catch(err => {
       console.error(err);
+      setError(err);
     });
 
   }, [phoneNumber]);
@@ -34,7 +36,10 @@ export function Embed(props) {
   return (<>
     {(ticket) ? (
         <Ticket ticketId={ticket.uuid} small={true} />
-    ) : (
+    ) : error ? <>
+        Não foi possível carregar o ticket. <br />
+        <a onClick={e => window.location.reload()}>Recarregar página</a>
+      </> : (
       <p>Carregando...</p>
     )}
   </>);
