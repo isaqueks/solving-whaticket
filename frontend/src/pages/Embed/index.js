@@ -38,7 +38,7 @@ export function Embed(props) {
         <Ticket ticketId={ticket.uuid} small={true} />
     ) : error ? <>
         Não foi possível carregar o ticket. <br />
-        <a onClick={e => window.location.reload()}>Recarregar página</a>
+        <a href="#" onClick={e => window.location.reload()}>Recarregar página</a>
       </> : (
       <p>Carregando...</p>
     )}
