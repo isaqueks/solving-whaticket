@@ -26,6 +26,7 @@ import ShowFileService from "./services/FileServices/ShowService";
 import { getMessageOptions } from "./services/WbotServices/SendWhatsAppMedia";
 import { ClosedAllOpenTickets } from "./services/WbotServices/wbotClosedTickets";
 import { logger } from "./utils/logger";
+import { attachAllTicketsToUser } from "./services/WbotServices/attachAllTicketsToUser";
 
 
 const nodemailer = require('nodemailer');
@@ -195,6 +196,26 @@ async function handleSendMessage(job) {
     throw e;
   }
 }; */}
+
+async function handleAttachTickets() {
+  const job = new CronJob('*/1 * * * *', async () => {
+    const companies = await Company.findAll();
+    companies.map(async c => {
+
+      try {
+        const companyId = c.id;
+        await attachAllTicketsToUser(companyId);
+      } catch (e: any) {
+        Sentry.captureException(e);
+        logger.error("attachAllTicketsToUser -> Verify: error", e.message);
+        throw e;
+      }
+
+    });
+  });
+  job.start()
+}
+
 
 async function handleCloseTicketsAutomatic() {
   const job = new CronJob('*/1 * * * *', async () => {
@@ -869,9 +890,11 @@ async function handleInvoiceCreate() {
   job.start()
 }
 
-handleCloseTicketsAutomatic()
+handleCloseTicketsAutomatic();
 
-handleInvoiceCreate()
+handleInvoiceCreate();
+
+handleAttachTickets();
 
 export async function startQueueProcess() {
   logger.info("Iniciando processamento de filas");
