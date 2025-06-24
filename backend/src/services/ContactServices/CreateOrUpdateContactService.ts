@@ -44,12 +44,25 @@ const CreateOrUpdateContactService = async ({
   let contact: Contact | null;
 
   const numRegex = /^(55[0-9][0-9])9([0-9]{8})$/;
+  const oldNumRegex = /^(55[0-9][0-9])([0-9]{8})$/;
+
+        const nums = [number];
+
+        if (!GP) {
+
+          if (numRegex.test(number)) {
+            nums.push(number.replace(numRegex, "$1$2"));
+          }
+          else if (oldNumRegex.test(number)) {
+            nums.push(number.replace(numRegex, "$19$2"));
+          }
+      }
 
   contact = await Contact.findOne({
     where: {
-      number: numRegex.test(number) ? {
-        [Op.or]: [number.replace(numRegex, "$1$2"), number]
-      } : number,
+      number: {
+        [Op.or]: nums
+      },
       companyId
     }
   });
@@ -67,14 +80,30 @@ const CreateOrUpdateContactService = async ({
       contact
     });
   } else {
-    const onWhatsapp = await CheckContactNumber(numRegex.test(number) ? number.replace(numRegex, "$1$2") : number, companyId);
-    if (!onWhatsapp) {
-      throw new Error(`Contact with number ${number} does not exist on WhatsApp.`);
+
+    let n = null;
+
+    if (!GP) {
+
+      for (const nn of nums) {
+        try {
+          const onWhatsapp = await CheckContactNumber(nn, companyId);
+          if (!onWhatsapp) {
+            throw new Error(`Contact with number ${number} does not exist on WhatsApp.`);
+          }
+          n = nn;
+          break;
+        }
+        catch{}
+      }
+      if (!n) {
+        throw new Error(`Contact with number ${number} does not exist on WhatsApp.`);
+      }
     }
 
     contact = await Contact.create({
       name,
-      number: numRegex.test(number) ? number.replace(numRegex, "$1$2") : number,
+      number: n,
       profilePicUrl,
       email,
       isGroup,
@@ -84,6 +113,8 @@ const CreateOrUpdateContactService = async ({
       whatsappId,
       attachedToEmail
     });
+
+    if (!GP) {
 
     const correspondingUser = await User.findOne({
       where: {
@@ -102,6 +133,7 @@ const CreateOrUpdateContactService = async ({
         userId: correspondingUser.id
       });
     }
+  }
 
     // io.to(`company-${companyId}-mainchannel`).emit(`company-${companyId}-contact`, {
     //   action: "create",

@@ -193,12 +193,13 @@ const TicketsListCustom = (props) => {
       (t) => queueIds.indexOf(t.queueId) > -1
     );
 
+    dispatch({ type: "RESET" });
     if (profile === "user") {
       dispatch({ type: "LOAD_TICKETS", payload: filteredTickets });
     } else {
       dispatch({ type: "LOAD_TICKETS", payload: tickets });
     }
-  }, [tickets, status, searchParam, queues, profile]);
+  }, [(tickets||[]).map(t=>t.id).join(","), status, searchParam, queues, profile]);
 
   useEffect(() => {
     const companyId = localStorage.getItem("companyId");
@@ -281,7 +282,7 @@ const TicketsListCustom = (props) => {
       updateCount(ticketsList.length);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ticketsList]);
+  }, [(ticketsList||[]).map(t=>t.id).join(",")]);
 
   const loadMore = () => {
     setPageNumber((prevState) => prevState + 1);
