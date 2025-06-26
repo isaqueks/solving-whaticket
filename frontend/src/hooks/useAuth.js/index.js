@@ -38,7 +38,7 @@ const useAuth = () => {
       if (error?.response?.status === 403 && !originalRequest._retry) {
         originalRequest._retry = true;
         localStorage.setItem("errCt", (+(localStorage.getItem("errCt"))||0) + 1);
-        const ct = localStorage.getItem("errCt");
+        const ct = +localStorage.getItem("errCt");
         if (ct > 3) {
           localStorage.removeItem("token");
           localStorage.removeItem("companyId");
