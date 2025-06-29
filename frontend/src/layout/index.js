@@ -332,7 +332,7 @@ const LoggedInLayout = ({ children, themeToggle }) => {
 
   return (
     <div className={classes.root}>
-      <Drawer
+      {!(window?.location?.href||'').includes('/embed/') && <Drawer
         variant={drawerVariant}
         className={drawerOpen ? classes.drawerPaper : classes.drawerPaperClose}
         classes={{
@@ -354,7 +354,7 @@ const LoggedInLayout = ({ children, themeToggle }) => {
           <MainListItems drawerClose={drawerClose} collapsed={!drawerOpen} />
         </List>
         <Divider />
-      </Drawer>
+      </Drawer>}
       <UserModal
         open={userModalOpen}
         onClose={() => setUserModalOpen(false)}
