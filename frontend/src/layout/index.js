@@ -49,8 +49,21 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
     height: "100vh",
     [theme.breakpoints.down("sm")]: {
-      height: (window?.location?.href||'').includes('/embeb/') ? '100vh' : "calc(100vh - 56px)",
+      height: "calc(100vh - 56px)",
     },
+    backgroundColor: theme.palette.fancyBackground,
+    '& .MuiButton-outlinedPrimary': {
+      color: theme.mode === 'light' ? '#FFF' : '#FFF',
+	  backgroundColor: theme.mode === 'light' ? '#0083B1' : '#1c1c1c',
+      //border: theme.mode === 'light' ? '1px solid rgba(0 124 102)' : '1px solid rgba(255, 255, 255, 0.5)',
+    },
+    '& .MuiTab-textColorPrimary.Mui-selected': {
+      color: theme.mode === 'light' ? '#0083B1' : '#FFF',
+    }
+  },
+  root2: {
+    display: "flex",
+    height: "100vh",
     backgroundColor: theme.palette.fancyBackground,
     '& .MuiButton-outlinedPrimary': {
       color: theme.mode === 'light' ? '#FFF' : '#FFF',
@@ -331,7 +344,7 @@ const LoggedInLayout = ({ children, themeToggle }) => {
   }
 
   return (
-    <div className={classes.root}>
+    <div className={(window?.location?.href||'').includes('/embed/') ? classes.root2 : classes.root}>
       {!(window?.location?.href||'').includes('/embed/') && <Drawer
         variant={drawerVariant}
         className={drawerOpen ? classes.drawerPaper : classes.drawerPaperClose}
