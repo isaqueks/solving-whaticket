@@ -360,7 +360,7 @@ const LoggedInLayout = ({ children, themeToggle }) => {
         onClose={() => setUserModalOpen(false)}
         userId={user?.id}
       />
-      <AppBar
+      {!(window?.location?.href||'').includes('/embed/') && <AppBar
         position="absolute"
         className={clsx(classes.appBar, drawerOpen && classes.appBarShift)}
         color="primary"
@@ -456,7 +456,7 @@ const LoggedInLayout = ({ children, themeToggle }) => {
             </Menu>
           </div>
         </Toolbar>
-      </AppBar>
+      </AppBar>}
       <main className={classes.content}>
         <div className={classes.appBarSpacer} />
 
