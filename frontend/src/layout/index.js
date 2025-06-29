@@ -49,7 +49,7 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
     height: "100vh",
     [theme.breakpoints.down("sm")]: {
-      height: "calc(100vh - 56px)",
+      height: (window?.location?.href||'').includes('/embeb/') ? '100vh' : "calc(100vh - 56px)",
     },
     backgroundColor: theme.palette.fancyBackground,
     '& .MuiButton-outlinedPrimary': {
@@ -458,7 +458,7 @@ const LoggedInLayout = ({ children, themeToggle }) => {
         </Toolbar>
       </AppBar>}
       <main className={classes.content}>
-        <div className={classes.appBarSpacer} />
+        {!(window?.location?.href||'').includes('/embed/') && <div className={classes.appBarSpacer} />}
 
         {children ? children : null}
       </main>
