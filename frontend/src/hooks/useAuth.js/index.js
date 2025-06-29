@@ -78,6 +78,16 @@ const useAuth = () => {
           setIsAuth(true);
           setUser(data.user);
         } catch (err) {
+          localStorage.setItem("errCt", (+(localStorage.getItem("errCt"))||0) + 1);
+          const ct = +localStorage.getItem("errCt");
+          if (ct > 3) {
+            localStorage.removeItem("token");
+            localStorage.removeItem("companyId");
+            api.defaults.headers.Authorization = undefined;
+            setIsAuth(false);
+            localStorage.setItem("errCt", 0);
+            window.location.reload();
+        }
           toastError(err);
         }
       }
