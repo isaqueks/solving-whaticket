@@ -29,7 +29,7 @@ const CreateTicketService = async ({
 }: Request): Promise<Ticket> => {
   let whatsapp;
 
-  if (whatsappId !== undefined && whatsappId !== null && whatsappId !==  "") {
+  if (whatsappId) {
     whatsapp = await ShowWhatsAppService(whatsappId, companyId)
   }
   
@@ -50,7 +50,7 @@ const CreateTicketService = async ({
     where: {
       contactId,
       companyId,
-      whatsappId
+      whatsappId: defaultWhatsapp.id
     },
     defaults: {
       contactId,
