@@ -86,9 +86,9 @@ const useAuth = () => {
             api.defaults.headers.Authorization = undefined;
             setIsAuth(false);
             localStorage.setItem("errCt", 0);
-            window.location.reload();
-        }
+          }
           toastError(err);
+          window.location.reload();
         }
       }
       setLoading(false);
