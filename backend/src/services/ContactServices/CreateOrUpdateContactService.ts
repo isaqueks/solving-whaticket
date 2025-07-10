@@ -23,6 +23,7 @@ interface Request {
   whatsappId?: number;
   taxId?: string;
   attachedToEmail?: string;
+  keepName?: boolean;
 }
 
 const CreateOrUpdateContactService = async ({
@@ -35,7 +36,8 @@ const CreateOrUpdateContactService = async ({
   companyId,
   extraInfo = [],
   attachedToEmail,
-  whatsappId
+  whatsappId,
+  keepName = false
 }: Request): Promise<Contact> => {
   const GP = isGroup || number.length > 13;
   number = GP ? number : number.replace(/[^0-9|-]/g, "");
@@ -68,6 +70,9 @@ const CreateOrUpdateContactService = async ({
   });
 
   if (contact) {
+    if (keepName) {
+      name = contact.name;
+    }
     contact.update({ name, profilePicUrl, email, taxId, attachedToEmail });
     console.log(contact.whatsappId)
     if (isNil(contact.whatsappId === null)) {

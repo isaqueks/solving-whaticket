@@ -541,7 +541,8 @@ const verifyContact = async (
     profilePicUrl,
     isGroup: msgContact.id.includes("g.us"),
     companyId,
-    whatsappId: wbot.id
+    whatsappId: wbot.id,
+    keepName: true
   };
 
 
