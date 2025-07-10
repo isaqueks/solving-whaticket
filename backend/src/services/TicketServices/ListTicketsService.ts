@@ -207,7 +207,7 @@ const ListTicketsService = async ({
     };
   }
 
-  const limit = 100;
+  const limit = 200;
   const offset = limit * (+pageNumber - 1);
 
   whereCondition = {
