@@ -15,83 +15,72 @@ const useAuth = () => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState({});
 
-  api.interceptors.request.use(
-    (config) => {
-      const token = localStorage.getItem("token");
-      if (token) {
-        config.headers["Authorization"] = `Bearer ${JSON.parse(token)}`;
-        setIsAuth(true);
-      }
-      return config;
-    },
-    (error) => {
-      Promise.reject(error);
-    }
-  );
+  // api.interceptors.request.use(
+  //   (config) => {
+  //     const token = localStorage.getItem("token");
+  //     if (token) {
+  //       config.headers["Authorization"] = `Bearer ${JSON.parse(token)}`;
+  //       setIsAuth(true);
+  //     }
+  //     return config;
+  //   },
+  //   (error) => {
+  //     Promise.reject(error);
+  //   }
+  // );
 
-  api.interceptors.response.use(
-    (response) => {
-      return response;
-    },
-    async (error) => {
-      const originalRequest = error.config;
-      if (error?.response?.status === 403 && !originalRequest._retry) {
-        originalRequest._retry = true;
-        localStorage.setItem("errCt", (+(localStorage.getItem("errCt"))||0) + 1);
-        const ct = +localStorage.getItem("errCt");
-        if (ct > 3) {
-          localStorage.removeItem("token");
-          localStorage.removeItem("companyId");
-          api.defaults.headers.Authorization = undefined;
-          setIsAuth(false);
-          localStorage.setItem("errCt", 0);
-          return Promise.reject(error);
-        }
+  // api.interceptors.response.use(
+  //   (response) => {
+  //     return response;
+  //   },
+  //   async (error) => {
+  //     const originalRequest = error.config;
+  //     if (error?.response?.status === 403 && !originalRequest._retry) {
+  //       originalRequest._retry = true;
+  //       localStorage.setItem("errCt", (+(localStorage.getItem("errCt"))||0) + 1);
+  //       const ct = +localStorage.getItem("errCt");
+  //       if (ct > 3) {
+  //         localStorage.removeItem("token");
+  //         localStorage.removeItem("companyId");
+  //         api.defaults.headers.Authorization = undefined;
+  //         setIsAuth(false);
+  //         localStorage.setItem("errCt", 0);
+  //         return Promise.reject(error);
+  //       }
 
-        const { data } = await api.post("/auth/refresh_token");
-        if (data) {
-          localStorage.setItem("token", JSON.stringify(data.token));
-          api.defaults.headers.Authorization = `Bearer ${data.token}`;
-        }
-        return api(originalRequest);
-      }
-      if (error?.response?.status === 401) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("companyId");
-        api.defaults.headers.Authorization = undefined;
-        setIsAuth(false);
-      }
-      return Promise.reject(error);
-    }
-  );
+  //       const { data } = await api.post("/auth/refresh_token");
+  //       if (data) {
+  //         localStorage.setItem("token", JSON.stringify(data.token));
+  //         api.defaults.headers.Authorization = `Bearer ${data.token}`;
+  //       }
+  //       return api(originalRequest);
+  //     }
+  //     if (error?.response?.status === 401) {
+  //       localStorage.removeItem("token");
+  //       localStorage.removeItem("companyId");
+  //       api.defaults.headers.Authorization = undefined;
+  //       setIsAuth(false);
+  //     }
+  //     return Promise.reject(error);
+  //   }
+  // );
 
   const socketManager = useContext(SocketContext);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    // const token = localStorage.getItem("token");
     (async () => {
-      if (token) {
-        try {
-          const { data } = await api.post("/auth/refresh_token");
-          api.defaults.headers.Authorization = `Bearer ${data.token}`;
-          localStorage.setItem("token", JSON.stringify(data.token));
-          setIsAuth(true);
-          setUser(data.user);
-        } catch (err) {
-          localStorage.setItem("errCt", (+(localStorage.getItem("errCt"))||0) + 1);
-          const ct = +localStorage.getItem("errCt");
-          if (ct > 3) {
-            localStorage.removeItem("token");
-            localStorage.removeItem("companyId");
-            api.defaults.headers.Authorization = undefined;
-            setIsAuth(false);
-            localStorage.setItem("errCt", 0);
-          }
-          toastError(err);
-          window.location.reload();
-        }
+      try {
+        const { data } = await api.get("/auth/me");
+        setIsAuth(true);
+        setUser(data);
+        setLoading(false);
       }
-      setLoading(false);
+      catch {
+        setIsAuth(false);
+        setLoading(false);
+        return;
+      }
     })();
   }, []);
 
