@@ -4,9 +4,8 @@ import { getIO } from "../libs/socket";
 
 import AuthUserService from "../services/UserServices/AuthUserService";
 import { SendRefreshToken } from "../helpers/SendRefreshToken";
-import { RefreshTokenService } from "../services/AuthServices/RefreshTokenService";
-import FindUserFromToken from "../services/AuthServices/FindUserFromToken";
 import User from "../models/User";
+import ShowUserService from "../services/UserServices/ShowUserService";
 
 export const store = async (req: Request, res: Response): Promise<Response> => {
   const { email, password } = req.body;
@@ -38,30 +37,30 @@ export const update = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-  const token: string = req.cookies.jrt;
+  // const token: string = req.cookies.jrt;
 
-  if (!token) {
-    throw new AppError("ERR_SESSION_EXPIRED", 401);
-  }
+  throw new AppError("Deprecated endpoint", 400);
 
-  const { user, newToken, refreshToken } = await RefreshTokenService(
-    res,
-    token
-  );
+  // if (!token) {
+  //   throw new AppError("ERR_SESSION_EXPIRED", 401);
+  // }
 
-  SendRefreshToken(res, refreshToken);
+  // const { user, newToken, refreshToken } = await RefreshTokenService(
+  //   res,
+  //   token
+  // );
 
-  return res.json({ token: newToken, user });
+  // SendRefreshToken(res, refreshToken);
+
+  // return res.json({ token: newToken, user });
 };
 
 export const me = async (req: Request, res: Response): Promise<Response> => {
-  const token: string = req.cookies.jrt;
-  const user = await FindUserFromToken(token);
-  const { id, profile, super: superAdmin } = user;
+  const reqUser = req.user;
 
-  if (!token) {
-    throw new AppError("ERR_SESSION_EXPIRED", 401);
-  }
+  const user = await ShowUserService(reqUser.id);
+
+  const { id, profile, super: superAdmin } = user;
 
   return res.json({ id, profile, super: superAdmin });
 };
