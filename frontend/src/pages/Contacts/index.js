@@ -292,7 +292,7 @@ const Contacts = () => {
               ),
             }}
           />
-          <Button
+          {/* <Button
             variant="contained"
             color="primary"
             onClick={(e) => setConfirmOpen(true)}
@@ -315,7 +315,7 @@ const Contacts = () => {
             onClick={handleOpenContactModal}
           >
             {i18n.t("contacts.buttons.add")}
-          </Button>
+          </Button> */}
 
          <CSVLink style={{ textDecoration:'none'}} separator=";" filename={'whaticket.csv'} data={contacts.map((contact) => ({ name: contact.name, number: contact.number, email: contact.email }))}>
           <Button	variant="contained" color="primary"> 

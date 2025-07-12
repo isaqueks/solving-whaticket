@@ -133,9 +133,9 @@ const ContactDrawer = ({ open, handleDrawerClose, contact, ticket, loading }) =>
 								avatar={<Avatar src={contact.profilePicUrl} alt="contact_image" style={{ width: 60, height: 60 }} />}
 								title={
 									<>
-										<Typography onClick={() => setOpenForm(true)}>
+										<Typography onClick={() => !contact.attachedToEmail && setOpenForm(true)}>
 											{contact.name}
-											<CreateIcon style={{fontSize: 16, marginLeft: 5}} />
+											{contact.attachedToEmail ? <></> : <CreateIcon style={{fontSize: 16, marginLeft: 5}} />}
 										</Typography>
 									</>
 								}
@@ -150,14 +150,14 @@ const ContactDrawer = ({ open, handleDrawerClose, contact, ticket, loading }) =>
 									</>
 								}
 							/>
-							<Button
+							{!contact.attachedToEmail && <Button
 								variant="outlined"
 								color="primary"
 								onClick={() => setModalOpen(!openForm)}
 								style={{fontSize: 12}}
 							>
 								{i18n.t("contactDrawer.buttons.edit")}
-							</Button>
+							</Button>}
 							{(contact.id && openForm) && <ContactForm initialContact={contact} onCancel={() => setOpenForm(false)} />}
 						</Paper>
 						<Paper square variant="outlined" className={classes.contactDetails}>
