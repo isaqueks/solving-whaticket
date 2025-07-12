@@ -60,9 +60,11 @@ export const me = async (req: Request, res: Response): Promise<Response> => {
 
   const user = await ShowUserService(reqUser.id);
 
-  const { id, profile, super: superAdmin } = user;
+  return res.json(user);
 
-  return res.json({ id, profile, super: superAdmin });
+  // const { id, profile, super: superAdmin } = user;
+
+  // return res.json({ id, profile, super: superAdmin });
 };
 
 export const remove = async (
