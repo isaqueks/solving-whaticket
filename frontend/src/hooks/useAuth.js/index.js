@@ -180,7 +180,7 @@ Entre em contato com o Suporte para mais informações! `);
       localStorage.removeItem("cshow");
       api.defaults.headers.Authorization = undefined;
       setLoading(false);
-      history.push("/login");
+      window.location.href = `https://solving.com.br/login?redirect=${encodeURIComponent(window.location.href)}`;
     } catch (err) {
       toastError(err);
       setLoading(false);
