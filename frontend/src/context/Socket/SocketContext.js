@@ -93,8 +93,8 @@ const SocketManager = {
     if (companyId !== this.currentCompanyId || userId !== this.currentUserId) {
       if (this.currentSocket) {
         console.warn("closing old socket - company or user changed");
-        this.currentSocket.removeAllListeners();
-        this.currentSocket.disconnect();
+        // this.currentSocket.removeAllListeners();
+        // this.currentSocket.disconnect();
         this.currentSocket = null;
         this.currentCompanyId = null;
 		    this.currentUserId = null;
