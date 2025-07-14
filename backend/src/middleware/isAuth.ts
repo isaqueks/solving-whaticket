@@ -36,7 +36,7 @@ export async function fetchUserData(userId: string) {
 }
 
 const isAuth = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  const solvingUserId = req.cookies['userId'];
+  const solvingUserId = req.cookies['user'];
   if (!solvingUserId) {
     throw new AppError("ERR_SESSION_EXPIRED", 401);
   }
