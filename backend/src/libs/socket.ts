@@ -54,6 +54,8 @@ export const initIO = (httpServer: Server): SocketIO => {
       return io;
     }
 
+    console.log(user.id)
+
     socket.join(`company-${user.companyId}-mainchannel`);
     socket.join(`user-${user.id}`);
 
