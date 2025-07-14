@@ -23,6 +23,7 @@ export const initIO = (httpServer: Server): SocketIO => {
     logger.info("Client Connected");
     const userCookie = socket.handshake.headers.cookie.split(";").map(s=>s.trim()).find(cookie => cookie.startsWith("userId=")).split("=")[1];
     const solvingUser =  await fetchUserData(userCookie);
+    console.log({ userCookie, solvingUser })
     if (!solvingUser) {
       logger.info("onConnect: User not found in cookie");
       socket.disconnect();
