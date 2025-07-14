@@ -198,7 +198,7 @@ async function handleSendMessage(job) {
 }; */}
 
 async function handleAttachTickets() {
-  const job = new CronJob('*/1 * * * *', async () => {
+  const job = new CronJob('*/3 * * * *', async () => {
     const companies = await Company.findAll();
     companies.map(async c => {
 
@@ -218,7 +218,7 @@ async function handleAttachTickets() {
 
 
 async function handleCloseTicketsAutomatic() {
-  const job = new CronJob('*/1 * * * *', async () => {
+  const job = new CronJob('*/3 * * * *', async () => {
     const companies = await Company.findAll();
     companies.map(async c => {
 
@@ -815,84 +815,9 @@ async function handleLoginStatus(job) {
 }
 
 
-async function handleInvoiceCreate() {
-  logger.info("Iniciando geração de boletos");
-  const job = new CronJob('*/5 * * * * *', async () => {
 
-
-    const companies = await Company.findAll();
-    companies.map(async c => {
-      var dueDate = c.dueDate;
-      const date = moment(dueDate).format();
-      const timestamp = moment().format();
-      const hoje = moment(moment()).format("DD/MM/yyyy");
-      var vencimento = moment(dueDate).format("DD/MM/yyyy");
-
-      var diff = moment(vencimento, "DD/MM/yyyy").diff(moment(hoje, "DD/MM/yyyy"));
-      var dias = moment.duration(diff).asDays();
-
-      if (dias < 20) {
-        const plan = await Plan.findByPk(c.planId);
-
-        const sql = `SELECT COUNT(*) mycount FROM "Invoices" WHERE "companyId" = ${c.id} AND "dueDate"::text LIKE '${moment(dueDate).format("yyyy-MM-DD")}%';`
-        const invoice = await sequelize.query(sql,
-          { type: QueryTypes.SELECT }
-        );
-        if (invoice[0]['mycount'] > 0) {
-
-        } else {
-          const sql = `INSERT INTO "Invoices" (detail, status, value, "updatedAt", "createdAt", "dueDate", "companyId")
-          VALUES ('${plan.name}', 'open', '${plan.value}', '${timestamp}', '${timestamp}', '${date}', ${c.id});`
-
-          const invoiceInsert = await sequelize.query(sql,
-            { type: QueryTypes.INSERT }
-          );
-
-          /*           let transporter = nodemailer.createTransport({
-                      service: 'gmail',
-                      auth: {
-                        user: 'email@gmail.com',
-                        pass: 'senha'
-                      }
-                    });
- 
-                    const mailOptions = {
-                      from: 'heenriquega@gmail.com', // sender address
-                      to: `${c.email}`, // receiver (use array of string for a list)
-                      subject: 'Fatura gerada - Sistema', // Subject line
-                      html: `Olá ${c.name} esté é um email sobre sua fatura!<br>
-          <br>
-          Vencimento: ${vencimento}<br>
-          Valor: ${plan.value}<br>
-          Link: ${process.env.FRONTEND_URL}/financeiro<br>
-          <br>
-          Qualquer duvida estamos a disposição!
-                      `// plain text body
-                    };
- 
-                    transporter.sendMail(mailOptions, (err, info) => {
-                      if (err)
-                        console.log(err)
-                      else
-                        console.log(info);
-                    }); */
-
-        }
-
-
-
-
-
-      }
-
-    });
-  });
-  job.start()
-}
 
 handleCloseTicketsAutomatic();
-
-handleInvoiceCreate();
 
 handleAttachTickets();
 
