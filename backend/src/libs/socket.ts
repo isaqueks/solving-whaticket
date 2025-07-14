@@ -8,6 +8,7 @@ import Ticket from "../models/Ticket";
 import { verify } from "jsonwebtoken";
 import authConfig from "../config/auth";
 import { CounterManager } from "./counter";
+import { fetchUserData } from "../middleware/isAuth";
 
 let io: SocketIO;
 
@@ -20,22 +21,22 @@ export const initIO = (httpServer: Server): SocketIO => {
 
   io.on("connection", async socket => {
     logger.info("Client Connected");
-    const { token } = socket.handshake.query;
-    let tokenData = null;
-    try {
-      tokenData = verify(token as string, authConfig.secret);
-      logger.debug(tokenData, "io-onConnection: tokenData");
-    } catch (error) {
-      logger.warn(`[libs/socket.ts] Error decoding token: ${error?.message}`);
+    const userCookie = socket.handshake.headers.cookie.split(";").map(s=>s.trim()).find(cookie => cookie.startsWith("userId=")).split("=")[1];
+    const solvingUser =  await fetchUserData(userCookie);
+    if (!solvingUser) {
+      logger.info("onConnect: User not found in cookie");
       socket.disconnect();
       return io;
     }
+
     const counters = new CounterManager();
 
-    let user: User = null;
-    let userId = tokenData.id;
+    let user: User = await User.findOne({
+      where: { email: solvingUser.email },
+    });
+    let userId = user.id;
 
-    if (userId && userId !== "undefined" && userId !== "null") {
+    if (userId) {
       user = await User.findByPk(userId, { include: [ Queue ] });
       if (user) {
         user.online = true;

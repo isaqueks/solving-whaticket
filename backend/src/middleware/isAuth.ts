@@ -10,7 +10,7 @@ const cache: Map<string, {
   timestamp: number
 }> = new Map();
 
-async function fetchUserData(userId: string) {
+export async function fetchUserData(userId: string) {
   if (cache.has(userId)) {
     const cachedData = cache.get(userId);
     if (cachedData && (Date.now() - cachedData.timestamp) < 5 * 60 * 1000) { // 5 minutes cache
