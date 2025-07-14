@@ -36,6 +36,7 @@ export const initIO = (httpServer: Server): SocketIO => {
       where: { email: solvingUser.email },
     });
     let userId = user.id;
+    console.log({ user })
 
     if (userId) {
       user = await User.findByPk(userId, { include: [ Queue ] });
