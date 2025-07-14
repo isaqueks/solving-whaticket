@@ -82,6 +82,7 @@ const SocketManager = {
     }
 
     if (!companyId && !this.currentSocket) {
+      console.log(1)
       return new DummySocket();
     }
 
