@@ -75,6 +75,9 @@ const useAuth = () => {
         setIsAuth(true);
         setUser(data);
         setLoading(false);
+
+        localStorage.setItem("companyId", data.companyId);
+        localStorage.setItem("userId", data.id);
       }
       catch {
         setIsAuth(false);
