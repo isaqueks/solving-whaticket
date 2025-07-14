@@ -142,16 +142,12 @@ export const remove = async (
 export const listPlan = async (req: Request, res: Response): Promise<Response> => {
   const { id } = req.params;
 
-  const authHeader = req.headers.authorization;
-  const [, token] = authHeader.split(" ");
-  const decoded = verify(token, authConfig.secret);
-  const { id: requestUserId, profile, companyId } = decoded as TokenPayload;
-  const requestUser = await User.findByPk(requestUserId);
+  const requestUser = await User.findByPk(req.user.id);
 
   if (requestUser.super === true) {
     const company = await ShowPlanCompanyService(id);
     return res.status(200).json(company);
-  } else if (companyId.toString() !== id) {
+  } else if (req.user.companyId.toString() !== id) {
     return res.status(400).json({ error: "Você não possui permissão para acessar este recurso!" });
   } else {
     const company = await ShowPlanCompanyService(id);
@@ -163,12 +159,8 @@ export const listPlan = async (req: Request, res: Response): Promise<Response> =
 export const indexPlan = async (req: Request, res: Response): Promise<Response> => {
   const { searchParam, pageNumber } = req.query as IndexQuery;
 
-  const authHeader = req.headers.authorization;
-  const [, token] = authHeader.split(" ");
-  const decoded = verify(token, authConfig.secret);
-  const { id, profile, companyId } = decoded as TokenPayload;
   // const company = await Company.findByPk(companyId);
-  const requestUser = await User.findByPk(id);
+  const requestUser = await User.findByPk(req.user.id);
 
   if (requestUser.super === true) {
     const companies = await ListCompaniesPlanService();
