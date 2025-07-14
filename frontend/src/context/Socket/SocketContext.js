@@ -99,18 +99,18 @@ const SocketManager = {
 		    this.currentUserId = null;
       }
 
-      let token = JSON.parse(localStorage.getItem("token"));
-      if (!token) {
-        return new DummySocket();
-      }
+      // let token = JSON.parse(localStorage.getItem("token"));
+      // if (!token) {
+      //   return new DummySocket();
+      // }
       
-      if ( isExpired(token) ) {
-        console.warn("Expired token, reload after refresh");
-        setTimeout(() => {
-          window.location.reload();
-        },1000);
-        return new DummySocket();
-      }
+      // if ( isExpired(token) ) {
+      //   console.warn("Expired token, reload after refresh");
+      //   setTimeout(() => {
+      //     window.location.reload();
+      //   },1000);
+      //   return new DummySocket();
+      // }
 
       this.currentCompanyId = companyId;
       this.currentUserId = userId;
@@ -119,37 +119,37 @@ const SocketManager = {
         transports: ["websocket"],
         pingTimeout: 18000,
         pingInterval: 18000,
-        query: { token },
+        // query: { token },
       });
 
-      this.currentSocket.io.on("reconnect_attempt", () => {
-        this.currentSocket.io.opts.query.r = 1;
-        token = JSON.parse(localStorage.getItem("token"));
-        if ( isExpired(token) ) {
-          console.warn("Refreshing");
-          window.location.reload();
-        } else {
-          console.warn("Using new token");
-          this.currentSocket.io.opts.query.token = token;
-        }
-      });
+      // this.currentSocket.io.on("reconnect_attempt", () => {
+      //   this.currentSocket.io.opts.query.r = 1;
+      //   token = JSON.parse(localStorage.getItem("token"));
+      //   if ( isExpired(token) ) {
+      //     console.warn("Refreshing");
+      //     window.location.reload();
+      //   } else {
+      //     console.warn("Using new token");
+      //     this.currentSocket.io.opts.query.token = token;
+      //   }
+      // });
       
       this.currentSocket.on("disconnect", (reason) => {
         console.warn(`socket disconnected because: ${reason}`);
-        if (reason.startsWith("io server disconnect")) {
-          console.warn("tryng to reconnect", this.currentSocket);
-          token = JSON.parse(localStorage.getItem("token"));
+        // if (reason.startsWith("io server disconnect")) {
+        //   console.warn("tryng to reconnect", this.currentSocket);
+        //   token = JSON.parse(localStorage.getItem("token"));
           
-          if ( isExpired(token) ) {
-            console.warn("Expired token - refreshing");
-            window.location.reload();
-            return;
-          }
-          console.warn("Reconnecting using refreshed token");
-          this.currentSocket.io.opts.query.token = token;
-          this.currentSocket.io.opts.query.r = 1;
-          this.currentSocket.connect();
-        }        
+        //   if ( isExpired(token) ) {
+        //     console.warn("Expired token - refreshing");
+        //     window.location.reload();
+        //     return;
+        //   }
+        //   console.warn("Reconnecting using refreshed token");
+        //   this.currentSocket.io.opts.query.token = token;
+        //   this.currentSocket.io.opts.query.r = 1;
+        //   this.currentSocket.connect();
+        // }        
       });
       
       this.currentSocket.on("connect", (...params) => {
