@@ -4,6 +4,7 @@ import { Op } from "sequelize";
 import User from "../../models/User";
 import { getIO } from "../../libs/socket";
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export async function attachAllTicketsToUser(companyId: number) {
 
@@ -20,6 +21,7 @@ export async function attachAllTicketsToUser(companyId: number) {
   const io = getIO();
 
   for (const ticket of nonAttached) {
+    await sleep(100);
     if (ticket.contact.attachedToEmail) {
       const user = await User.findOne({
         where: {
