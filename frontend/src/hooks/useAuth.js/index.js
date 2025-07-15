@@ -18,12 +18,12 @@ const useAuth = () => {
   const [user, setUser] = useState({});
 
   useEffect(() => {
-    if (globalThis['WINDOW_HASH']) {
+    if (window['WINDOW_HASH']) {
       return;
     }
 
-    globalThis['WINDOW_HASH'] = (Date.now() + Math.random()*100).toFixed(5);
-    const WINDOW_HASH = globalThis['WINDOW_HASH'];
+    window['WINDOW_HASH'] = (Date.now() + Math.random()*100).toFixed(5);
+    const WINDOW_HASH = window['WINDOW_HASH'];
     
     localStorage.setItem('activeWindow', WINDOW_HASH);
 
