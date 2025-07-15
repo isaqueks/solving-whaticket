@@ -4,9 +4,30 @@ import { Op } from "sequelize";
 import CreateTicketService from "../services/TicketServices/CreateTicketService";
 import Contact from "../models/Contact";
 import User from "../models/User";
+import CheckContactNumber from "../services/WbotServices/CheckNumber";
 
+const numExistCache = new Map<string, boolean>();
+async function checkValid(num: string, cpId: number): Promise<boolean> {
+  if (numExistCache.has(num)) {
+    return numExistCache.get(num);
+  }
+
+  try {
+    const valid = await CheckContactNumber(num, cpId);
+    numExistCache.set(num, valid.exists);
+    return valid.exists;
+  }
+  catch (err) {
+    if (err.message.includes("ERR_CHECK_NUMBER")) {
+      numExistCache.set(num, false);
+      return false;
+    }
+    throw err;
+  }
+}
 
 export class GetTickerByNumberController {
+
 
   public async get(req: Request, res: Response) {
     const { phone } = req.query;
@@ -27,6 +48,24 @@ export class GetTickerByNumberController {
       }
     });
     if (!contact) {
+      // let exist;
+      // if (GetTickerByNumberController.numExistCache.has(phone)) {
+      //   exist = GetTickerByNumberController.numExistCache.get(phone);
+      // }
+      // else {
+      //   exist = 
+      // }
+      const nums = numRegex.test(phone) ? [phone.replace(numRegex, "$1$2"), phone] : [phone];
+      let exist = false;
+      for (const num of nums) {
+        exist = await checkValid(num, companyId);
+        if (exist) break;
+      }
+
+      if (!exist) {
+        return res.status(400).json({ error: "Número inválido" });
+      }
+
       return res.status(400).json({ error: "Contact not found" });
     }
 
