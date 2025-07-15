@@ -24,10 +24,14 @@ export function Embed(props) {
 
     api.get(`/ticket-by-number?phone=${encodeURIComponent(phoneNumber)}`)
     .then(res => {
-      setTicket(res.data);
+      if (res.data.error) {
+        setError(res.data.error);
+      }
+      else {
+        setTicket(res.data);
+      }
     })
     .catch(err => {
-      console.error(err);
       setError(err);
     });
 
@@ -37,7 +41,7 @@ export function Embed(props) {
     {(ticket) ? (
         <Ticket ticketId={ticket.uuid} small={true} />
     ) : error ? <>
-        Não foi possível carregar o ticket. <br />
+        {String(error).includes('Número inválido') ?  `Número ${phoneNumber} não está no WhatsApp.` : 'Não foi possível carregar o ticket.'} <br />
         <a href="#" onClick={e => window.location.reload()}>Recarregar página</a>
       </> : (
       <p>Carregando...</p>
