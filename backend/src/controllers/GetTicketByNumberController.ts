@@ -32,7 +32,7 @@ export class GetTickerByNumberController {
   public async get(req: Request, res: Response) {
     const { phone } = req.query;
     if (typeof phone !== 'string' || !/^\+?[1-9]\d{1,14}$/.test(phone)) {
-      return res.status(400).json({ error: "Phone number is required" });
+      return res.status(200).json({ error: "Phone number is required" });
     }
 
     const { companyId } = req.user;
@@ -63,10 +63,10 @@ export class GetTickerByNumberController {
       }
 
       if (!exist) {
-        return res.status(400).json({ error: "Número inválido" });
+        return res.status(200).json({ error: "Número inválido" });
       }
 
-      return res.status(400).json({ error: "Contact not found" });
+      return res.status(200).json({ error: "Contact not found" });
     }
 
     let ticket = await Ticket.findOne({
