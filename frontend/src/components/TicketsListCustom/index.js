@@ -163,6 +163,7 @@ const TicketsListCustom = (props) => {
     selectedQueueIds,
     updateCount,
     style,
+    unread
   } = props;
   const classes = useStyles();
   const [pageNumber, setPageNumber] = useState(1);
@@ -185,6 +186,7 @@ const TicketsListCustom = (props) => {
     tags: JSON.stringify(tags),
     users: JSON.stringify(users),
     queueIds: JSON.stringify(selectedQueueIds),
+    unread
   });
 
   useEffect(() => {
