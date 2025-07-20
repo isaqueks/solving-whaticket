@@ -326,10 +326,10 @@ const TicketsManagerTabs = () => {
                 badgeContent={openCount}
                 color="primary"
               >
-                {i18n.t("ticketsList.assignedHeader")}
+                Lidos
               </Badge>
             }
-            value={"open"}
+            value={"read"}
           />
           <Tab
             label={
@@ -338,25 +338,27 @@ const TicketsManagerTabs = () => {
                 badgeContent={pendingCount}
                 color="secondary"
               >
-                {i18n.t("ticketsList.pendingHeader")}
+                Não lidos
               </Badge>
             }
-            value={"pending"}
+            value={"unread"}
           />
         </Tabs>
         <Paper className={classes.ticketsWrapper}>
           <TicketsList
-            status="open"
+            // status="open"
+            unread="read"
             showAll={showAllTickets}
             selectedQueueIds={selectedQueueIds}
             updateCount={(val) => setOpenCount(val)}
-            style={applyPanelStyle("open")}
+            style={applyPanelStyle("read")}
           />
           <TicketsList
-            status="pending"
+            // status="pending"
+            unread="unread"
             selectedQueueIds={selectedQueueIds}
             updateCount={(val) => setPendingCount(val)}
-            style={applyPanelStyle("pending")}
+            style={applyPanelStyle("unread")}
           />
         </Paper>
       </TabPanel>
