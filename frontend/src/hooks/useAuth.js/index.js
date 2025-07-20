@@ -10,6 +10,7 @@ import toastError from "../../errors/toastError";
 import { SocketContext } from "../../context/Socket/SocketContext";
 import moment from "moment";
 import Swal from 'sweetalert2';
+import { SocketManager } from '../../context/Socket/SocketContext'
 
 const useAuth = () => {
   const history = useHistory();
@@ -39,7 +40,14 @@ const useAuth = () => {
           allowOutsideClick: false,
         }).then(() => {
           window.location.reload();
-        })
+        });
+
+        SocketManager.manageds.forEach(m => {
+          try {
+            m.disconnect(false);
+          }
+          catch {}
+        });
       }
 
     }, 2000);

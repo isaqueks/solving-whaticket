@@ -50,9 +50,11 @@ class ManagedSocket {
     return this.rawSocket.emit(event, ...params);
   }
   
-  disconnect() {
-    for (const j of this.joins) {
-      this.rawSocket.emit(`leave${j.event}`, ...j.params);
+  disconnect(notify = true) {
+    if (notify) {
+      for (const j of this.joins) {
+        this.rawSocket.emit(`leave${j.event}`, ...j.params);
+      }
     }
     this.joins = [];
     for (const c of this.callbacks) {
@@ -74,6 +76,7 @@ const SocketManager = {
   currentUserId: -1,
   currentSocket: null,
   socketReady: false,
+  manageds: [],
 
   getSocket: function(companyId) {
     let userId = null;
@@ -167,7 +170,9 @@ const SocketManager = {
 
     }
     
-    return new ManagedSocket(this);
+    const ms = new ManagedSocket(this);
+    this.manageds.push(ms);
+    return ms;
   },
   
   onReady: function( callbackReady ) {
