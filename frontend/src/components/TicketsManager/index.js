@@ -181,7 +181,7 @@ const TicketsManager = () => {
           aria-label="icon label tabs example"
         >
           <Tab
-            value={"open"}
+            value={"read"}
             icon={<MoveToInbox />}
             label={
               <Badge
@@ -190,13 +190,13 @@ const TicketsManager = () => {
                 overlap="rectangular"
                 color="secondary"
               >
-                {i18n.t("tickets.tabs.open.title")}
+                Lidos
               </Badge>
             }
             classes={{ root: classes.tab }}
           />
           <Tab
-            value={"pending"}
+            value={"unread"}
             icon={<HourglassEmptyRounded />}
             label={
               <Badge
@@ -205,7 +205,7 @@ const TicketsManager = () => {
                 overlap="rectangular"
                 color="secondary"
               >
-                {i18n.t("ticketsList.pendingHeader")}
+                Não lidos
               </Badge>
             }
             classes={{ root: classes.tab }}
@@ -300,6 +300,36 @@ const TicketsManager = () => {
           tags={selectedTags}
           showAll={true}
           selectedQueueIds={selectedQueueIds}
+        />
+      </TabPanel>
+
+
+      <TabPanel value={tab} name="read" className={classes.ticketsWrapper}>
+      <TagsFilter onFiltered={handleSelectedTags} />
+        <Paper className={classes.ticketsWrapper}>
+          <TicketsList
+            unread="read"
+            showAll={showAllTickets}
+            selectedQueueIds={selectedQueueIds}
+            updateCount={(val) => setOpenCount(val)}
+            style={applyPanelStyle("open")}
+          />
+          {/* <TicketsList
+            status="pending"
+            selectedQueueIds={selectedQueueIds}
+            updateCount={(val) => setPendingCount(val)}
+            style={applyPanelStyle("pending")}
+          /> */}
+        </Paper>
+      </TabPanel>
+
+      <TabPanel value={tab} name="unread" className={classes.ticketsWrapper}>
+      <TagsFilter onFiltered={handleSelectedTags} />
+        <TicketsList
+          unread="unread"
+          showAll={showAllTickets}
+          selectedQueueIds={selectedQueueIds}
+          updateCount={(val) => setPendingCount(val)}
         />
       </TabPanel>
     </Paper>

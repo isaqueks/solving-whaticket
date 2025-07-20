@@ -25,6 +25,7 @@ interface Request {
   tags: number[];
   users: number[];
   companyId: number;
+  unread?: 'unread' | 'read';
 }
 
 interface Response {
@@ -45,7 +46,8 @@ const ListTicketsService = async ({
   showAll,
   userId,
   withUnreadMessages,
-  companyId
+  companyId,
+  unread
 }: Request): Promise<Response> => {
   let whereCondition: Filterable["where"] = {
     [Op.or]: [{ userId }, { status: "pending" }],
@@ -162,6 +164,13 @@ const ListTicketsService = async ({
       [Op.or]: [{ userId }, { status: "pending" }],
       queueId: { [Op.or]: [userQueueIds, null] },
       unreadMessages: { [Op.gt]: 0 }
+    };
+  }
+
+  if (unread) {
+    whereCondition = {
+      ...whereCondition,
+      unreadMessages: (unread === 'unread') ? { [Op.gt]: 0 } : 0
     };
   }
 

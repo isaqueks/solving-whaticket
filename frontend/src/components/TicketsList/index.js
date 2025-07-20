@@ -167,6 +167,7 @@ const TicketsList = (props) => {
 		updateCount,
 		style,
 		tags,
+		unread
 	} = props;
 	const classes = useStyles();
 	const history = useHistory();
@@ -189,6 +190,7 @@ const TicketsList = (props) => {
 		showAll,
 		tags: JSON.stringify(tags),
 		queueIds: JSON.stringify(selectedQueueIds),
+		unread
 	});
 
 
