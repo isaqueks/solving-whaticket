@@ -167,9 +167,23 @@ const TicketsListCustom = (props) => {
   } = props;
   const classes = useStyles();
   const [pageNumber, setPageNumber] = useState(1);
-  const [ticketsList, dispatch] = useReducer(reducer, []);
+  const [ _ticketsList, dispatch ] = useReducer(reducer, []);
   const { user } = useContext(AuthContext);
   const { profile, queues } = user;
+
+
+  const ticketsList = _ticketsList.filter((ticket) => {
+    if (!unread) {
+      return true;
+    }
+
+    if (unread === 'read') {
+      return ticket.unreadMessages === 0;
+    }
+    else if (unread === 'unread') {
+      return ticket.unreadMessages > 0;
+    }
+  });
 
   const socketManager = useContext(SocketContext);
 
