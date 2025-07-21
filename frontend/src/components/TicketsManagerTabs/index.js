@@ -243,13 +243,13 @@ const TicketsManagerTabs = () => {
           <Tab
             value={"open"}
             icon={<MoveToInboxIcon />}
-            label={i18n.t("tickets.tabs.open.title")}
+            label={"Entrada"}
             classes={{ root: classes.tab }}
           />
           <Tab
             value={"closed"}
             icon={<CheckBoxIcon />}
-            label={i18n.t("tickets.tabs.closed.title")}
+            label={"Fechados"}
             classes={{ root: classes.tab }}
           />
           <Tab
