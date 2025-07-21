@@ -353,13 +353,13 @@ const TicketListItemCustom = ({ ticket }) => {
         dense
         button
         onClick={(e) => {
-          if (ticket.status === "pending") return;
+          // if (ticket.status === "pending") return;
           handleSelectTicket(ticket);
         }}
         selected={ticketId && +ticketId === ticket.id}
-        className={clsx(classes.ticket, {
+        className={clsx(classes.ticket/*, {
           [classes.pendingTicket]: ticket.status === "pending",
-        })}
+        }*/)}
       >
         {/* Barra colorida da fila */}
         <Tooltip
