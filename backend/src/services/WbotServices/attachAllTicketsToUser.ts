@@ -15,7 +15,9 @@ export async function attachAllTicketsToUser(companyId: number) {
       },
       companyId
     },
-    include: [{ all: true }]
+    include: [
+      'contact'
+    ]
   });
 
   const io = getIO();
