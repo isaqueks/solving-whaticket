@@ -11,7 +11,7 @@ export async function attachAllTicketsToUser(companyId: number) {
   const nonAttached = await Ticket.findAll({
     where: {
       userId: {
-        [Op.eq]: null
+        [Op.is]: null
       },
       companyId
     },
