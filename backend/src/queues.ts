@@ -816,13 +816,19 @@ async function handleLoginStatus(job) {
 
 
 
-
-handleCloseTicketsAutomatic();
-
-handleAttachTickets();
+if (process.env.PORT === process.env.MAIN_PORT) {
+  handleCloseTicketsAutomatic();
+  
+  handleAttachTickets();
+}
 
 export async function startQueueProcess() {
   logger.info("Iniciando processamento de filas");
+
+  if (process.env.PORT !== process.env.MAIN_PORT) {
+    logger.info("Cancelando início das filas, não é instância principal");
+    return;
+  }
 
   messageQueue.process("SendMessage", handleSendMessage);
 
