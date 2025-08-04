@@ -189,7 +189,7 @@ const useStyles = makeStyles((theme) => ({
     overflowWrap: "break-word",
     padding: "3px 80px 6px 6px",
   },
-  
+
   textContentItemEdited: {
     overflowWrap: "break-word",
     padding: "3px 120px 6px 6px",
@@ -394,9 +394,17 @@ const MessagesList = ({ ticket, ticketId, isGroup }) => {
 
   const scrollToBottom = () => {
     if (lastMessageRef.current) {
-      lastMessageRef.current.scrollIntoView({
-        block: 'nearest', 
-      });
+      const lastMessageElement = lastMessageRef.current;
+      // 1. Tenta scrollar de forma segura, sem mexer no host
+      lastMessageElement.scrollIntoView({ block: 'nearest' });
+
+      // 2. Garante que o elemento está realmente todo visível
+      const rect = lastMessageElement.getBoundingClientRect();
+      const container = lastMessageElement.offsetParent; // ou um seletor fixo tipo `.messages-container`
+
+      if (container && (rect.bottom > container.clientHeight)) {
+        container.scrollTop += rect.bottom - container.clientHeight;
+      }
     }
   };
 
@@ -440,111 +448,111 @@ const MessagesList = ({ ticket, ticketId, isGroup }) => {
       return <LocationPreview image={imageLocation} link={linkLocation} description={descriptionLocation} />
     }
     else
-    if (message.mediaType === "contactMessage") {
-      let array = message.body.split("\n");
-      let obj = [];
-      let contact = "";
-      for (let index = 0; index < array.length; index++) {
-        const v = array[index];
-        let values = v.split(":");
-        for (let ind = 0; ind < values.length; ind++) {
-          if (values[ind].indexOf("+") !== -1) {
-            obj.push({ number: values[ind] });
-          }
-          if (values[ind].indexOf("FN") !== -1) {
-            contact = values[ind + 1];
-          }
-        }
-      }
-      //console.log(array);
-      //console.log(contact);
-      //console.log(obj[0].number);
-      return <VCardPreview contact={contact} numbers={obj[0].number} />
-    }
-    /* else if (message.mediaType === "vcard") {
-      let array = message.body.split("\n");
-      let obj = [];
-      let contact = "";
-      for (let index = 0; index < array.length; index++) {
-        const v = array[index];
-        let values = v.split(":");
-        for (let ind = 0; ind < values.length; ind++) {
-          if (values[ind].indexOf("+") !== -1) {
-            obj.push({ number: values[ind] });
-          }
-          if (values[ind].indexOf("FN") !== -1) {
-            contact = values[ind + 1];
-          }
-        }
-      }
-      return <VcardPreview contact={contact} numbers={obj[0].number} />
-    } */
-    /*else if (message.mediaType === "multi_vcard") {
-      console.log("multi_vcard")
-      console.log(message)
-      
-      if(message.body !== null && message.body !== "") {
-        let newBody = JSON.parse(message.body)
-        return (
-          <>
-            {
-            newBody.map(v => (
-              <VcardPreview contact={v.name} numbers={v.number} />
-            ))
+      if (message.mediaType === "contactMessage") {
+        let array = message.body.split("\n");
+        let obj = [];
+        let contact = "";
+        for (let index = 0; index < array.length; index++) {
+          const v = array[index];
+          let values = v.split(":");
+          for (let ind = 0; ind < values.length; ind++) {
+            if (values[ind].indexOf("+") !== -1) {
+              obj.push({ number: values[ind] });
             }
-          </>
-        )
-      } else return (<></>)
-    }*/
-    else if (message.mediaType === "image") {
-      return <ModalImageCors imageUrl={message.mediaUrl} />;
-    } else if (message.mediaType === "audio") {
+            if (values[ind].indexOf("FN") !== -1) {
+              contact = values[ind + 1];
+            }
+          }
+        }
+        //console.log(array);
+        //console.log(contact);
+        //console.log(obj[0].number);
+        return <VCardPreview contact={contact} numbers={obj[0].number} />
+      }
+      /* else if (message.mediaType === "vcard") {
+        let array = message.body.split("\n");
+        let obj = [];
+        let contact = "";
+        for (let index = 0; index < array.length; index++) {
+          const v = array[index];
+          let values = v.split(":");
+          for (let ind = 0; ind < values.length; ind++) {
+            if (values[ind].indexOf("+") !== -1) {
+              obj.push({ number: values[ind] });
+            }
+            if (values[ind].indexOf("FN") !== -1) {
+              contact = values[ind + 1];
+            }
+          }
+        }
+        return <VcardPreview contact={contact} numbers={obj[0].number} />
+      } */
+      /*else if (message.mediaType === "multi_vcard") {
+        console.log("multi_vcard")
+        console.log(message)
+        
+        if(message.body !== null && message.body !== "") {
+          let newBody = JSON.parse(message.body)
+          return (
+            <>
+              {
+              newBody.map(v => (
+                <VcardPreview contact={v.name} numbers={v.number} />
+              ))
+              }
+            </>
+          )
+        } else return (<></>)
+      }*/
+      else if (message.mediaType === "image") {
+        return <ModalImageCors imageUrl={message.mediaUrl} />;
+      } else if (message.mediaType === "audio") {
 
-      //console.log(isIOS);
+        //console.log(isIOS);
 
-      if (isIOS) {
-        message.mediaUrl = message.mediaUrl.replace("ogg", "mp3");
+        if (isIOS) {
+          message.mediaUrl = message.mediaUrl.replace("ogg", "mp3");
 
+          return (
+            <audio controls>
+              <source src={message.mediaUrl} type="audio/mp3"></source>
+            </audio>
+          );
+        } else {
+
+          return (
+            <audio controls>
+              <source src={message.mediaUrl} type="audio/ogg"></source>
+            </audio>
+          );
+        }
+      } else if (message.mediaType === "video") {
         return (
-          <audio controls>
-            <source src={message.mediaUrl} type="audio/mp3"></source>
-          </audio>
+          <video
+            className={classes.messageMedia}
+            src={message.mediaUrl}
+            controls
+          />
         );
       } else {
-
         return (
-          <audio controls>
-            <source src={message.mediaUrl} type="audio/ogg"></source>
-          </audio>
+          <>
+            <div className={classes.downloadMedia}>
+              <Button
+                startIcon={<GetApp />}
+                color="primary"
+                variant="outlined"
+                target="_blank"
+                href={message.mediaUrl}
+              >
+                Download
+              </Button>
+            </div>
+            <Divider />
+          </>
         );
       }
-    } else if (message.mediaType === "video") {
-      return (
-        <video
-          className={classes.messageMedia}
-          src={message.mediaUrl}
-          controls
-        />
-      );
-    } else {
-      return (
-        <>
-          <div className={classes.downloadMedia}>
-            <Button
-              startIcon={<GetApp />}
-              color="primary"
-              variant="outlined"
-              target="_blank"
-              href={message.mediaUrl}
-            >
-              Download
-            </Button>
-          </div>
-          <Divider />
-        </>
-      );
-    }
-};
+  };
 
   /*
     const renderMessageAck = (message) => {
@@ -563,23 +571,23 @@ const MessagesList = ({ ticket, ticketId, isGroup }) => {
     };
     */
 
-    const renderMessageAck = (message) => {
-      if (message.ack === 0) {
-        return <AccessTime fontSize="small" className={classes.ackIcons} />;
-      }
-      if (message.ack === 1) {
-        return <Done fontSize="small" className={classes.ackIcons} />;
-      }
-      if (message.ack === 2) {
-        return <Done fontSize="small" className={classes.ackIcons} />;
-      }
-      if (message.ack === 3) {
-        return <DoneAll fontSize="small" className={classes.ackIcons} />;
-      }
-      if (message.ack === 4 || message.ack === 5) {
-        return <DoneAll fontSize="small" className={classes.ackDoneAllIcon} style={{color:'#0377FC'}} />;
-      }
-    };
+  const renderMessageAck = (message) => {
+    if (message.ack === 0) {
+      return <AccessTime fontSize="small" className={classes.ackIcons} />;
+    }
+    if (message.ack === 1) {
+      return <Done fontSize="small" className={classes.ackIcons} />;
+    }
+    if (message.ack === 2) {
+      return <Done fontSize="small" className={classes.ackIcons} />;
+    }
+    if (message.ack === 3) {
+      return <DoneAll fontSize="small" className={classes.ackIcons} />;
+    }
+    if (message.ack === 4 || message.ack === 5) {
+      return <DoneAll fontSize="small" className={classes.ackDoneAllIcon} style={{ color: '#0377FC' }} />;
+    }
+  };
 
   const renderDailyTimestamps = (message, index) => {
     if (index === 0) {
