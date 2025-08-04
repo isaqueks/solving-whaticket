@@ -394,7 +394,9 @@ const MessagesList = ({ ticket, ticketId, isGroup }) => {
 
   const scrollToBottom = () => {
     if (lastMessageRef.current) {
-      lastMessageRef.current.scrollIntoView({});
+      lastMessageRef.current.scrollIntoView({
+        block: 'nearest', 
+      });
     }
   };
 

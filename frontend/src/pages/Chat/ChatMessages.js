@@ -85,7 +85,9 @@ export default function ChatMessages({
 
   const scrollToBottom = () => {
     if (baseRef.current) {
-      baseRef.current.scrollIntoView({});
+      baseRef.current.scrollIntoView({
+        block: 'nearest', 
+      });
     }
   };
 
