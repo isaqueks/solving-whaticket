@@ -87,15 +87,7 @@ export default function ChatMessages({
     if (baseRef.current) {
       const lastMessageElement = baseRef.current;
       // 1. Tenta scrollar de forma segura, sem mexer no host
-      lastMessageElement.scrollIntoView({ block: 'nearest' });
-
-      // 2. Garante que o elemento está realmente todo visível
-      const rect = lastMessageElement.getBoundingClientRect();
-      const container = lastMessageElement.offsetParent; // ou um seletor fixo tipo `.messages-container`
-
-      if (container && (rect.bottom > container.clientHeight)) {
-        container.scrollTop += rect.bottom - container.clientHeight;
-      }
+      lastMessageElement.parentElement.scrollTop = Number.MAX_SAFE_INTEGER;
     }
   };
 
