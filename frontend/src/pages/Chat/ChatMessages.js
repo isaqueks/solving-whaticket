@@ -84,8 +84,8 @@ export default function ChatMessages({
   const [contentMessage, setContentMessage] = useState("");
 
   const scrollToBottom = () => {
-    if (lastMessageRef.current) {
-      const lastMessageElement = lastMessageRef.current;
+    if (baseRef.current) {
+      const lastMessageElement = baseRef.current;
       // 1. Tenta scrollar de forma segura, sem mexer no host
       lastMessageElement.scrollIntoView({ block: 'nearest' });
 
