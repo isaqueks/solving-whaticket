@@ -390,6 +390,12 @@ const MessagesList = ({ ticket, ticketId, isGroup, pendingMessages = [] }) => {
     };
   }, [ticketId, ticket, socketManager]);
 
+  useEffect(() => {
+    if (pendingMessages?.length > 0) {
+      scrollToBottom();
+    }
+  }, [pendingMessages]);
+
   const loadMore = () => {
     setPageNumber((prevPageNumber) => prevPageNumber + 1);
   };
