@@ -406,7 +406,10 @@ const MessagesList = ({ ticket, ticketId, isGroup, pendingMessages = [], setPend
 
     for (const pending of pendingMessages) {
       const correspondingMessage = messagesList.find(
-        m => m.body === pending.body && m.fromMe === pending.fromMe && m.mediaType === pending.mediaType && m.ack === 0
+        m => 
+          m.body === pending.body && 
+        m.fromMe === pending.fromMe && 
+        m.mediaType === pending.mediaType && 
       );
 
       if (correspondingMessage) {
