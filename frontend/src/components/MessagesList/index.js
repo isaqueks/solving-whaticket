@@ -408,8 +408,9 @@ const MessagesList = ({ ticket, ticketId, isGroup, pendingMessages = [], setPend
       const correspondingMessage = messagesList.find(
         m => 
           m.body === pending.body && 
-        m.fromMe === pending.fromMe && 
-        m.mediaType === pending.mediaType
+          m.fromMe === pending.fromMe && 
+          m.mediaType === pending.mediaType &&
+          +new Date(m.createdAt) >= + new Date(pending.createdAt)
       );
 
       if (correspondingMessage) {
