@@ -172,6 +172,7 @@ const Ticket = (props) => {
           ticketId={ticket.id}
           isGroup={ticket.isGroup}
           pendingMessages={pendingMessages}
+          setPendingMessages={setPendingMessages}
         ></MessagesList>
         <MessageInput 
           ticketId={ticket.id} 

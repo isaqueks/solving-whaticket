@@ -309,12 +309,17 @@ const reducer = (state, action) => {
     return [...state];
   }
 
+  if (action.type === 'REMOVE_MESSAGE') {
+    const filterFn = action.payload;
+    return state.filter(filterFn);
+  }
+
   if (action.type === "RESET") {
     return [];
   }
 };
 
-const MessagesList = ({ ticket, ticketId, isGroup, pendingMessages = [] }) => {
+const MessagesList = ({ ticket, ticketId, isGroup, pendingMessages = [], setPendingMessages = ()=>0 }) => {
   const classes = useStyles();
 
   const [messagesList, dispatch] = useReducer(reducer, []);
@@ -395,6 +400,27 @@ const MessagesList = ({ ticket, ticketId, isGroup, pendingMessages = [] }) => {
       scrollToBottom();
     }
   }, [pendingMessages]);
+
+  useEffect(() => {
+    const toRemove = [];
+
+    for (const pending of pendingMessages) {
+      const correspondingMessage = messagesList.find(
+        m => m.body === pending.body && m.fromMe === pending.fromMe && m.mediaType === pending.mediaType && m.ack === 0
+      );
+
+      if (correspondingMessage) {
+        toRemove.push(pending);
+      }
+    }
+
+    if (toRemove.length > 0) {
+      setPendingMessages((prevPendingMessages) =>
+        prevPendingMessages.filter((msg) => !toRemove.includes(msg))
+      );
+    }
+
+  }, [messagesList, pendingMessages]);
 
   const loadMore = () => {
     setPageNumber((prevPageNumber) => prevPageNumber + 1);

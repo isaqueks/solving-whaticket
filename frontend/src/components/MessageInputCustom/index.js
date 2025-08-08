@@ -499,7 +499,7 @@ const MessageInputCustom = (props) => {
       setReplyingMessage(null);
     };
   }, [ticketId, setReplyingMessage]);
-
+  
   // const handleChangeInput = e => {
   // 	if (isObject(e) && has(e, 'value')) {
   // 		setInputMessage(e.value);
@@ -623,7 +623,7 @@ const MessageInputCustom = (props) => {
     }
 
     setPendingMessages(prev => [...prev, pendingMsg]);
-    setInputMessage("");
+    setTimeout(() => setInputMessage(""), 1);
     
     try {
       await api.post(`/messages/${ticketId}`, message);
@@ -634,9 +634,6 @@ const MessageInputCustom = (props) => {
     setShowEmoji(false);
     // setLoading(false);
     setReplyingMessage(null);
-    setPendingMessages((prev) => 
-      prev.filter((msg) => msg.id !== tempId)
-    );
   };
 
   const handleStartRecording = async () => {
