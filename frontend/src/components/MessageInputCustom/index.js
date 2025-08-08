@@ -623,14 +623,14 @@ const MessageInputCustom = (props) => {
     }
 
     setPendingMessages(prev => [...prev, pendingMsg]);
-
+    setInputMessage("");
+    
     try {
       await api.post(`/messages/${ticketId}`, message);
     } catch (err) {
       toastError(err);
     }
 
-    setInputMessage("");
     setShowEmoji(false);
     // setLoading(false);
     setReplyingMessage(null);
