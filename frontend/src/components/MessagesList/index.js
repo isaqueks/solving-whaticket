@@ -409,7 +409,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, pendingMessages = [], setPend
         m => 
           m.body === pending.body && 
         m.fromMe === pending.fromMe && 
-        m.mediaType === pending.mediaType && 
+        m.mediaType === pending.mediaType
       );
 
       if (correspondingMessage) {
