@@ -266,6 +266,8 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
+const ACK_SENDING = 0;
+
 const reducer = (state, action) => {
   if (action.type === "LOAD_MESSAGES") {
     const messages = action.payload;
@@ -727,7 +729,7 @@ const MessagesList = ({ ticket, ticketId, isGroup }) => {
     "remoteJid": "555189537060@s.whatsapp.net",
     "participant": "",
     "dataJson": "{\"key\":{\"remoteJid\":\"555189537060@s.whatsapp.net\",\"fromMe\":true,\"id\":\"3EB07D369979D54B4E73CC\"},\"message\":{\"extendedTextMessage\":{\"text\":\"*Isaque:*\\nok\"}},\"messageTimestamp\":\"1753061195\",\"status\":\"SERVER_ACK\"}",
-    "ack": -1000,
+    "ack": ACK_SENDING,
     "read": true,
     "fromMe": true,
     "body": "*Isaque:*\nok",
