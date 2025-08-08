@@ -469,7 +469,7 @@ const CustomInput = (props) => {
 };
 
 const MessageInputCustom = (props) => {
-  const { ticketStatus, ticketId } = props;
+  const { ticketStatus, ticketId, pendingMessages, setPendingMessages } = props;
   const classes = useStyles();
 
   const [medias, setMedias] = useState([]);
@@ -590,7 +590,7 @@ const MessageInputCustom = (props) => {
 
   const handleSendMessage = async () => {
     if (inputMessage.trim() === "") return;
-    setLoading(true);
+    // setLoading(true);
 
     const message = {
       read: 1,
@@ -601,6 +601,29 @@ const MessageInputCustom = (props) => {
         : inputMessage.trim(),
       quotedMsg: replyingMessage,
     };
+
+    const tempId = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+
+    const pendingMsg = {
+      "mediaUrl": null,
+      "id": tempId,
+      "participant": "",
+      "ack": 0,
+      "read": false,
+      "fromMe": true,
+      "body": message.body,
+      "mediaType": "extendedTextMessage",
+      "isDeleted": false,
+      "createdAt": new Date().toISOString(),
+      "updatedAt": new Date().toISOString(),
+      "quotedMsgId": message.quotedMsg?.id || null,
+      "ticketId": ticketId,
+      "isEdited": false,
+      "quotedMsg": message.quotedMsg,
+    }
+
+    setPendingMessages(prev => [...prev, pendingMsg]);
+
     try {
       await api.post(`/messages/${ticketId}`, message);
     } catch (err) {
@@ -609,8 +632,11 @@ const MessageInputCustom = (props) => {
 
     setInputMessage("");
     setShowEmoji(false);
-    setLoading(false);
+    // setLoading(false);
     setReplyingMessage(null);
+    setPendingMessages((prev) => 
+      prev.filter((msg) => msg.id !== tempId)
+    );
   };
 
   const handleStartRecording = async () => {

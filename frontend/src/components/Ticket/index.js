@@ -70,6 +70,7 @@ const Ticket = (props) => {
   const [loading, setLoading] = useState(true);
   const [contact, setContact] = useState({});
   const [ticket, setTicket] = useState({});
+  const [ pendingMessages, setPendingMessages ] = useState([]);
   const smallMode = !!props.small;
 
   const socketManager = useContext(SocketContext);
@@ -170,8 +171,14 @@ const Ticket = (props) => {
           ticket={ticket}
           ticketId={ticket.id}
           isGroup={ticket.isGroup}
+          pendingMessages={pendingMessages}
         ></MessagesList>
-        <MessageInput ticketId={ticket.id} ticketStatus={ticket.status} />
+        <MessageInput 
+          ticketId={ticket.id} 
+          ticketStatus={ticket.status}
+          pendingMessages={pendingMessages}
+          setPendingMessages={setPendingMessages}
+        />
       </>
     );
   };

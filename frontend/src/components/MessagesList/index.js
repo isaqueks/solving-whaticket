@@ -314,7 +314,7 @@ const reducer = (state, action) => {
   }
 };
 
-const MessagesList = ({ ticket, ticketId, isGroup }) => {
+const MessagesList = ({ ticket, ticketId, isGroup, pendingMessages = [] }) => {
   const classes = useStyles();
 
   const [messagesList, dispatch] = useReducer(reducer, []);
@@ -723,34 +723,10 @@ const MessagesList = ({ ticket, ticketId, isGroup }) => {
     );
   };
 
-  const foo = {
-    "mediaUrl": null,
-    "id": `${Date.now()+Math.random()*1000}`,
-    "remoteJid": "555189537060@s.whatsapp.net",
-    "participant": "",
-    "dataJson": "{\"key\":{\"remoteJid\":\"555189537060@s.whatsapp.net\",\"fromMe\":true,\"id\":\"3EB07D369979D54B4E73CC\"},\"message\":{\"extendedTextMessage\":{\"text\":\"*Isaque:*\\nok\"}},\"messageTimestamp\":\"1753061195\",\"status\":\"SERVER_ACK\"}",
-    "ack": ACK_SENDING,
-    "read": true,
-    "fromMe": true,
-    "body": "*Isaque:*\nok",
-    "mediaType": "extendedTextMessage",
-    "isDeleted": false,
-    "createdAt": new Date().toISOString(),
-    "updatedAt": new Date().toISOString(),
-    "quotedMsgId": null,
-    "ticketId": 1692,
-    "contactId": null,
-    "companyId": 2,
-    "queueId": null,
-    "isEdited": false,
-    "contact": null,
-    "quotedMsg": null,
-    "queue": null
-  }
 
   const renderMessages = () => {
     if (messagesList.length > 0) {
-      const viewMessagesList = [...messagesList, foo].map((message, index) => {
+      const viewMessagesList = [...messagesList, ...pendingMessages].map((message, index) => {
 
         if (message.mediaType === "call_log") {
           return (
