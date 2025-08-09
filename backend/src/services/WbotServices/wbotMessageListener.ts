@@ -57,6 +57,7 @@ import ShowWhatsAppService from "../WhatsappService/ShowWhatsAppService";
 import { provider } from "./providers";
 import SendWhatsAppMessage from "./SendWhatsAppMessage";
 import { getMessageOptions } from "./SendWhatsAppMedia";
+import { getCachedPFP } from "./GetCachedPFP";
 
 const request = require("request");
 
@@ -527,13 +528,7 @@ const verifyContact = async (
   wbot: Session,
   companyId: number
 ): Promise<Contact> => {
-  let profilePicUrl: string;
-  try {
-    profilePicUrl = await wbot.profilePictureUrl(msgContact.id);
-  } catch (e) {
-    Sentry.captureException(e);
-    profilePicUrl = `${process.env.FRONTEND_URL}/nopicture.png`;
-  }
+  const profilePicUrl: string = await getCachedPFP(wbot, msgContact.id);
 
   const isGroup =  msgContact.id.includes("g.us");
 
