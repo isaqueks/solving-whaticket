@@ -5,9 +5,14 @@ import Message from "../models/Message";
 import Ticket from "../models/Ticket";
 import { logger } from "../utils/logger";
 import GetTicketWbot from "./GetTicketWbot";
+import { cacheLayer } from "../libs/cache";
 
 const SetTicketMessagesAsRead = async (ticket: Ticket): Promise<void> => {
   await ticket.update({ unreadMessages: 0 });
+  const REDIS_KEY = `contacts:${(ticket.contactId)}:unreads`;
+
+  await cacheLayer.set(REDIS_KEY, "0");
+
   // await cacheLayer.set(`contacts:${ticket.contactId}:unreads`, "0");
 
   try {
