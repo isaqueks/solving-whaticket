@@ -547,6 +547,7 @@ const verifyContact = async (
     keepName: true
   };
 
+  console.log('new', contactData)
 
 
   const contact = await CreateOrUpdateContactService(contactData);
