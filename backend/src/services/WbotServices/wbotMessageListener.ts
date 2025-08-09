@@ -549,7 +549,7 @@ const verifyContact = async (
 
 
 
-  const contact = CreateOrUpdateContactService(contactData);
+  const contact = await CreateOrUpdateContactService(contactData);
 
   return contact;
 };
@@ -1853,7 +1853,7 @@ const handleMessage = async (
     if (isGroup) {
       const grupoMeta = await wbot.groupMetadata(msg.key.remoteJid);
       const msgGroupContact = {
-        id: grupoMeta.id,
+        id: grupoMeta.id || msg.key.remoteJid,
         name: grupoMeta.subject
       };
       groupContact = await verifyContact(msgGroupContact, wbot, companyId);
