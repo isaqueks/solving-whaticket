@@ -48,17 +48,17 @@ const CreateOrUpdateContactService = async ({
   const numRegex = /^(55[0-9][0-9])9([0-9]{8})$/;
   const oldNumRegex = /^(55[0-9][0-9])([0-9]{8})$/;
 
-        const nums = [number];
+  const nums = [number];
 
-        if (!GP) {
+  if (!GP) {
 
-          if (numRegex.test(number)) {
-            nums.push(number.replace(numRegex, "$1$2"));
-          }
-          else if (oldNumRegex.test(number)) {
-            nums.push(number.replace(numRegex, "$19$2"));
-          }
-      }
+    if (numRegex.test(number)) {
+      nums.push(number.replace(numRegex, "$1$2"));
+    }
+    else if (oldNumRegex.test(number)) {
+      nums.push(number.replace(numRegex, "$19$2"));
+    }
+  }
 
   contact = await Contact.findOne({
     where: {
@@ -86,7 +86,7 @@ const CreateOrUpdateContactService = async ({
     });
   } else {
 
-    let n = null;
+    let n = GP ? number : null;
 
     if (!GP) {
 
@@ -99,7 +99,7 @@ const CreateOrUpdateContactService = async ({
           n = nn;
           break;
         }
-        catch{}
+        catch { }
       }
       if (!n) {
         throw new Error(`Contact with number ${number} does not exist on WhatsApp.`);
@@ -121,24 +121,24 @@ const CreateOrUpdateContactService = async ({
 
     if (!GP) {
 
-    const correspondingUser = await User.findOne({
-      where: {
-        companyId,
-        email: attachedToEmail
-      }
-    });
-
-    if (correspondingUser) {
-      const defaultWhatsapp = await GetDefaultWhatsApp(companyId);
-      await CreateTicketService({
-        contactId: contact.id,
-        status: 'closed',
-        companyId,
-        whatsappId: String(defaultWhatsapp.id),
-        userId: correspondingUser.id
+      const correspondingUser = await User.findOne({
+        where: {
+          companyId,
+          email: attachedToEmail
+        }
       });
+
+      if (correspondingUser) {
+        const defaultWhatsapp = await GetDefaultWhatsApp(companyId);
+        await CreateTicketService({
+          contactId: contact.id,
+          status: 'closed',
+          companyId,
+          whatsappId: String(defaultWhatsapp.id),
+          userId: correspondingUser.id
+        });
+      }
     }
-  }
 
     // io.to(`company-${companyId}-mainchannel`).emit(`company-${companyId}-contact`, {
     //   action: "create",
