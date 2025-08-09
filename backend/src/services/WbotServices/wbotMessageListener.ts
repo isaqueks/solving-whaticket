@@ -547,9 +547,6 @@ const verifyContact = async (
     keepName: true
   };
 
-  console.log('new', contactData)
-
-
   const contact = await CreateOrUpdateContactService(contactData);
 
   return contact;
@@ -1865,14 +1862,15 @@ const handleMessage = async (
 
     let unreadMessages = 0;
 
+    const REDIS_KEY = `contacts:${(groupContact || contact).id}:unreads`;
 
     if (msg.key.fromMe) {
-      await cacheLayer.set(`contacts:${contact.id}:unreads`, "0");
+      await cacheLayer.set(REDIS_KEY, "0");
     } else {
-      const unreads = await cacheLayer.get(`contacts:${contact.id}:unreads`);
+      const unreads = await cacheLayer.get(REDIS_KEY);
       unreadMessages = +unreads + 1;
       await cacheLayer.set(
-        `contacts:${contact.id}:unreads`,
+        REDIS_KEY,
         `${unreadMessages}`
       );
     }
