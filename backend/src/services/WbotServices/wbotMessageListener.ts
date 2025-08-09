@@ -535,11 +535,13 @@ const verifyContact = async (
     profilePicUrl = `${process.env.FRONTEND_URL}/nopicture.png`;
   }
 
+  const isGroup =  msgContact.id.includes("g.us");
+
   const contactData = {
-    name: msgContact?.name || msgContact.id.replace(/[^0-9|-]/g, ""),
+    name: msgContact?.name || msgContact.id.replace(/[^0-9|-]/g, "") || `${isGroup ? 'GRUPO' : 'CONTATO'} SEM NOME`,
     number: msgContact.id.replace(/[^0-9|-]/g, ""),
     profilePicUrl,
-    isGroup: msgContact.id.includes("g.us"),
+    isGroup,
     companyId,
     whatsappId: wbot.id,
     keepName: true
