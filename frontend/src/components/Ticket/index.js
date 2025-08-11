@@ -144,6 +144,10 @@ const Ticket = (props) => {
     };
   }, [ticketId, ticket, history, socketManager]);
 
+  useEffect(() => {
+    setPendingMessages([]);
+  }, [ticketId])
+
   const handleDrawerOpen = () => {
     setDrawerOpen(true);
   };
