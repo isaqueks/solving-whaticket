@@ -592,7 +592,10 @@ const MessageInputCustom = (props) => {
     if (inputMessage.trim() === "") return;
     // setLoading(true);
 
+    const tempId = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+
     const message = {
+      tempId,
       read: 1,
       fromMe: true,
       mediaUrl: "",
@@ -602,7 +605,6 @@ const MessageInputCustom = (props) => {
       quotedMsg: replyingMessage,
     };
 
-    const tempId = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
 
     const pendingMsg = {
       "mediaUrl": null,

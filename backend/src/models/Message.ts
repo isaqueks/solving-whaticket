@@ -9,7 +9,8 @@ import {
   Default,
   BelongsTo,
   ForeignKey,
-  Index
+  Index,
+  AllowNull
 } from "sequelize-typescript";
 import Contact from "./Contact";
 import Ticket from "./Ticket";
@@ -32,6 +33,7 @@ class Message extends Model<Message> {
 
   @Column(DataType.STRING)
   dataJson: string;
+
 
   @Default(0)
   @Column

@@ -410,7 +410,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, pendingMessages = [], setPend
           m.body === pending.body && 
           m.fromMe === pending.fromMe && 
           m.mediaType === pending.mediaType &&
-          +new Date(m.createdAt) >= + new Date(pending.createdAt)
+          +new Date(m.createdAt) >= (+new Date(pending.createdAt) - 5 * 60 * 1000)
       );
 
       if (correspondingMessage) {
