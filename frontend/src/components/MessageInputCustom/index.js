@@ -630,6 +630,7 @@ const MessageInputCustom = (props) => {
     try {
       await api.post(`/messages/${ticketId}`, message);
     } catch (err) {
+      setPendingMessages(prev => prev.filter(m => m.id !== tempId));
       toastError(err);
     }
 
