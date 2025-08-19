@@ -6,6 +6,8 @@ import { getIO } from "../../libs/socket";
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+const QUEUE_FALAR_COM_ATENDENTE = 1;
+
 export async function attachAllTicketsToUser(companyId: number) {
 
   const nonAttached = await Ticket.findAll({
@@ -13,7 +15,8 @@ export async function attachAllTicketsToUser(companyId: number) {
       userId: {
         [Op.is]: null
       },
-      companyId
+      companyId,
+      queueId: QUEUE_FALAR_COM_ATENDENTE
     },
     include: [
       'contact'
