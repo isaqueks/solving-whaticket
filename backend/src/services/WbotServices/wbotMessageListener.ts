@@ -2099,6 +2099,9 @@ const handleMessage = async (
       !ticket.useIntegration
     ) {
 
+      console.log('fds');
+      
+
       const integrations = await ShowQueueIntegrationService(whatsapp.integrationId, companyId);
 
       await handleMessageIntegration(msg, wbot, integrations, ticket)
