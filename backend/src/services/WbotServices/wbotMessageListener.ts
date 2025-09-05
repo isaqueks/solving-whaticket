@@ -2125,7 +2125,7 @@ const handleMessage = async (
     if (
       !msg.key.fromMe &&
       !ticket.isGroup &&
-      !ticket.userId &&
+      // !ticket.userId &&
       ticket.integrationId &&
       ticket.useIntegration &&
       ticket.queue
