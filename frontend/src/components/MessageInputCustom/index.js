@@ -690,6 +690,8 @@ const MessageInputCustom = (props) => {
     return loading || recording || !isOpen() || (ticket?.useIntegration);
   };
 
+  useEffect(() => (console.log(ticket), void 0), [ticket]);
+
   const renderReplyingMessage = (message) => {
     return (
       <div className={classes.replyginMsgWrapper}>
@@ -785,7 +787,6 @@ const MessageInputCustom = (props) => {
             handleInputPaste={handleInputPaste}
             disableOption={disableOption}
             handleQuickAnswersClick={handleQuickAnswersClick}
-            dis
           />
 
           <ActionButtons
