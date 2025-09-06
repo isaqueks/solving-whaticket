@@ -469,7 +469,7 @@ const CustomInput = (props) => {
 };
 
 const MessageInputCustom = (props) => {
-  const { ticketStatus, ticketId, pendingMessages, setPendingMessages } = props;
+  const { ticketStatus, ticketId, ticket, pendingMessages, setPendingMessages } = props;
   const classes = useStyles();
 
   const [medias, setMedias] = useState([]);
@@ -687,7 +687,7 @@ const MessageInputCustom = (props) => {
   };
 
   const disableOption = () => {
-    return loading || recording || !isOpen();
+    return loading || recording || !isOpen() || (ticket?.useIntegration);
   };
 
   const renderReplyingMessage = (message) => {
@@ -785,6 +785,7 @@ const MessageInputCustom = (props) => {
             handleInputPaste={handleInputPaste}
             disableOption={disableOption}
             handleQuickAnswersClick={handleQuickAnswersClick}
+            dis
           />
 
           <ActionButtons

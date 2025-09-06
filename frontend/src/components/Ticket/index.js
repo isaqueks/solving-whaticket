@@ -179,6 +179,7 @@ const Ticket = (props) => {
           setPendingMessages={setPendingMessages}
         ></MessagesList>
         <MessageInput 
+          ticket={ticket}
           ticketId={ticket.id} 
           ticketStatus={ticket.status}
           pendingMessages={pendingMessages}

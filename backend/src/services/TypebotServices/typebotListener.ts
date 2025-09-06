@@ -7,6 +7,7 @@ import { logger } from "../../utils/logger";
 import { isNil } from "lodash";
 import UpdateTicketService from "../TicketServices/UpdateTicketService";
 import ListQueuesService from "../QueueService/ListQueuesService";
+import { getIO } from "../../libs/socket";
 
 
 type Session = WASocket & {
@@ -24,14 +25,14 @@ interface Request {
 const transferQueue = async (
     queueId: number,
     ticket: Ticket,
-  ): Promise<void> => {
+): Promise<void> => {
     await UpdateTicketService({
-      ticketData: { queueId: queueId, useIntegration: false, promptId: null },
-      ticketId: ticket.id,
-      companyId: ticket.companyId
+        ticketData: { queueId: queueId, useIntegration: false, promptId: null },
+        ticketId: ticket.id,
+        companyId: ticket.companyId
     });
-  };
-  
+};
+
 
 const typebotListener = async ({
     wbot,
@@ -110,7 +111,7 @@ const typebotListener = async ({
             await ticket.reload();
         }
 
-        if (isNil(ticket.typebotSessionId)) {            
+        if (isNil(ticket.typebotSessionId)) {
             dataStart = await createSession(msg, typebot, number);
             sessionId = dataStart.sessionId
             status = true;
@@ -275,7 +276,7 @@ const typebotListener = async ({
                             try {
                                 let jsonGatilho = JSON.parse(gatilho);
 
-                                if (jsonGatilho.stopBot  && isNil(jsonGatilho.userId)  && isNil(jsonGatilho.queueId)) {
+                                if (jsonGatilho.stopBot && isNil(jsonGatilho.userId) && isNil(jsonGatilho.queueId)) {
                                     await ticket.update({
                                         useIntegration: false,
                                         isBot: false
@@ -436,7 +437,7 @@ const typebotListener = async ({
                 ticketData: {
                     status: "closed",
                     useIntegration: false,
-                    integrationId: null                   
+                    integrationId: null
                 },
                 ticketId: ticket.id,
                 companyId: ticket.companyId
@@ -450,7 +451,7 @@ const typebotListener = async ({
                 ticketData: {
                     status: "closed",
                     useIntegration: false,
-                    integrationId: null                   
+                    integrationId: null
                 },
                 ticketId: ticket.id,
                 companyId: ticket.companyId
@@ -459,6 +460,7 @@ const typebotListener = async ({
         if (transfer) {
             const queues = await ListQueuesService({ companyId: typebot.companyId });
             const q = queues.find(q => q.name.toLowerCase() == 'atendente') || queues.find(q => !q.integrationId);
+            const oldStatus = ticket.status;
             if (!q) {
                 await UpdateTicketService({
                     ticketData: {
@@ -482,6 +484,19 @@ const typebotListener = async ({
                     companyId: ticket.companyId
                 })
             }
+
+            const io = getIO();
+
+            await ticket.reload();
+
+            io.to(`company-${ticket.companyId}-${oldStatus}`)
+                .to(`queue-${ticket.queueId}-${oldStatus}`)
+                .to(ticket.id.toString())
+                .emit(`company-${ticket.companyId}-ticket`, {
+                    action: "update",
+                    ticket,
+                    ticketId: ticket.id,
+                });
         }
     } catch (error) {
         logger.info("Error on typebotListener: ", error);
