@@ -415,6 +415,7 @@ const CustomInput = (props) => {
         freeSolo
         open={popupOpen}
         id="grouped-demo"
+        disabled={disableOption()}
         value={inputMessage}
         options={options}
         closeIcon={null}
