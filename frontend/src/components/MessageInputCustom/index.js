@@ -394,7 +394,13 @@ const CustomInput = (props) => {
     }
   };
 
+  const disabledReason = disableOption();
+  const disabled = !!disabledReason;
+
   const renderPlaceholder = () => {
+    if (disabled) {
+      return disabledReason;
+    }
     if (isOpen()) {
       return i18n.t("messagesInput.placeholderOpen");
     }
@@ -415,7 +421,7 @@ const CustomInput = (props) => {
         freeSolo
         open={popupOpen}
         id="grouped-demo"
-        disabled={disableOption()}
+        disabled={disabled}
         value={inputMessage}
         options={options}
         closeIcon={null}
@@ -455,7 +461,7 @@ const CustomInput = (props) => {
             <InputBase
               {...params.InputProps}
               {...rest}
-              disabled={disableOption()}
+              disabled={disabled}
               inputRef={setInputRef}
               placeholder={renderPlaceholder()}
               multiline
@@ -688,7 +694,18 @@ const MessageInputCustom = (props) => {
   };
 
   const disableOption = () => {
-    return loading || recording || !isOpen() || (ticket?.useIntegration);
+    if (loading) {
+      return 'Carregando';
+    }
+    else if (recording) {
+      return 'Gravando';
+    }
+    else if (!isOpen()) {
+      return 'Ticket Fechado';
+    }
+    else if (ticket?.useIntegration) {
+      return 'Automação está ativa';
+    }
   };
 
   useEffect(() => (console.log(ticket), void 0), [ticket]);
