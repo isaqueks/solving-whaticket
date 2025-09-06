@@ -703,12 +703,10 @@ const MessageInputCustom = (props) => {
     else if (!isOpen()) {
       return 'Ticket Fechado';
     }
-    else if (ticket?.useIntegration) {
-      return 'Automação está ativa';
-    }
+    // else if (ticket?.useIntegration) {
+    //   return 'Automação está ativa';
+    // }
   };
-
-  useEffect(() => (console.log(ticket), void 0), [ticket]);
 
   const renderReplyingMessage = (message) => {
     return (

@@ -8,6 +8,7 @@ import Ticket from "../../models/Ticket";
 import formatBody from "../../helpers/Mustache";
 import { map_msg } from "../../utils/global";
 import UpdateTicketService from "../TicketServices/UpdateTicketService";
+import { getIO } from "../../libs/socket";
 
 interface Request {
   body: string;
@@ -28,17 +29,37 @@ const SendWhatsAppMessage = async ({
     }`;
   console.log("number", number);
 
-    if (ticket.status !== 'open') {
-      const res = await UpdateTicketService({
+  let changed = false;
+
+  if (ticket.status !== 'open') {
+    const res = await UpdateTicketService({
+      ticketId: ticket.id,
+      companyId: ticket.companyId,
+      ticketData: {
+        userId: userId,
+        status: 'open',
+      }
+    });
+    ticket = res.ticket;
+    changed = true;
+  }
+  if (ticket.useIntegration) {
+    const res = await ticket.update({ useIntegration: false });
+    ticket = res;
+    changed = true;
+  }
+
+  if (changed) {
+    const io = getIO();
+    io.to(`company-${ticket.companyId}-${ticket.status}`)
+      .to(`queue-${ticket.queueId}-${ticket.status}`)
+      .to(ticket.id.toString())
+      .emit(`company-${ticket.companyId}-ticket`, {
+        action: "update",
+        ticket,
         ticketId: ticket.id,
-        companyId: ticket.companyId,
-        ticketData: {
-          userId: userId,
-          status: 'open',
-        }
       });
-      ticket = res.ticket;
-    }
+  }
 
   if (quotedMsg) {
     const chatMessages = await Message.findOne({
