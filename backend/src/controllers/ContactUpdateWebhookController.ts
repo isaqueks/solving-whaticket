@@ -14,6 +14,7 @@ import ContactListItem from "../models/ContactListItem";
 import AppError from "../errors/AppError";
 import CreateOrUpdateContactService from "../services/ContactServices/CreateOrUpdateContactService";
 import CheckContactNumber from "../services/WbotServices/CheckNumber";
+import User from "../models/User";
 
 
 type StoreData = {

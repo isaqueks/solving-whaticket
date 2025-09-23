@@ -27,6 +27,8 @@ import { getMessageOptions } from "./services/WbotServices/SendWhatsAppMedia";
 import { ClosedAllOpenTickets } from "./services/WbotServices/wbotClosedTickets";
 import { logger } from "./utils/logger";
 import { attachAllTicketsToUser } from "./services/WbotServices/attachAllTicketsToUser";
+import Ticket from "./models/Ticket";
+import CreateTicketService from "./services/TicketServices/CreateTicketService";
 
 
 const nodemailer = require('nodemailer');
@@ -93,109 +95,6 @@ async function handleSendMessage(job) {
   }
 }
 
-{/*async function handleVerifyQueue(job) {
-  logger.info("Buscando atendimentos perdidos nas filas");
-  try {
-    const companies = await Company.findAll({
-      attributes: ['id', 'name'],
-      where: {
-        status: true,
-        dueDate: {
-          [Op.gt]: Sequelize.literal('CURRENT_DATE')
-        }
-      },
-      include: [
-        {
-          model: Whatsapp, attributes: ["id", "name", "status", "timeSendQueue", "sendIdQueue"], where: {
-            timeSendQueue: {
-              [Op.gt]: 0
-            }
-          }
-        },
-      ]
-    }); */}
-
-{/*    companies.map(async c => {
-      c.whatsapps.map(async w => {
-
-        if (w.status === "CONNECTED") {
-
-          var companyId = c.id;
-
-          const moveQueue = w.timeSendQueue ? w.timeSendQueue : 0;
-          const moveQueueId = w.sendIdQueue;
-          const moveQueueTime = moveQueue;
-          const idQueue = moveQueueId;
-          const timeQueue = moveQueueTime;
-
-          if (moveQueue > 0) {
-
-            if (!isNaN(idQueue) && Number.isInteger(idQueue) && !isNaN(timeQueue) && Number.isInteger(timeQueue)) {
-
-              const tempoPassado = moment().subtract(timeQueue, "minutes").utc().format();
-              // const tempoAgora = moment().utc().format();
-
-              const { count, rows: tickets } = await Ticket.findAndCountAll({
-                where: {
-                  status: "pending",
-                  queueId: null,
-                  companyId: companyId,
-                  whatsappId: w.id,
-                  updatedAt: {
-                    [Op.lt]: tempoPassado
-                  }
-                },
-                include: [
-                  {
-                    model: Contact,
-                    as: "contact",
-                    attributes: ["id", "name", "number", "email", "profilePicUrl"],
-                    include: ["extraInfo"]
-                  }
-                ]
-              });
-
-              if (count > 0) {
-                tickets.map(async ticket => {
-                  await ticket.update({
-                    queueId: idQueue
-                  });
-
-                  await ticket.reload();
-
-                  const io = getIO();
-                  io.to(ticket.status)
-                    .to("notification")
-                    .to(ticket.id.toString())
-                    .emit(`company-${companyId}-ticket`, {
-                      action: "update",
-                      ticket,
-                      ticketId: ticket.id
-                    });
-
-                  // io.to("pending").emit(`company-${companyId}-ticket`, {
-                  //   action: "update",
-                  //   ticket,
-                  // });
-
-                  logger.info(`Atendimento Perdido: ${ticket.id} - Empresa: ${companyId}`);
-                });
-              } else {
-                logger.info(`Nenhum atendimento perdido encontrado - Empresa: ${companyId}`);
-              }
-            } else {
-              logger.info(`Condição não respeitada - Empresa: ${companyId}`);
-            }
-          }
-        }
-      });
-    });
-  } catch (e: any) {
-    Sentry.captureException(e);
-    logger.error("SearchForQueue -> VerifyQueue: error", e.message);
-    throw e;
-  }
-}; */}
 
 async function handleAttachTickets() {
   const job = new CronJob('*/3 * * * *', async () => {
@@ -327,7 +226,7 @@ async function handleVerifyCampaigns(job) {
 
   if (campaigns.length > 0)
     logger.info(`Campanhas encontradas: ${campaigns.length}`);
-  
+
   for (let campaign of campaigns) {
     try {
       const now = moment();
@@ -815,11 +714,64 @@ async function handleLoginStatus(job) {
 }
 
 
+const userByEmailCache = new Map<string, User>();
+
+const getUserByEmail = async (email: string): Promise<User> => {
+  if (userByEmailCache.has(email)) {
+    return userByEmailCache.get(email);
+  }
+
+  const user = await User.findOne({ where: { email } });
+  if (user) {
+    userByEmailCache.set(email, user);
+  }
+
+  return user;
+}
+
+async function handleCreateTicketAutomatic() {
+  const job = new CronJob('*/5 * * * *', async () => {
+    const contacts = await sequelize.query(/*sql*/`
+    SELECT 
+      c.id as id,
+      c."companyId" as "companyId",
+      c."attachedToEmail" as "attachedToEmail"
+    FROM 
+      "${Contact.tableName}" c
+    WHERE 
+      c.id NOT IN (
+        SELECT DISTINCT t."contactId" FROM "${Ticket.tableName}" t
+      ) AND
+      c."attachedToEmail" IS NOT NULL
+  `, {
+      type: QueryTypes.SELECT
+    }) as any[];
+
+    for (const c of contacts) {
+      const user = await getUserByEmail(c.attachedToEmail);
+      if (!user) {
+        continue;
+      }
+
+      await CreateTicketService({
+        contactId: c.id,
+        status: 'closed',
+        companyId: c.companyId,
+        userId: user.id,
+      });
+    }
+  });
+  job.start();
+}
+
+
 
 if (process.env.PORT === process.env.MAIN_PORT) {
   handleCloseTicketsAutomatic();
-  
+
   handleAttachTickets();
+
+  handleCreateTicketAutomatic();
 }
 
 export async function startQueueProcess() {
@@ -847,6 +799,7 @@ export async function startQueueProcess() {
   userMonitor.process("VerifyLoginStatus", handleLoginStatus);
 
   //queueMonitor.process("VerifyQueueStatus", handleVerifyQueue);
+
 
 
 
