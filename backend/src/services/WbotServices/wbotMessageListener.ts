@@ -898,7 +898,7 @@ const verifyMediaMessage = async (
     quotedMsgId: quotedMsg?.id,
     ack: msg.status,
     remoteJid: msg.key.remoteJid,
-    participant: msg.key.participant,
+    participant: msg.key['participantAlt'] || msg.key.participant,
     dataJson: JSON.stringify(msg),
   };
 
@@ -964,7 +964,7 @@ export const verifyMessage = async (
     quotedMsgId: quotedMsg?.id,
     ack: msg.status,
     remoteJid: msg.key.remoteJid,
-    participant: msg.key.participant,
+    participant: msg.key['participantAlt'] || msg.key.participant,
     dataJson: JSON.stringify(msg),
     isEdited: isEdited,
   };
