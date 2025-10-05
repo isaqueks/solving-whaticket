@@ -25,6 +25,8 @@ export async function fetchUserData(userId: string) {
     }
   });
 
+  console.log(response)
+
   if (!response.ok) {
    return null;
   }
