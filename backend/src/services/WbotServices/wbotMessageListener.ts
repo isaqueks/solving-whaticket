@@ -456,6 +456,8 @@ const getSenderMessage = (
   const me = getMeSocket(wbot);
   if (msg.key.fromMe) return me.id;
 
+  console.log(JSON.stringify(msg.key, null, 2))
+
   const senderId = msg.participant || msg.key.participant || msg.key.remoteJid || undefined;
 
   return senderId && jidNormalizedUser(senderId);
