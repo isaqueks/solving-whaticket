@@ -44,7 +44,7 @@ const CreateOrUpdateContactService = async ({
   if (number.length > 13) {
     try { throw new Error(''); }
     catch (e) {
-      console.log('LID');
+      console.log('LID', number);
       console.log(e.stack);
     }
   }
