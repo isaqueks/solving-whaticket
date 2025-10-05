@@ -12,7 +12,9 @@ const KEY_MAP: { [T in keyof SignalDataTypeMap]: string } = {
   "sender-key": "senderKeys",
   "app-state-sync-key": "appStateSyncKeys",
   "app-state-sync-version": "appStateVersions",
-  "sender-key-memory": "senderKeyMemory"
+  "sender-key-memory": "senderKeyMemory",
+  "lid-mapping": "lidMappings",
+  "device-list": "deviceList"
 };
 
 const authState = async (
@@ -52,7 +54,7 @@ const authState = async (
             let value = keys[key]?.[id];
             if (value) {
               if (type === "app-state-sync-key") {
-                value = proto.Message.AppStateSyncKeyData.fromObject(value);
+                value = proto.Message.AppStateSyncKeyData.create(value);
               }
               dict[id] = value;
             }
