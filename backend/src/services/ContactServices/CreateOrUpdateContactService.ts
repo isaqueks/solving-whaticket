@@ -7,6 +7,7 @@ import CheckContactNumber from "../WbotServices/CheckNumber";
 import CreateTicketService from "../TicketServices/CreateTicketService";
 import GetDefaultWhatsApp from "../../helpers/GetDefaultWhatsApp";
 import User from "../../models/User";
+import { jidNormalizedUser } from "baileys";
 interface ExtraInfo extends ContactCustomField {
   name: string;
   value: string;

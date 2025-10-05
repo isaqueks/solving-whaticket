@@ -528,13 +528,16 @@ const verifyContact = async (
   wbot: Session,
   companyId: number
 ): Promise<Contact> => {
-  const profilePicUrl: string = await getCachedPFP(wbot, msgContact.id);
 
-  const isGroup =  msgContact.id.includes("g.us");
+  const jid = jidNormalizedUser(msgContact.id);
+
+  const profilePicUrl: string = await getCachedPFP(wbot, jid);
+
+  const isGroup =  jid.includes("g.us");
 
   const contactData = {
-    name: msgContact?.name || msgContact.id.replace(/[^0-9|-]/g, "") || `${isGroup ? 'GRUPO' : 'CONTATO'} SEM NOME`,
-    number: msgContact.id.replace(/[^0-9|-]/g, ""),
+    name: msgContact?.name || jid.replace(/[^0-9|-]/g, "") || `${isGroup ? 'GRUPO' : 'CONTATO'} SEM NOME`,
+    number: jid.replace(/[^0-9|-]/g, ""),
     profilePicUrl,
     isGroup,
     companyId,

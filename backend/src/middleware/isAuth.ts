@@ -25,14 +25,11 @@ export async function fetchUserData(userId: string) {
     }
   });
 
-  console.log(response)
-
   if (!response.ok) {
    return null;
   }
 
   const userData = await response.json();
-  console.log(userData)
   cache.set(userId, { user: userData, timestamp: Date.now() });
   
   return userData;
