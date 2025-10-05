@@ -32,6 +32,7 @@ export async function fetchUserData(userId: string) {
   }
 
   const userData = await response.json();
+  console.log(userData)
   cache.set(userId, { user: userData, timestamp: Date.now() });
   
   return userData;
