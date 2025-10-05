@@ -40,6 +40,15 @@ const CreateOrUpdateContactService = async ({
   whatsappId,
   keepName = false
 }: Request): Promise<Contact> => {
+
+  if (number.length > 13) {
+    try { throw new Error(''); }
+    catch (e) {
+      console.log('LID');
+      console.log(e.stack);
+    }
+  }
+
   const GP = isGroup || number.length > 13;
   number = GP ? number : number.replace(/[^0-9|-]/g, "");
 
