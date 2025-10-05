@@ -8,6 +8,7 @@ import {
   downloadMediaMessage,
   extractMessageContent,
   getContentType,
+  jidDecode,
   jidNormalizedUser,
   MessageUpsertType,
   proto,
@@ -530,10 +531,11 @@ const verifyContact = async (
 ): Promise<Contact> => {
 
   const jid = jidNormalizedUser(msgContact.id);
+  console.log({ jid, dec: jidDecode(jid) });
 
   const profilePicUrl: string = await getCachedPFP(wbot, jid);
 
-  const isGroup =  jid.includes("g.us");
+  const isGroup = jid.includes("g.us");
 
   const contactData = {
     name: msgContact?.name || jid.replace(/[^0-9|-]/g, "") || `${isGroup ? 'GRUPO' : 'CONTATO'} SEM NOME`,

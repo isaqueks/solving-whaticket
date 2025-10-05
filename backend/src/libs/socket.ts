@@ -23,7 +23,6 @@ export const initIO = (httpServer: Server): SocketIO => {
     logger.info("Client Connected");
     const userCookie = socket.handshake.headers.cookie.split(";").map(s=>s.trim()).find(cookie => cookie.startsWith("user=")).split("=")[1];
     const solvingUser =  await fetchUserData(userCookie);
-    console.log({ userCookie, solvingUser })
     if (!solvingUser) {
       logger.info("onConnect: User not found in cookie");
       socket.disconnect();
@@ -36,7 +35,6 @@ export const initIO = (httpServer: Server): SocketIO => {
       where: { email: solvingUser.email },
     });
     let userId = user.id;
-    console.log({ user })
 
     if (userId) {
       user = await User.findByPk(userId, { include: [ Queue ] });
