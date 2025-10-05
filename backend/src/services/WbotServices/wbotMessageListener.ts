@@ -15,7 +15,7 @@ import {
   WAMessageStubType,
   WAMessageUpdate,
   WASocket,
-} from "@whiskeysockets/baileys";
+} from "baileys";
 import Contact from "../../models/Contact";
 import Message from "../../models/Message";
 import Ticket from "../../models/Ticket";

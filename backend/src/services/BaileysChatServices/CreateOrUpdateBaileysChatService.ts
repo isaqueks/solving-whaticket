@@ -1,4 +1,4 @@
-import { Chat } from "@whiskeysockets/baileys";
+import { Chat } from "baileys";
 import BaileysChats from "../../models/BaileysChats";
 
 export const CreateOrUpdateBaileysChatService = async (

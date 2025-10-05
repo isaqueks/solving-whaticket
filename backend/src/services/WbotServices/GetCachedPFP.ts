@@ -1,4 +1,4 @@
-import { WASocket } from "@whiskeysockets/baileys";
+import { WASocket } from "baileys";
 import { cacheLayer } from "../../libs/cache";
 
 

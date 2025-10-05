@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/node";
-import { WAMessage } from "@whiskeysockets/baileys";
+import { WAMessage } from "baileys";
 import AppError from "../../errors/AppError";
 import GetTicketWbot from "../../helpers/GetTicketWbot";
 import Message from "../../models/Message";
