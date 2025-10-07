@@ -34,6 +34,7 @@ import forgotsRoutes from "./forgotPasswordRoutes";
 import versionRouter from "./versionRoutes";
 import webhookRoutes from "./webhookRoutes";
 import getTicketByNumberRoutes from "./ticketByNumberRoutes";
+import integrationRoutes from "./integrationRoutes";
 const routes = Router();
 
 routes.use(userRoutes);
@@ -71,5 +72,6 @@ routes.use(queueIntegrationRoutes);
 routes.use(forgotsRoutes);
 routes.use(versionRouter);
 routes.use(getTicketByNumberRoutes);
+routes.use(integrationRoutes);
 
 export default routes;
