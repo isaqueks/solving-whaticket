@@ -9,6 +9,9 @@ type Body = {
 }
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
+
+  throw new Error('Disabled');
+
   const body = req.body as Body;
 
   const whats = await Whatsapp.findOne({
