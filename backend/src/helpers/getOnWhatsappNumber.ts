@@ -7,7 +7,7 @@ export function getBrazilianNumberVariations(number: string): string[] {
 
   if (number.length === 13) {
     const small = number.slice(0, 4) + number.slice(5);
-    return [number, small];
+    return [small, number];
   } else if (number.length === 12) {
     const big = number.slice(0, 4) + "9" + number.slice(4);
     return [number, big];
