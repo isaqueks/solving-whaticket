@@ -2,12 +2,10 @@ import { Op } from "sequelize";
 import { getIO } from "../../libs/socket";
 import Contact from "../../models/Contact";
 import ContactCustomField from "../../models/ContactCustomField";
-import { isNil } from "lodash";
-import CheckContactNumber from "../WbotServices/CheckNumber";
 import CreateTicketService from "../TicketServices/CreateTicketService";
 import GetDefaultWhatsApp from "../../helpers/GetDefaultWhatsApp";
 import User from "../../models/User";
-import { jidNormalizedUser } from "baileys";
+import { getBrazilianNumberVariations, getOnWhatsappNumber } from "../../helpers/getOnWhatsappNumber";
 interface ExtraInfo extends ContactCustomField {
   name: string;
   value: string;
@@ -45,72 +43,46 @@ const CreateOrUpdateContactService = async ({
   number = GP ? number : number.replace(/[^0-9|-]/g, "");
 
   const io = getIO();
-  let contact: Contact | null;
 
-  const numRegex = /^(55[0-9][0-9])9([0-9]{8})$/;
-  const oldNumRegex = /^(55[0-9][0-9])([0-9]{8})$/;
+  const variations = GP ? [number] : getBrazilianNumberVariations(number);
 
-  const nums = [number];
-
-  if (!GP) {
-
-    if (numRegex.test(number)) {
-      nums.push(number.replace(numRegex, "$1$2"));
-    }
-    else if (oldNumRegex.test(number)) {
-      nums.push(number.replace(numRegex, "$19$2"));
-    }
-  }
-
-  contact = await Contact.findOne({
+  let contact = await Contact.findOne({
     where: {
       number: {
-        [Op.or]: nums
+        [Op.or]: variations
       },
       companyId
     }
   });
 
+  const correctNumber = GP ? number : (await getOnWhatsappNumber(number, companyId));
+
   if (contact) {
     if (keepName) {
       name = contact.name;
     }
-    contact.update({ name, profilePicUrl, email, taxId, attachedToEmail });
-    console.log(contact.whatsappId)
-    if (isNil(contact.whatsappId === null)) {
-      contact.update({
-        whatsappId
-      });
-    }
+    contact.update({
+      name, 
+      profilePicUrl, 
+      email, 
+      taxId, 
+      attachedToEmail,
+      number: correctNumber || contact.number,
+      whatsappId: whatsappId || contact.whatsappId
+    });
     io.to(`company-${companyId}-mainchannel`).emit(`company-${companyId}-contact`, {
       action: "update",
       contact
     });
   } else {
 
-    let n = GP ? number : null;
-
-    if (!GP) {
-
-      for (const nn of nums) {
-        try {
-          const onWhatsapp = await CheckContactNumber(nn, companyId);
-          if (!onWhatsapp) {
-            throw new Error(`Contact with number ${number} does not exist on WhatsApp.`);
-          }
-          n = nn;
-          break;
-        }
-        catch { }
-      }
-      if (!n) {
-        throw new Error(`Contact with number ${number} does not exist on WhatsApp.`);
-      }
+    if (!GP && !correctNumber) {
+      throw new Error(`Contact with number ${number} does not exist on WhatsApp.`);
     }
 
     contact = await Contact.create({
       name,
-      number: n,
+      number: correctNumber,
       profilePicUrl,
       email,
       isGroup,
@@ -141,11 +113,6 @@ const CreateOrUpdateContactService = async ({
         });
       }
     }
-
-    // io.to(`company-${companyId}-mainchannel`).emit(`company-${companyId}-contact`, {
-    //   action: "create",
-    //   contact
-    // });
   }
 
   return contact;
