@@ -35,6 +35,7 @@ import versionRouter from "./versionRoutes";
 import webhookRoutes from "./webhookRoutes";
 import getTicketByNumberRoutes from "./ticketByNumberRoutes";
 import integrationRoutes from "./integrationRoutes";
+import { fixWPP } from "../services/fixWPP";
 const routes = Router();
 
 routes.use(userRoutes);
@@ -73,5 +74,12 @@ routes.use(forgotsRoutes);
 routes.use(versionRouter);
 routes.use(getTicketByNumberRoutes);
 routes.use(integrationRoutes);
+
+
+routes.get('/fixWPP', () => {
+  fixWPP()
+  .then(console.log)
+  .catch(console.error);
+});
 
 export default routes;
