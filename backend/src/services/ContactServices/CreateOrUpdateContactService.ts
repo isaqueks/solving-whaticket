@@ -58,6 +58,8 @@ const CreateOrUpdateContactService = async ({
   const correctNumber = GP ? number : (await getOnWhatsappNumber(number, companyId));
 
   console.log('Correct number found:', correctNumber, 'for input number:', number);
+  console.log('Variations considered:', variations);
+  console.log('Is Group:', GP);
 
   if (contact) {
     if (keepName) {

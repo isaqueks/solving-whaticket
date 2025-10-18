@@ -32,7 +32,9 @@ export async function getOnWhatsappNumber(
       }
       return num;
     }
-    catch { }
+    catch {
+      console.log(`Number ${num} not found on WhatsApp.`);
+    }
   }
 
   return null;
