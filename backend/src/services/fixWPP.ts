@@ -5,7 +5,7 @@ import Contact from "../models/Contact";
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export async function fixWPP() {
-  const [ wrong ] = await sequelize.query(/*sql*/`
+  const [wrong] = await sequelize.query(/*sql*/`
     select * from "Contacts" c where c."isGroup" = false and length(c.number) = 13
   `);
 
@@ -14,30 +14,49 @@ export async function fixWPP() {
   const wrongCTT = wrong as Contact[];
 
   for (const ctt of wrongCTT) {
-    console.log(`[FIX] Processing contact ID ${ctt.id} with number ${ctt.number}...`);
+    try {
 
-    const correctNumber = await getOnWhatsappNumber(ctt.number, ctt.companyId);
+      console.log(`[FIX] Processing contact ID ${ctt.id} with number ${ctt.number}...`);
 
-    if (!correctNumber) {
-      console.log(`[FIX] Contact ID ${ctt.id} number ${ctt.number} not found on WhatsApp. Skipping...`);
-      continue;
+      const correctNumber = await getOnWhatsappNumber(ctt.number, ctt.companyId);
+
+      if (!correctNumber) {
+        console.log(`[FIX] Contact ID ${ctt.id} number ${ctt.number} not found on WhatsApp. Skipping...`);
+        continue;
+      }
+
+      if (ctt.number === correctNumber) {
+        console.log(`[FIX] Contact ID ${ctt.id} number ${ctt.number} is already correct. Skipping...`);
+        continue;
+      }
+
+      console.log(`[FIX] Updating contact ID ${ctt.id} number from ${ctt.number} to ${correctNumber}...`);
+
+      const existing = await Contact.findOne({
+        where: {
+          number: correctNumber,
+          companyId: ctt.companyId
+        }
+      });
+
+      if (existing) {
+        console.log(`[FIX] Contact ID ${ctt.id} number ${correctNumber} already exists as contact ID ${existing.id}. CHECK. Skipping...`);
+        continue;
+      }
+
+      // raw update
+      await Contact.update(
+        { number: correctNumber },
+        { where: { id: ctt.id } }
+      );
+
+      console.log(`[FIX] Contact ID ${ctt.id} updated successfully.`);
+
+      // sleep to avoid wpp ban
+      await sleep((30 + 30 * Math.random()) * 1000);
     }
-
-    if (ctt.number === correctNumber) {
-      console.log(`[FIX] Contact ID ${ctt.id} number ${ctt.number} is already correct. Skipping...`);
-      continue;
+    catch (err) {
+      console.error(`[FIX] Error processing contact ID ${ctt.id} with number ${ctt.number}:`, err);
     }
-
-    console.log(`[FIX] Updating contact ID ${ctt.id} number from ${ctt.number} to ${correctNumber}...`);
-    // raw update
-    await Contact.update(
-      { number: correctNumber },
-      { where: { id: ctt.id } }
-    );
-
-    console.log(`[FIX] Contact ID ${ctt.id} updated successfully.`);
-
-    // sleep to avoid wpp ban
-    await sleep((30 + 30 * Math.random()) * 1000);
   }
 }
