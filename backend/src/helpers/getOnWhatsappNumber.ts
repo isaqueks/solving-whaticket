@@ -7,7 +7,7 @@ export function getBrazilianNumberVariations(number: string): string[] {
 
   if (number.length === 13) {
     const small = number.slice(0, 4) + number.slice(5);
-    return [small, number];
+    return [number, small];
   } else if (number.length === 12) {
     const big = number.slice(0, 4) + "9" + number.slice(4);
     return [number, big];
@@ -30,6 +30,7 @@ export async function getOnWhatsappNumber(
       if (!onWhatsapp) {
         throw new Error(`Contact with number ${number} does not exist on WhatsApp.`);
       }
+      console.log(onWhatsapp)
       return num;
     }
     catch {
