@@ -958,11 +958,6 @@ export const verifyMessage = async (
   ticket: Ticket,
   contact: Contact
 ) => {
-  try { throw new Error('') }
-  catch (err) {
-    console.log('verifyMessage', err.stack)
-  }
-
   const io = getIO();
   const quotedMsg = await verifyQuotedMessage(msg);
   const body = getBodyMessage(msg);
@@ -1113,7 +1108,6 @@ const verifyQueue = async (
     if (greetingMessage.length > 1 && sendGreetingMessageOneQueues?.value === "enabled") {
       const body = formatBody(`${greetingMessage}`, contact);
 
-      console.log('body2', body)
       await wbot.sendMessage(getContactJid(contact),
         {
           text: body
@@ -1210,10 +1204,6 @@ const verifyQueue = async (
     })
     let invalidOption = "Opção inválida, por favor, escolha uma opção válida."
     
-
-    // console.log('getBodyMessage(msg)', getBodyMessage(msg))
-    console.log('textMessage2', textMessage)
-    // map_msg.set(contact.number, lastMsg);
     if (!lastMsg || getBodyMessage(msg).includes('#') || textMessage.text === 'concluido' || lastMsg.body !== textMessage.text) {
       const sendMsg = await wbot.sendMessage(getContactJid(contact),
         textMessage
@@ -1262,7 +1252,6 @@ const verifyQueue = async (
 
         if (now.isBefore(startTime) || now.isAfter(endTime)) {
           const body = formatBody(`\u200e ${queue.outOfHoursMessage}\n\n*[ # ]* - Voltar ao Menu Principal`, ticket.contact);
-          console.log('body222', body)
           const sentMessage = await wbot.sendMessage(getContactJid(contact), {
             text: body,
           }
@@ -1313,7 +1302,6 @@ const verifyQueue = async (
       const body = formatBody(`\u200e${choosenQueue.greetingMessage}`, ticket.contact
       );
       if (choosenQueue.greetingMessage) {
-        console.log('body33333333', body)
         const sentMessage = await wbot.sendMessage(getContactJid(contact), {
           text: body,
         });
@@ -1574,7 +1562,6 @@ const handleChartbot = async (ticket: Ticket, msg: WAMessage, wbot: Session, don
         text: formatBody(`\u200e${queue.greetingMessage}\n\n${options}`, ticket.contact),
       };
 
-      console.log('textMessage5555555555555', textMessage)
       const sendMsg = await wbot.sendMessage(getContactJid(ticket.contact), textMessage);
 
       await verifyMessage(sendMsg, ticket, ticket.contact);
@@ -1688,7 +1675,6 @@ const handleChartbot = async (ticket: Ticket, msg: WAMessage, wbot: Session, don
           text: formatBody(`\u200e${currentOption.message}\n\n${options}`, ticket.contact),
         };
 
-        console.log('textMessage6666666666', textMessage)
         const sendMsg = await wbot.sendMessage(getContactJid(ticket.contact), textMessage);
 
         await verifyMessage(sendMsg, ticket, ticket.contact);
@@ -1770,11 +1756,6 @@ const handleMessage = async (
   companyId: number
 ): Promise<void> => {
 
-  try { throw new Error('') } 
-  catch (err) {
-    console.log('handleMessage', err.stack)
-  }
-  
   let mediaSent: Message | undefined;
   
   if (!isValidMsg(msg)) {
@@ -1911,7 +1892,6 @@ const handleMessage = async (
         ) {
           const body = `\u200e ${whatsapp.outOfHoursMessage}`;
 
-          console.log('body9341023', body)
           const debouncedSentMessage = debounce(
             async () => {
               await wbot.sendMessage(getContactJid(ticket.contact),
@@ -1963,7 +1943,6 @@ const handleMessage = async (
 
             if (now.isBefore(startTime) || now.isAfter(endTime)) {
               const body = `${queue.outOfHoursMessage}`;
-              console.log('body:23801', body)
               const debouncedSentMessage = debounce(
                 async () => {
                   await wbot.sendMessage(getContactJid(ticket.contact), {
@@ -2016,10 +1995,6 @@ const handleMessage = async (
       !isNil(whatsapp.integrationId) &&
       !ticket.useIntegration
     ) {
-
-      console.log('fds');
-      
-
       const integrations = await ShowQueueIntegrationService(whatsapp.integrationId, companyId);
 
       await handleMessageIntegration(msg, wbot, integrations, ticket)
@@ -2113,7 +2088,6 @@ const handleMessage = async (
 
           if (now.isBefore(startTime) || now.isAfter(endTime)) {
             const body = queue.outOfHoursMessage;
-            console.log('body158964153', body)
             const debouncedSentMessage = debounce(
               async () => {
                 await wbot.sendMessage(getContactJid(ticket.contact), {
@@ -2317,8 +2291,6 @@ const wbotMessageListener = async (wbot: Session, companyId: number): Promise<vo
         });
 
         if (!messageExists) {
-
-          // console.log('body-------------------:', message);
           await handleMessage(message, wbot, companyId);
           await verifyRecentCampaign(message, companyId);
           await verifyCampaignMessageAndCloseTicket(message, companyId);
