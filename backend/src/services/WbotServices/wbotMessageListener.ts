@@ -1,4 +1,3 @@
-import * as Sentry from "@sentry/node";
 import { writeFile } from "fs";
 import { head, isNil } from "lodash";
 import path, { join } from "path";
@@ -397,15 +396,9 @@ export const getBodyMessage = (msg: proto.IWebMessageInfo): string | null => {
     if (!objKey) {
       logger.warn(`#### Nao achou o type 152: ${type}
 ${JSON.stringify(msg)}`);
-      Sentry.setExtra("Mensagem", { BodyMsg: msg.message, msg, type });
-      Sentry.captureException(
-        new Error("Novo Tipo de Mensagem em getTypeMessage")
-      );
     }
     return types[type];
   } catch (error) {
-    Sentry.setExtra("Error getTypeMessage", { msg, BodyMsg: msg.message });
-    Sentry.captureException(error);
     console.log(error);
   }
 };
@@ -903,7 +896,6 @@ const verifyMediaMessage = async (
       "base64"
     );
   } catch (err) {
-    Sentry.captureException(err);
     logger.error(err);
   }
 
@@ -1087,14 +1079,11 @@ const isValidMsg = (msg: proto.IWebMessageInfo): boolean => {
     if (!ifType) {
       logger.warn(`#### Nao achou o type em isValidMsg: ${msgType}
 ${JSON.stringify(msg?.message)}`);
-      Sentry.setExtra("Mensagem", { BodyMsg: msg.message, msg, msgType });
-      Sentry.captureException(new Error("Novo Tipo de Mensagem em isValidMsg"));
     }
 
     return !!ifType;
   } catch (error) {
-    Sentry.setExtra("Error isValidMsg", { msg });
-    Sentry.captureException(error);
+    console.error(error)
   }
 };
 
@@ -1958,8 +1947,7 @@ const handleMessage = async (
         fromMe: msg.key.fromMe,
       });
     } catch (e) {
-      Sentry.captureException(e);
-      console.log(e);
+      console.error(e);
     }
 
     if (hasMedia) {
@@ -2066,8 +2054,7 @@ const handleMessage = async (
 
       }
     } catch (e) {
-      Sentry.captureException(e);
-      console.log(e);
+      console.error(e);
     }
 
     try {
@@ -2078,8 +2065,7 @@ const handleMessage = async (
         }
       }
     } catch (e) {
-      Sentry.captureException(e);
-      console.log(e);
+      console.error(e);
     }
 
     //openai na conexao
@@ -2220,8 +2206,7 @@ const handleMessage = async (
         }
       }
     } catch (e) {
-      Sentry.captureException(e);
-      console.log(e);
+      console.error(e);
     }
 
 
@@ -2276,7 +2261,6 @@ const handleMessage = async (
 
   } catch (err) {
     console.error(err)
-    Sentry.captureException(err);
     logger.error(`Error handling whatsapp message: Err: ${err}`);
   }
 };
@@ -2310,7 +2294,6 @@ const handleMsgAck = async (
       }
     );
   } catch (err) {
-    Sentry.captureException(err);
     logger.error(`Error handling message ack. Err: ${err}`);
   }
 };
@@ -2437,7 +2420,6 @@ const wbotMessageListener = async (wbot: Session, companyId: number): Promise<vo
     //   messageSet.messages.filter(filterMessages).map(msg => msg);
     // });
   } catch (error) {
-    Sentry.captureException(error);
     logger.error(`Error handling wbot message listener. Err: ${error}`);
   }
 };
