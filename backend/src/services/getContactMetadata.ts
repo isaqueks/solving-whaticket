@@ -16,7 +16,7 @@ export function getContactMetadata(msg: proto.IWebMessageInfo): ContactMetadata 
     addressingMode: msg.key['addressingMode'] || undefined,
     name: msg.pushName || undefined,
     isFromGroup: isGroup,
-    jid: isGroup ? msg.key.participant : msg.key.remoteJid
+    jid: isGroup ? (msg.participant || msg.key.participant) : msg.key.remoteJid
   };
 
   let keys: string[] = [];
