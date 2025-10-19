@@ -23,6 +23,8 @@ interface Request {
   taxId?: string;
   attachedToEmail?: string;
   keepName?: boolean;
+  addressingMode?: string;
+  lidNumber?: string;
 }
 
 const CreateOrUpdateContactService = async ({
@@ -36,7 +38,9 @@ const CreateOrUpdateContactService = async ({
   extraInfo = [],
   attachedToEmail,
   whatsappId,
-  keepName = false
+  keepName = false,
+  addressingMode,
+  lidNumber
 }: Request): Promise<Contact> => {
 
   const GP = isGroup || number.length > 13;
@@ -72,7 +76,9 @@ const CreateOrUpdateContactService = async ({
       taxId, 
       attachedToEmail,
       number: correctNumber || contact.number,
-      whatsappId: whatsappId || contact.whatsappId
+      whatsappId: whatsappId || contact.whatsappId,
+      addressingMode: addressingMode || contact.addressingMode,
+      lidNumber: lidNumber || contact.lidNumber
     });
     io.to(`company-${companyId}-mainchannel`).emit(`company-${companyId}-contact`, {
       action: "update",
@@ -94,7 +100,9 @@ const CreateOrUpdateContactService = async ({
       companyId,
       taxId,
       whatsappId,
-      attachedToEmail
+      attachedToEmail,
+      addressingMode,
+      lidNumber
     });
 
     if (!GP) {

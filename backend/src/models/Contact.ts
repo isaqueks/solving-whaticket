@@ -81,6 +81,15 @@ class Contact extends Model<Contact> {
   })
   schedules: Schedule[];
 
+  @Column
+  @AllowNull(true)
+  lidNumber: string;
+
+  @Column
+  @AllowNull(true)
+  @Default('pn')
+  addressingMode: string;
+
   @ForeignKey(() => Whatsapp)
   @Column
   whatsappId: number;

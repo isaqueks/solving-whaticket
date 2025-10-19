@@ -59,6 +59,7 @@ import { provider } from "./providers";
 import SendWhatsAppMessage from "./SendWhatsAppMessage";
 import { getMessageOptions } from "./SendWhatsAppMedia";
 import { getCachedPFP } from "./GetCachedPFP";
+import { getContactMetadata, getGroupMetadata } from "../getContactMetadata";
 
 const request = require("request");
 
@@ -521,22 +522,49 @@ const downloadMedia = async (msg: proto.IWebMessageInfo) => {
 
 
 const verifyContact = async (
-  msgContact: IMe,
+  msgContact: proto.IWebMessageInfo,
   wbot: Session,
   companyId: number
 ): Promise<Contact> => {
 
-  const jid = jidNormalizedUser(msgContact.id);
+  const meta = getContactMetadata(msgContact);
 
-  const profilePicUrl: string = await getCachedPFP(wbot, jid);
-
-  const isGroup = jid.includes("g.us");
+  const profilePicUrl: string = await getCachedPFP(wbot, meta.jid);
 
   const contactData = {
-    name: msgContact?.name || jid.replace(/[^0-9|-]/g, "") || `${isGroup ? 'GRUPO' : 'CONTATO'} SEM NOME`,
-    number: jid.replace(/[^0-9|-]/g, ""),
+    name: meta.name || msgContact.key.remoteJid.replace(/[^0-9|-]/g, ""),
+    number: meta.number,
+    lidNumber: meta.lidNumber,
+    addressingMode: meta.addressingMode,
     profilePicUrl,
-    isGroup,
+    isGroup: false,
+    companyId,
+    whatsappId: wbot.id,
+    keepName: true
+  };
+
+  const contact = await CreateOrUpdateContactService(contactData);
+
+  return contact;
+};
+
+const verifyGroup = async (
+  msgContact: proto.IWebMessageInfo,
+  wbot: Session,
+  companyId: number
+): Promise<Contact> => {
+
+  const meta = getGroupMetadata(msgContact);
+
+  const profilePicUrl: string = await getCachedPFP(wbot, meta.jid);
+
+  const wbotMeta = await wbot.groupMetadata(meta.jid);
+
+  const contactData = {
+    name: wbotMeta.subject || `GRUPO SEM NOME`,
+    number: meta.number,
+    profilePicUrl,
+    isGroup: true,
     companyId,
     whatsappId: wbot.id,
     keepName: true
@@ -1806,7 +1834,6 @@ const handleMessage = async (
 
   if (!isValidMsg(msg)) return;
   try {
-    let msgContact: IMe;
     let groupContact: Contact | undefined;
 
     const isGroup = msg.key.remoteJid?.endsWith("@g.us");
@@ -1838,24 +1865,16 @@ const handleMessage = async (
         msgType !== "vcard"
       )
         return;
-      msgContact = await getContactMessage(msg, wbot);
-    } else {
-      msgContact = await getContactMessage(msg, wbot);
     }
 
     if (msgIsGroupBlock?.value === "enabled" && isGroup) return;
 
     if (isGroup) {
-      const grupoMeta = await wbot.groupMetadata(msg.key.remoteJid);
-      const msgGroupContact = {
-        id: grupoMeta.id || msg.key.remoteJid,
-        name: grupoMeta.subject
-      };
-      groupContact = await verifyContact(msgGroupContact, wbot, companyId);
+      groupContact = await verifyGroup(msg, wbot, companyId);
     }
 
     const whatsapp = await ShowWhatsAppService(wbot.id!, companyId);
-    const contact = await verifyContact(msgContact, wbot, companyId);
+    const contact = await verifyContact(msg, wbot, companyId);
 
     let unreadMessages = 0;
 
@@ -1909,45 +1928,6 @@ const handleMessage = async (
       companyId,
       whatsappId: whatsapp?.id
     });
-
-    try {
-      if (!msg.key.fromMe) {
-        /**
-         * Tratamento para avaliação do atendente
-         */
-
-        //  // dev Ricardo: insistir a responder avaliação
-        //  const rate_ = Number(bodyMessage);
-
-        //  if ((ticket?.lastMessage.includes('_Insatisfeito_') || ticket?.lastMessage.includes('Por favor avalie nosso atendimento.')) &&  (!isFinite(rate_))) {
-        //      const debouncedSentMessage = debounce(
-        //        async () => {
-        //          await wbot.sendMessage(
-        //            `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"
-        //            }`,
-        //            {
-        //              text: 'Por favor avalie nosso atendimento.'
-        //            }
-        //          );
-        //        },
-        //        1000,
-        //        ticket.id
-        //      );
-        //      debouncedSentMessage();
-        //      return;
-        //  }
-        //  // dev Ricardo
-
-        if (ticketTraking !== null && verifyRating(ticketTraking)) {
-
-          handleRating(parseFloat(bodyMessage), ticket, ticketTraking);
-          return;
-        }
-      }
-    } catch (e) {
-      Sentry.captureException(e);
-      console.log(e);
-    }
 
     // Atualiza o ticket se a ultima mensagem foi enviada por mim, para que possa ser finalizado. 
     try {
@@ -2004,7 +1984,6 @@ const handleMessage = async (
           return;
         }
 
-        console.log('bodyMaaaaaaa1111aaaaaessage:', bodyMessage);
         if (scheduleType.value === "queue" && ticket.queueId !== null) {
 
           /**
