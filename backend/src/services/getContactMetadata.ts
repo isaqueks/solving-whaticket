@@ -60,23 +60,11 @@ export function getGroupMetadata(msg: proto.IWebMessageInfo): ContactMetadata {
     addressingMode: msg.key['addressingMode'] || undefined,
     name: msg.pushName || undefined,
     isFromGroup: isGroup,
-    jid: msg.key.remoteJid
+    jid: msg.key.remoteJid,
+    number: msg.key.remoteJid?.replace('@g.us', '')
   };
 
   let keys: string[] = [];
-
-  if (isGroup) {
-    keys = [
-      msg.key.participant,
-      msg.key['participantAlt']
-    ]
-  }
-  else {
-    keys = [
-      msg.key.remoteJid,
-      msg.key['remoteJidAlt']
-    ]
-  }
 
   for (const key of keys) {
     if (key.endsWith('@lid')) {
