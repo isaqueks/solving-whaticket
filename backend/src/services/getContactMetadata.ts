@@ -64,19 +64,5 @@ export function getGroupMetadata(msg: proto.IWebMessageInfo): ContactMetadata {
     number: msg.key.remoteJid?.replace('@g.us', '')
   };
 
-  let keys: string[] = [];
-
-  for (const key of keys) {
-    if (key.endsWith('@lid')) {
-      result.lidNumber = key.replace('@lid', '');
-    }
-    else if (key.endsWith('@s.whatsapp.net')) {
-      result.number = key.replace('@s.whatsapp.net', '');
-    }
-    else {
-      console.error(`Unknown contact key format: ${key}`, msg);
-    }
-  }
-
   return result;
 }

@@ -72,7 +72,7 @@ const CreateOrUpdateContactService = async ({
     contact.update({
       name, 
       profilePicUrl, 
-      email, 
+      email: email || contact.email || '', 
       taxId, 
       attachedToEmail,
       number: correctNumber || contact.number,
@@ -94,7 +94,7 @@ const CreateOrUpdateContactService = async ({
       name,
       number: correctNumber,
       profilePicUrl,
-      email,
+      email: email || '',
       isGroup,
       extraInfo,
       companyId,
