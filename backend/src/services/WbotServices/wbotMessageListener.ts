@@ -972,6 +972,11 @@ export const verifyMessage = async (
   ticket: Ticket,
   contact: Contact
 ) => {
+  try { throw new Error('') }
+  catch (err) {
+    console.log('verifyMessage', err.stack)
+  }
+
   const io = getIO();
   const quotedMsg = await verifyQuotedMessage(msg);
   const body = getBodyMessage(msg);
@@ -1828,11 +1833,12 @@ const handleMessage = async (
   companyId: number
 ): Promise<void> => {
 
+  
+  let mediaSent: Message | undefined;
+  
+  if (!isValidMsg(msg)) return;
   console.log(msg);
 
-  let mediaSent: Message | undefined;
-
-  if (!isValidMsg(msg)) return;
   try {
     let groupContact: Contact | undefined;
 
