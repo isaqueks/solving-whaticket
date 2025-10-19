@@ -132,6 +132,9 @@ const contactsArrayMessageGet = (msg: any,) => {
 }
 
 const getTypeMessage = (msg: proto.IWebMessageInfo): string => {
+  if (msg.message?.protocolMessage?.editedMessage) {
+    return 'editedMessage';
+  }
   return getContentType(msg.message);
 };
 
