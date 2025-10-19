@@ -35,6 +35,9 @@ export function getContactMetadata(msg: proto.IWebMessageInfo): ContactMetadata 
   }
 
   for (const key of keys) {
+    if (!key) {
+      continue;
+    }
     if (key.endsWith('@lid')) {
       result.lidNumber = key.replace('@lid', '');
     }
