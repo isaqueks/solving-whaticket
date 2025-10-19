@@ -1862,15 +1862,20 @@ const handleMessage = async (
       msg.message?.documentWithCaptionMessage ||
       msg.message.stickerMessage;
     if (msg.key.fromMe) {
-      if (/\u200e/.test(bodyMessage)) return;
+      if (/\u200e/.test(bodyMessage)) {
+        console.log('RETURN 1');
+        return;
+      }
 
       if (
         !hasMedia &&
         msgType !== "conversation" &&
         msgType !== "extendedTextMessage" &&
         msgType !== "vcard"
-      )
+      ) {
+        console.log('RETURN 2');
         return;
+      }
     }
 
     if (msgIsGroupBlock?.value === "enabled" && isGroup) return;
@@ -1906,6 +1911,7 @@ const handleMessage = async (
     });
 
     if (unreadMessages === 0 && whatsapp.complationMessage && formatBody(whatsapp.complationMessage, contact).trim().toLowerCase() === lastMessage?.body.trim().toLowerCase()) {
+      console.log('RETURN 3')
       return;
     }
 
