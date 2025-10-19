@@ -2131,7 +2131,8 @@ const verifyCampaignMessageAndCloseTicket = async (
 };
 
 const filterMessages = (msg: WAMessage): boolean => {
-  if (msg.message?.protocolMessage) return false;
+  if (msg.message?.protocolMessage && !msg.message?.protocolMessage.editedMessage) 
+    return false;
 
   if (
     [
