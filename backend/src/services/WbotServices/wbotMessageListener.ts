@@ -1881,6 +1881,7 @@ const handleMessage = async (
 
     const whatsapp = await ShowWhatsAppService(wbot.id!, companyId);
     const contact = await verifyContact(msg, wbot, companyId);
+    console.log('contact END')
 
     let unreadMessages = 0;
 
@@ -1888,6 +1889,7 @@ const handleMessage = async (
 
     if (msg.key.fromMe) {
       await cacheLayer.set(REDIS_KEY, "0");
+      console.log('cacheLayer set 0 END')
     } else {
       const unreads = await cacheLayer.get(REDIS_KEY);
       unreadMessages = +unreads + 1;

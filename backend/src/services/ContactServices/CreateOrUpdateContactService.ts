@@ -28,9 +28,6 @@ interface Request {
 }
 
 const CreateOrUpdateContactService = async (data: Request): Promise<Contact> => {
-
-  console.log('CreateOrUpdateContactService called with data:', data);
-
   let {
     name,
     number,
