@@ -90,7 +90,7 @@ const CreateOrUpdateContactService = async (data: Request): Promise<Contact> => 
     });
   } else {
 
-    if (!GP && !correctNumber) {
+    if (!correctNumber) {
       throw new Error(`Contact with number ${number} does not exist on WhatsApp.`);
     }
 

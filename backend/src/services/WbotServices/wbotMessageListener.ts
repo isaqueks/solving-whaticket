@@ -571,6 +571,7 @@ const verifyGroup = async (
   };
 
   const contact = await CreateOrUpdateContactService(contactData);
+  console.log(contact)
 
   return contact;
 };
