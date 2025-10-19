@@ -17,10 +17,17 @@ export function getBrazilianNumberVariations(number: string): string[] {
 
 }
 
+const cache = new Map<string, string>();
+
 export async function getOnWhatsappNumber(
   number: string,
   companyId: number
 ): Promise<string> {
+
+  const cacheKey = `${companyId}-${number}`;
+  if (cache.has(cacheKey)) {
+    return cache.get(cacheKey)!;
+  }
 
   const numbers = getBrazilianNumberVariations(number);
 
@@ -30,7 +37,9 @@ export async function getOnWhatsappNumber(
       if (!onWhatsapp?.exists || !onWhatsapp?.jid) {
         throw new Error(`Contact with number ${number} does not exist on WhatsApp.`);
       }
-      return onWhatsapp?.jid.split("@")[0];
+      const result = onWhatsapp?.jid.split("@")[0];
+      cache.set(cacheKey, result);
+      return result;
     }
     catch {
       console.log(`Number ${num} not found on WhatsApp.`);
