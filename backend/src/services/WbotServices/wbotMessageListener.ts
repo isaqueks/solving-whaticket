@@ -1625,8 +1625,11 @@ const handleMessage = async (
 ): Promise<void> => {
 
   let mediaSent: Message | undefined;
+
+  console.log('HANDLE MESSAGE', msg)
   
   if (!isValidMsg(msg)) {
+    console.log('Not valid')
     return;
   }
   try {
@@ -2158,7 +2161,7 @@ const wbotMessageListener = async (wbot: Session, companyId: number): Promise<vo
           where: { id: message.key.id!, companyId }
         });
 
-        if (!messageExists || message?.message?.editedMessage) {
+        if (!messageExists) {
           await handleMessage(message, wbot, companyId);
           await verifyRecentCampaign(message, companyId);
           await verifyCampaignMessageAndCloseTicket(message, companyId);
