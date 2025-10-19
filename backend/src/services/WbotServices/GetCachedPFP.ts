@@ -19,7 +19,6 @@ export async function getCachedPFP(wbot: WASocket, waId: string): Promise<string
     pfp = await wbot.profilePictureUrl(waId);
   }
   catch {}
-  console.log('Fetched PFP END');
 
   await cacheLayer.set(REDIS_KEY, pfp, 'EX', 1 * 60 * 60); // Cache 1 hour
   return pfp;
