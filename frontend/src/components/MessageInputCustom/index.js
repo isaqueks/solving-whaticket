@@ -633,7 +633,9 @@ const MessageInputCustom = (props) => {
       "quotedMsg": message.quotedMsg,
     }
 
-    setPendingMessages(prev => [...prev, pendingMsg]);
+    if (!editingMessage) {
+      setPendingMessages(prev => [...prev, pendingMsg]);
+    }
     setTimeout(() => setInputMessage(""), 1);
     
     try {
