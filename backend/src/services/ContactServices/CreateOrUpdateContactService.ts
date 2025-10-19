@@ -51,6 +51,7 @@ const CreateOrUpdateContactService = async (data: Request): Promise<Contact> => 
 
   const variations = GP ? [number] : getBrazilianNumberVariations(number);
 
+  console.log('GET CONTACT')
   let contact = await Contact.findOne({
     where: {
       number: {
@@ -59,8 +60,11 @@ const CreateOrUpdateContactService = async (data: Request): Promise<Contact> => 
       companyId
     }
   });
+  console.log('GET CONTACT END')
 
+  console.log('CORRECT NUMBER START')
   const correctNumber = GP ? number : (await getOnWhatsappNumber(number, companyId));
+  console.log('CORRECT NUMBER END')
 
   console.log('Correct number found:', correctNumber, 'for input number:', number);
   console.log('Variations considered:', variations);
@@ -70,7 +74,7 @@ const CreateOrUpdateContactService = async (data: Request): Promise<Contact> => 
     if (keepName) {
       name = contact.name;
     }
-    contact.update({
+    await contact.update({
       name, 
       profilePicUrl, 
       email: email || contact.email || '', 
