@@ -10,6 +10,9 @@ export async function getCachedPFP(wbot: WASocket, waId: string): Promise<string
   }
 
   let pfp: string = `${process.env.FRONTEND_URL}/nopicture.png`;
+  if (!waId) {
+    return pfp;
+  }
 
   try {
     console.log(`Fetching profile picture for waId: ${waId}`);
