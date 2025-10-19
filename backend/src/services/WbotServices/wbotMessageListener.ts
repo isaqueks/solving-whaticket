@@ -1910,10 +1910,11 @@ const handleMessage = async (
     }
 
     const ticket = await FindOrCreateTicketService(contact, wbot.id!, unreadMessages, companyId, groupContact);
-
+    console.log('FindOrCreateTicketService END')
 
 
     await provider(ticket, msg, companyId, contact, wbot as WASocket);
+    console.log('provider END')
 
     // voltar para o menu inicial
 
@@ -1934,12 +1935,14 @@ const handleMessage = async (
       companyId,
       whatsappId: whatsapp?.id
     });
+    console.log('FindOrCreateATicketTrakingService END')
 
     // Atualiza o ticket se a ultima mensagem foi enviada por mim, para que possa ser finalizado. 
     try {
       await ticket.update({
         fromMe: msg.key.fromMe,
       });
+      console.log('Update ticket END');
     } catch (e) {
       console.error(e);
     }
@@ -1948,6 +1951,7 @@ const handleMessage = async (
       mediaSent = await verifyMediaMessage(msg, ticket, contact);
     } else {
       await verifyMessage(msg, ticket, contact);
+      console.log('verifyMessage END');
     }
 
     const currentSchedule = await VerifyCurrentSchedule(companyId);
