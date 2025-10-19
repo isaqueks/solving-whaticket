@@ -1830,11 +1830,8 @@ const handleMessage = async (
   let mediaSent: Message | undefined;
   
   if (!isValidMsg(msg)) {
-    console.log("Mensagem inválida", msg);
     return;
   }
-  console.log(msg);
-
   try {
     let groupContact: Contact | undefined;
 
@@ -1859,7 +1856,6 @@ const handleMessage = async (
       msg.message.stickerMessage;
     if (msg.key.fromMe) {
       if (/\u200e/.test(bodyMessage)) {
-        console.log('RETURN 1');
         return;
       }
 
@@ -1869,18 +1865,18 @@ const handleMessage = async (
         msgType !== "extendedTextMessage" &&
         msgType !== "vcard"
       ) {
-        console.log('RETURN 2');
         return;
       }
     }
 
     if (msgIsGroupBlock?.value === "enabled" && isGroup) {
-      console.log('Block group')
       return;
     }
 
     if (isGroup) {
+      console.log('groupContact')
       groupContact = await verifyGroup(msg, wbot, companyId);
+      console.log('groupContact END')
     }
 
     const whatsapp = await ShowWhatsAppService(wbot.id!, companyId);
@@ -1910,7 +1906,6 @@ const handleMessage = async (
     });
 
     if (unreadMessages === 0 && whatsapp.complationMessage && formatBody(whatsapp.complationMessage, contact).trim().toLowerCase() === lastMessage?.body.trim().toLowerCase()) {
-      console.log('RETURN 3')
       return;
     }
 
@@ -1930,7 +1925,6 @@ const handleMessage = async (
         queueId: null,
       });
       await verifyQueue(wbot, msg, ticket, ticket.contact);
-      console.log('RETURN 4')
       return;
     }
 
@@ -1951,7 +1945,6 @@ const handleMessage = async (
     }
 
     if (hasMedia) {
-      console.log('hasMedia')
       mediaSent = await verifyMediaMessage(msg, ticket, contact);
     } else {
       await verifyMessage(msg, ticket, contact);
