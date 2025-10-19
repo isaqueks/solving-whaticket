@@ -106,7 +106,7 @@ const CreateOrUpdateContactService = async (data: Request): Promise<Contact> => 
       lidNumber
     });
 
-    if (!GP) {
+    if (!GP && attachedToEmail) {
 
       const correspondingUser = await User.findOne({
         where: {
