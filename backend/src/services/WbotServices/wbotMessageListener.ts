@@ -299,7 +299,7 @@ export const sendMessageLink = async (
   caption: string
 ) => {
 
-  let sentMessage
+  let sentMessage: proto.IWebMessageInfo;
   try {
     sentMessage = await wbot.sendMessage(
       `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`, {
@@ -310,11 +310,7 @@ export const sendMessageLink = async (
     }
     );
   } catch (error) {
-    sentMessage = await wbot.sendMessage(
-      `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`, {
-      text: formatBody('Não consegui enviar o PDF, tente novamente!', contact)
-    }
-    );
+    throw new Error('Erro aio enviar arquivo');
   }
   verifyMessage(sentMessage, ticket, contact);
 };
@@ -1803,6 +1799,8 @@ const handleMessage = async (
   wbot: Session,
   companyId: number
 ): Promise<void> => {
+
+  console.log(msg);
 
   let mediaSent: Message | undefined;
 
