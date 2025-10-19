@@ -23,7 +23,7 @@ export function getContactMetadata(msg: proto.IWebMessageInfo): ContactMetadata 
 
   if (isGroup) {
     console.log('Getting contact metadata for group message');
-    console.log(msg)
+    console.log(msg, msg.message)
     keys = [
       msg.key.participant,
       msg.key['participantAlt']
