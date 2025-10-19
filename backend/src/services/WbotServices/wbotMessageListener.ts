@@ -1880,6 +1880,7 @@ const handleMessage = async (
     }
 
     const whatsapp = await ShowWhatsAppService(wbot.id!, companyId);
+    console.log('ShowWhatsAppService END')
     const contact = await verifyContact(msg, wbot, companyId);
     console.log('contact END')
 
