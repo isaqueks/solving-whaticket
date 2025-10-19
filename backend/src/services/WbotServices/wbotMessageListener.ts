@@ -54,11 +54,11 @@ import FindOrCreateTicketService from "../TicketServices/FindOrCreateTicketServi
 import UpdateTicketService from "../TicketServices/UpdateTicketService";
 import typebotListener from "../TypebotServices/typebotListener";
 import ShowWhatsAppService from "../WhatsappService/ShowWhatsAppService";
-import { provider } from "./providers";
 import SendWhatsAppMessage from "./SendWhatsAppMessage";
 import { getMessageOptions } from "./SendWhatsAppMedia";
 import { getCachedPFP } from "./GetCachedPFP";
 import { getContactMetadata, getGroupMetadata } from "../getContactMetadata";
+import { getContactJid } from "../../helpers/getContactJid";
 
 const request = require("request");
 
@@ -271,8 +271,7 @@ export const sendMessageImage = async (
 
   let sentMessage
   try {
-    sentMessage = await wbot.sendMessage(
-      `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+    sentMessage = await wbot.sendMessage(getContactJid(contact),
       {
         image: url ? { url } : fs.readFileSync(`public/temp/${caption}-${makeid(10)}`),
         fileName: caption,
@@ -281,8 +280,7 @@ export const sendMessageImage = async (
       }
     );
   } catch (error) {
-    sentMessage = await wbot.sendMessage(
-      `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+      sentMessage = await wbot.sendMessage(getContactJid(contact),
       {
         text: formatBody('Não consegui enviar o PDF, tente novamente!', contact)
       }
@@ -301,8 +299,7 @@ export const sendMessageLink = async (
 
   let sentMessage: proto.IWebMessageInfo;
   try {
-    sentMessage = await wbot.sendMessage(
-      `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`, {
+    sentMessage = await wbot.sendMessage(getContactJid(contact), {
       document: url ? { url } : fs.readFileSync(`public/temp/${caption}-${makeid(10)}`),
       fileName: caption,
       caption: caption,
@@ -1117,8 +1114,7 @@ const verifyQueue = async (
       const body = formatBody(`${greetingMessage}`, contact);
 
       console.log('body2', body)
-      await wbot.sendMessage(
-        `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+      await wbot.sendMessage(getContactJid(contact),
         {
           text: body
         }
@@ -1219,16 +1215,14 @@ const verifyQueue = async (
     console.log('textMessage2', textMessage)
     // map_msg.set(contact.number, lastMsg);
     if (!lastMsg || getBodyMessage(msg).includes('#') || textMessage.text === 'concluido' || lastMsg.body !== textMessage.text) {
-      const sendMsg = await wbot.sendMessage(
-        `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+      const sendMsg = await wbot.sendMessage(getContactJid(contact),
         textMessage
       );
       await verifyMessage(sendMsg, ticket, ticket.contact);
 
     } else if (lastMsg.body !== invalidOption) {
       textMessage.text = invalidOption
-      const sendMsg = await wbot.sendMessage(
-        `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+      const sendMsg = await wbot.sendMessage(getContactJid(contact),
         textMessage
       );
       await verifyMessage(sendMsg, ticket, ticket.contact);
@@ -1269,8 +1263,7 @@ const verifyQueue = async (
         if (now.isBefore(startTime) || now.isAfter(endTime)) {
           const body = formatBody(`\u200e ${queue.outOfHoursMessage}\n\n*[ # ]* - Voltar ao Menu Principal`, ticket.contact);
           console.log('body222', body)
-          const sentMessage = await wbot.sendMessage(
-            `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`, {
+          const sentMessage = await wbot.sendMessage(getContactJid(contact), {
             text: body,
           }
           );
@@ -1321,11 +1314,9 @@ const verifyQueue = async (
       );
       if (choosenQueue.greetingMessage) {
         console.log('body33333333', body)
-        const sentMessage = await wbot.sendMessage(
-          `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`, {
+        const sentMessage = await wbot.sendMessage(getContactJid(contact), {
           text: body,
-        }
-        );
+        });
         await verifyMessage(sentMessage, ticket, contact);
       }
 	        if (choosenQueue.mediaPath !== null && choosenQueue.mediaPath !== "") {
@@ -1333,7 +1324,7 @@ const verifyQueue = async (
 
         const optionsMsg = await getMessageOptions(choosenQueue.mediaName, filePath);
 
-        let sentMessage = await wbot.sendMessage(`${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`, { ...optionsMsg });
+        let sentMessage = await wbot.sendMessage(getContactJid(ticket.contact), { ...optionsMsg });
 
         await verifyMediaMessage(sentMessage, ticket, contact);
       }
@@ -1542,37 +1533,6 @@ const handleChartbot = async (ticket: Ticket, msg: WAMessage, wbot: Session, don
       }
     });
 
-    // const botList = async () => {
-    // const sectionsRows = [];
-
-    // queues.forEach((queue, index) => {
-    //   sectionsRows.push({
-    //     title: queue.name,
-    //     rowId: `${index + 1}`
-    //   });
-    // });
-
-    // const sections = [
-    //   {
-    //     rows: sectionsRows
-    //   }
-    // ];
-
-
-    //   const listMessage = {
-    //     text: formatBody(`\u200e${queue.greetingMessage}`, ticket.contact),
-    //     buttonText: "Escolha uma opção",
-    //     sections
-    //   };
-
-    //   const sendMsg = await wbot.sendMessage(
-    //     `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
-    //     listMessage
-    //   );
-
-    //   await verifyMessage(sendMsg, ticket, ticket.contact);
-    // }
-
     const botButton = async () => {
       const buttons = [];
       queueOptions.forEach((option, i) => {
@@ -1594,8 +1554,7 @@ const handleChartbot = async (ticket: Ticket, msg: WAMessage, wbot: Session, don
         headerType: 4
       };
 
-      const sendMsg = await wbot.sendMessage(
-        `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+      const sendMsg = await wbot.sendMessage(getContactJid(ticket.contact),
         buttonMessage
       );
 
@@ -1616,10 +1575,7 @@ const handleChartbot = async (ticket: Ticket, msg: WAMessage, wbot: Session, don
       };
 
       console.log('textMessage5555555555555', textMessage)
-      const sendMsg = await wbot.sendMessage(
-        `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
-        textMessage
-      );
+      const sendMsg = await wbot.sendMessage(getContactJid(ticket.contact), textMessage);
 
       await verifyMessage(sendMsg, ticket, ticket.contact);
     };
@@ -1684,8 +1640,7 @@ const handleChartbot = async (ticket: Ticket, msg: WAMessage, wbot: Session, don
           sections
         };
 
-        const sendMsg = await wbot.sendMessage(
-          `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+        const sendMsg = await wbot.sendMessage(getContactJid(ticket.contact),
           listMessage
         );
 
@@ -1713,8 +1668,7 @@ const handleChartbot = async (ticket: Ticket, msg: WAMessage, wbot: Session, don
           headerType: 4
         };
 
-        const sendMsg = await wbot.sendMessage(
-          `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+        const sendMsg = await wbot.sendMessage(getContactJid(ticket.contact),
           buttonMessage
         );
 
@@ -1735,10 +1689,7 @@ const handleChartbot = async (ticket: Ticket, msg: WAMessage, wbot: Session, don
         };
 
         console.log('textMessage6666666666', textMessage)
-        const sendMsg = await wbot.sendMessage(
-          `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
-          textMessage
-        );
+        const sendMsg = await wbot.sendMessage(getContactJid(ticket.contact), textMessage);
 
         await verifyMessage(sendMsg, ticket, ticket.contact);
 		        if (currentOption.mediaPath !== null && currentOption.mediaPath !== "")  {
@@ -1748,7 +1699,7 @@ const handleChartbot = async (ticket: Ticket, msg: WAMessage, wbot: Session, don
 
           const optionsMsg = await getMessageOptions(currentOption.mediaName, filePath);
 
-          let sentMessage = await wbot.sendMessage(`${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`, { ...optionsMsg });
+          let sentMessage = await wbot.sendMessage(getContactJid(ticket.contact), { ...optionsMsg });
 
           await verifyMediaMessage(sentMessage, ticket, ticket.contact);
         }
@@ -1906,12 +1857,7 @@ const handleMessage = async (
 
     const ticket = await FindOrCreateTicketService(contact, wbot.id!, unreadMessages, companyId, groupContact);
 
-
-    await provider(ticket, msg, companyId, contact, wbot as WASocket);
-
     // voltar para o menu inicial
-
-
     if (bodyMessage == "#") {
       await ticket.update({
         queueOptionId: null,
@@ -1968,9 +1914,7 @@ const handleMessage = async (
           console.log('body9341023', body)
           const debouncedSentMessage = debounce(
             async () => {
-              await wbot.sendMessage(
-                `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"
-                }`,
+              await wbot.sendMessage(getContactJid(ticket.contact),
                 {
                   text: body
                 }
@@ -2022,13 +1966,9 @@ const handleMessage = async (
               console.log('body:23801', body)
               const debouncedSentMessage = debounce(
                 async () => {
-                  await wbot.sendMessage(
-                    `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"
-                    }`,
-                    {
-                      text: body
-                    }
-                  );
+                  await wbot.sendMessage(getContactJid(ticket.contact), {
+                    text: body
+                  });
                 },
                 3000,
                 ticket.id
@@ -2176,13 +2116,9 @@ const handleMessage = async (
             console.log('body158964153', body)
             const debouncedSentMessage = debounce(
               async () => {
-                await wbot.sendMessage(
-                  `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"
-                  }`,
-                  {
-                    text: body
-                  }
-                );
+                await wbot.sendMessage(getContactJid(ticket.contact), {
+                  text: body
+                });
               },
               3000,
               ticket.id
@@ -2217,13 +2153,9 @@ const handleMessage = async (
         console.log('whatsapp.greetingMessage', whatsapp.greetingMessage)
         const debouncedSentMessage = debounce(
           async () => {
-            await wbot.sendMessage(
-              `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"
-              }`,
-              {
-                text: whatsapp.greetingMessage
-              }
-            );
+            await wbot.sendMessage(getContactJid(ticket.contact), {
+              text: whatsapp.greetingMessage
+            });
           },
           1000,
           ticket.id

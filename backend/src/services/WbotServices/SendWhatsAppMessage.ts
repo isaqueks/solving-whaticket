@@ -9,6 +9,7 @@ import formatBody from "../../helpers/Mustache";
 import { map_msg } from "../../utils/global";
 import UpdateTicketService from "../TicketServices/UpdateTicketService";
 import { getIO } from "../../libs/socket";
+import { getContactJid } from "../../helpers/getContactJid";
 
 interface Request {
   body: string;
@@ -25,9 +26,8 @@ const SendWhatsAppMessage = async ({
 }: Request): Promise<WAMessage> => {
   let options = {};
   const wbot = await GetTicketWbot(ticket);
-  const number = `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"
-    }`;
-  console.log("number", number);
+  const jid = getContactJid(ticket.contact);
+  console.log("number", jid);
 
   let changed = false;
 
@@ -87,7 +87,7 @@ const SendWhatsAppMessage = async ({
     console.log('body:::::::::::::::::::::::::::', body)
     map_msg.set(ticket.contact.number, { lastSystemMsg: body })
     console.log('lastSystemMsg:::::::::::::::::::::::::::', ticket.contact.number)
-    const sentMessage = await wbot.sendMessage(number, {
+    const sentMessage = await wbot.sendMessage(jid, {
       text: formatBody(body, ticket.contact)
     },
       {

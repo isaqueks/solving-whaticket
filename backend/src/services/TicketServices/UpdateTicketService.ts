@@ -22,6 +22,7 @@ import { id } from "date-fns/locale";
 import Tag from "../../models/Tag";
 import TicketTag from "../../models/TicketTag";
 import User from "../../models/User";
+import { getContactJid } from "../../helpers/getContactJid";
 
 interface TicketData {
   status?: string;
@@ -200,8 +201,7 @@ const UpdateTicketService = async ({
         const wbot = await GetTicketWbot(ticket);
         const msgtxt = "*Mensagem automática*:\nVocê foi transferido para o departamento *" + queue?.name + "*\naguarde, já vamos te atender!";
 
-        const queueChangedMessage = await wbot.sendMessage(
-          `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+        const queueChangedMessage = await wbot.sendMessage(getContactJid(ticket.contact),
           {
             text: msgtxt
           }
@@ -215,8 +215,7 @@ const UpdateTicketService = async ({
           const nome = await ShowUserService(ticketData.userId);
           const msgtxt = "*Mensagem automática*:\nFoi transferido para o atendente *" + nome.name + "*\naguarde, já vamos te atender!";
 
-          const queueChangedMessage = await wbot.sendMessage(
-            `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+          const queueChangedMessage = await wbot.sendMessage(getContactJid(ticket.contact),
             {
               text: msgtxt
             }
@@ -231,8 +230,7 @@ const UpdateTicketService = async ({
             const nome = await ShowUserService(ticketData.userId);
             const msgtxt = "*Mensagem automática*:\nVocê foi transferido para o departamento *" + queue?.name + "* e contará com a presença de *" + nome.name + "*\naguarde, já vamos te atender!";
 
-            const queueChangedMessage = await wbot.sendMessage(
-              `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+            const queueChangedMessage = await wbot.sendMessage(getContactJid(ticket.contact),
               {
                 text: msgtxt
               }
@@ -245,8 +243,7 @@ const UpdateTicketService = async ({
               const wbot = await GetTicketWbot(ticket);
               const msgtxt = "*Mensagem automática*:\nVocê foi transferido para o departamento *" + queue?.name + "*\naguarde, já vamos te atender!";
 
-              const queueChangedMessage = await wbot.sendMessage(
-                `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
+              const queueChangedMessage = await wbot.sendMessage(getContactJid(ticket.contact),
                 {
                   text: msgtxt
                 }
