@@ -27,21 +27,25 @@ interface Request {
   lidNumber?: string;
 }
 
-const CreateOrUpdateContactService = async ({
-  name,
-  number,
-  profilePicUrl,
-  isGroup,
-  email,
-  taxId,
-  companyId,
-  extraInfo = [],
-  attachedToEmail,
-  whatsappId,
-  keepName = false,
-  addressingMode,
-  lidNumber
-}: Request): Promise<Contact> => {
+const CreateOrUpdateContactService = async (data: Request): Promise<Contact> => {
+
+  console.log('CreateOrUpdateContactService called with data:', data);
+
+  let {
+    name,
+    number,
+    profilePicUrl,
+    isGroup,
+    email,
+    taxId,
+    companyId,
+    extraInfo = [],
+    attachedToEmail,
+    whatsappId,
+    keepName = false,
+    addressingMode,
+    lidNumber
+  } = data;
 
   const GP = isGroup || number.length > 13;
   number = GP ? number : number.replace(/[^0-9|-]/g, "");
