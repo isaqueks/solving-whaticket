@@ -54,6 +54,7 @@ const typebotListener = async ({
     } = typebot;
 
     const number = msg.key.remoteJid.replace(/[^0-9|-]/g, '');
+    const jid = msg.key.remoteJid;
 
     let body = getBodyMessage(msg);
 
@@ -161,7 +162,7 @@ const typebotListener = async ({
             }
 
             if (messages?.length === 0) {
-                await wbot.sendMessage(`${number}@c.us`, { text: typebotUnknownMessage });
+                await wbot.sendMessage(jid, { text: typebotUnknownMessage });
             } else {
                 for (const message of messages) {
                     console.log(JSON.stringify(message, null, 2))
@@ -429,7 +430,7 @@ const typebotListener = async ({
 
             await ticket.reload();
 
-            await wbot.sendMessage(`${number}@c.us`, { text: typebotRestartMessage })
+            await wbot.sendMessage(jid, { text: typebotRestartMessage })
 
         }
         if (body === typebotKeywordFinish) {
