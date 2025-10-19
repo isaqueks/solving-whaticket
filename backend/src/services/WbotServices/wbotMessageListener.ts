@@ -571,7 +571,6 @@ const verifyGroup = async (
   };
 
   const contact = await CreateOrUpdateContactService(contactData);
-  console.log(contact)
 
   return contact;
 };
@@ -1834,7 +1833,10 @@ const handleMessage = async (
   companyId: number
 ): Promise<void> => {
 
-  console.log('HANDLE MESSAGE')
+  try { throw new Error('') } 
+  catch (err) {
+    console.log('handleMessage', err.stack)
+  }
   
   let mediaSent: Message | undefined;
   
@@ -1939,6 +1941,7 @@ const handleMessage = async (
         queueId: null,
       });
       await verifyQueue(wbot, msg, ticket, ticket.contact);
+      console.log('RETURN 4')
       return;
     }
 
