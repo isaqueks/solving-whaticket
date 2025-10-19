@@ -1836,7 +1836,10 @@ const handleMessage = async (
   
   let mediaSent: Message | undefined;
   
-  if (!isValidMsg(msg)) return;
+  if (!isValidMsg(msg)) {
+    console.log("Mensagem inválida", msg);
+    return;
+  }
   console.log(msg);
 
   try {
@@ -1952,6 +1955,7 @@ const handleMessage = async (
     }
 
     if (hasMedia) {
+      console.log('hasMedia')
       mediaSent = await verifyMediaMessage(msg, ticket, contact);
     } else {
       await verifyMessage(msg, ticket, contact);
