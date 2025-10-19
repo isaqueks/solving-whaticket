@@ -1883,7 +1883,10 @@ const handleMessage = async (
       }
     }
 
-    if (msgIsGroupBlock?.value === "enabled" && isGroup) return;
+    if (msgIsGroupBlock?.value === "enabled" && isGroup) {
+      console.log('Block group')
+      return;
+    }
 
     if (isGroup) {
       groupContact = await verifyGroup(msg, wbot, companyId);
@@ -2269,7 +2272,7 @@ const handleMessage = async (
     }
 
   } catch (err) {
-    console.log(err)
+    console.error(err)
     Sentry.captureException(err);
     logger.error(`Error handling whatsapp message: Err: ${err}`);
   }
