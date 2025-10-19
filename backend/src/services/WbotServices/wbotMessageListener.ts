@@ -1834,6 +1834,7 @@ const handleMessage = async (
   companyId: number
 ): Promise<void> => {
 
+  console.log('HANDLE MESSAGE')
   
   let mediaSent: Message | undefined;
   
