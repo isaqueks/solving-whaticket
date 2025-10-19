@@ -1035,6 +1035,7 @@ const isValidMsg = (msg: proto.IWebMessageInfo): boolean => {
   if (msg.key.remoteJid === "status@broadcast") return false;
   try {
     const msgType = getTypeMessage(msg);
+    console.log(msgType, msg)
     if (!msgType) {
       return;
     }
