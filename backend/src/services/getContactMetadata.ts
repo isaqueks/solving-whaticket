@@ -23,9 +23,8 @@ export function getContactMetadata(msg: proto.IWebMessageInfo): ContactMetadata 
 
   if (isGroup) {
     console.log('Getting contact metadata for group message');
-    console.log(msg, msg.message)
     keys = [
-      msg.key.participant,
+      msg.participant || msg.key.participant,
       msg.key['participantAlt']
     ]
   }
@@ -44,7 +43,7 @@ export function getContactMetadata(msg: proto.IWebMessageInfo): ContactMetadata 
       result.lidNumber = key.replace('@lid', '');
     }
     else if (key.endsWith('@s.whatsapp.net')) {
-      result.number = key.replace('@s.whatsapp.net', '');
+      result.number = key.replace('@s.whatsapp.net', '').split(':')[0];
     }
     else {
       console.error(`Unknown contact key format: ${key}`, msg);
