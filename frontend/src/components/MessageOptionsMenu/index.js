@@ -10,7 +10,7 @@ import { ReplyMessageContext } from "../../context/ReplyingMessage/ReplyingMessa
 import toastError from "../../errors/toastError";
 
 const MessageOptionsMenu = ({ message, menuOpen, handleClose, anchorEl }) => {
-	const { setReplyingMessage } = useContext(ReplyMessageContext);
+	const { setReplyingMessage, setEditingMessage } = useContext(ReplyMessageContext);
 	const [confirmationOpen, setConfirmationOpen] = useState(false);
 
 	const handleDeleteMessage = async () => {
@@ -20,6 +20,15 @@ const MessageOptionsMenu = ({ message, menuOpen, handleClose, anchorEl }) => {
 			toastError(err);
 		}
 	};
+
+	const handleEditMessage = async () => {
+		setEditingMessage(message);
+		handleClose();
+	}
+
+	const handleForwardMessage = async () => {
+
+	}
 
 	const hanldeReplyMessage = () => {
 		setReplyingMessage(message);
@@ -55,11 +64,17 @@ const MessageOptionsMenu = ({ message, menuOpen, handleClose, anchorEl }) => {
 				open={menuOpen}
 				onClose={handleClose}
 			>
-				{message.fromMe && (
+				{message.fromMe && <>
 					<MenuItem onClick={handleOpenConfirmationModal}>
 						{i18n.t("messageOptionsMenu.delete")}
 					</MenuItem>
-				)}
+					{['extendedTextMessage', 'conversation'].includes(message.mediaType) && <MenuItem onClick={handleEditMessage}>
+						Editar
+					</MenuItem>}
+					<MenuItem disabled onClick={handleForwardMessage}>
+						Encaminhar
+					</MenuItem>
+				</>}
 				<MenuItem onClick={hanldeReplyMessage}>
 					{i18n.t("messageOptionsMenu.reply")}
 				</MenuItem>

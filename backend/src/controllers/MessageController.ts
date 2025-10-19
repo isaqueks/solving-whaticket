@@ -28,6 +28,7 @@ type MessageData = {
   fromMe: boolean;
   read: boolean;
   quotedMsg?: Message;
+  editMsg?: Message;
   number?: string;
   closeTicket?: true;
 };
@@ -61,7 +62,7 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
 
 export const store = async (req: Request, res: Response): Promise<Response> => {
   const { ticketId } = req.params;
-  const { body, quotedMsg }: MessageData = req.body;
+  const { body, quotedMsg, editMsg }: MessageData = req.body;
   const medias = req.files as Express.Multer.File[];
   const { companyId } = req.user;
 
@@ -76,7 +77,7 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
       })
     );
   } else {
-    const send = await SendWhatsAppMessage({ body, ticket, quotedMsg, userId: +req.user.id });
+    const send = await SendWhatsAppMessage({ body, ticket, quotedMsg, editMsg, userId: +req.user.id });
   }
 
   return res.send();

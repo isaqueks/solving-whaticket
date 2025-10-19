@@ -16,12 +16,14 @@ interface Request {
   ticket: Ticket;
   userId: number;
   quotedMsg?: Message;
+  editMsg?: Message;
 }
 
 const SendWhatsAppMessage = async ({
   body,
   ticket,
   quotedMsg,
+  editMsg,
   userId
 }: Request): Promise<WAMessage> => {
   let options = {};
@@ -83,12 +85,26 @@ const SendWhatsAppMessage = async ({
 
   }
 
+  let editMessageObject: Message;
+  if (editMsg) {
+    const chatMessages = await Message.findOne({
+      where: {
+        id: editMsg.id
+      }
+    });
+
+    if (chatMessages) {
+      editMessageObject = chatMessages;
+    }
+  }
+
   try {
     console.log('body:::::::::::::::::::::::::::', body)
     map_msg.set(ticket.contact.number, { lastSystemMsg: body })
     console.log('lastSystemMsg:::::::::::::::::::::::::::', ticket.contact.number)
     const sentMessage = await wbot.sendMessage(jid, {
-      text: formatBody(body, ticket.contact)
+      text: formatBody(body, ticket.contact),
+      edit: editMessageObject ? JSON.parse(editMessageObject.dataJson).key : undefined
     },
       {
         ...options

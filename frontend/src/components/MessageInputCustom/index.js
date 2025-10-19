@@ -485,7 +485,7 @@ const MessageInputCustom = (props) => {
   const [loading, setLoading] = useState(false);
   const [recording, setRecording] = useState(false);
   const inputRef = useRef();
-  const { setReplyingMessage, replyingMessage } =
+  const { setReplyingMessage, replyingMessage, editingMessage, setEditingMessage } =
     useContext(ReplyMessageContext);
   const { user } = useContext(AuthContext);
 
@@ -495,7 +495,7 @@ const MessageInputCustom = (props) => {
 
   useEffect(() => {
     inputRef.current.focus();
-  }, [replyingMessage]);
+  }, [replyingMessage, editingMessage]);
 
   useEffect(() => {
     inputRef.current.focus();
@@ -504,6 +504,7 @@ const MessageInputCustom = (props) => {
       setShowEmoji(false);
       setMedias([]);
       setReplyingMessage(null);
+      setEditingMessage(null);
     };
   }, [ticketId, setReplyingMessage]);
   
@@ -610,6 +611,7 @@ const MessageInputCustom = (props) => {
         ? `*${user?.name}:*\n${inputMessage.trim()}`
         : inputMessage.trim(),
       quotedMsg: replyingMessage,
+      editMsg: editingMessage
     };
 
 
@@ -643,6 +645,7 @@ const MessageInputCustom = (props) => {
 
     setShowEmoji(false);
     // setLoading(false);
+    setEditingMessage(null);
     setReplyingMessage(null);
   };
 
@@ -738,6 +741,37 @@ const MessageInputCustom = (props) => {
     );
   };
 
+    const renderEditingMessage = (message) => {
+    return (
+      <div className={classes.replyginMsgWrapper}>
+        <div className={classes.replyginMsgContainer}>
+          <span
+            className={clsx(classes.replyginContactMsgSideColor, {
+              [classes.replyginSelfMsgSideColor]: !message.fromMe,
+            })}
+          ></span>
+          <div className={classes.replyginMsgBody}>
+            {!message.fromMe && (
+              <span className={classes.messageContactName}>
+                {message.contact?.name}
+              </span>
+            )}
+            {message.body}
+          </div>
+        </div>
+        <IconButton
+          aria-label="showRecorder"
+          component="span"
+          disabled={loading || !isOpen()}
+          onClick={() => setEditingMessage(null)}
+        >
+          <ClearIcon className={classes.sendMessageIcons} />
+        </IconButton>
+      </div>
+    );
+  };
+
+
   if (medias.length > 0)
     return (
       <Paper elevation={0} square className={classes.viewMediaInputWrapper}>
@@ -773,6 +807,7 @@ const MessageInputCustom = (props) => {
     return (
       <Paper square elevation={0} className={classes.mainWrapper}>
         {replyingMessage && renderReplyingMessage(replyingMessage)}
+        {editingMessage && renderEditingMessage(editingMessage)}
         <div className={classes.newMessageBox}>
           <EmojiOptions
             disabled={disableOption()}
