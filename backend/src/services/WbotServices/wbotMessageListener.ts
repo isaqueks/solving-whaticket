@@ -835,7 +835,7 @@ export const verifyMessage = async (
   const isEdited = getTypeMessage(msg) == 'editedMessage';
 
   const messageData = {
-    id: isEdited ? msg?.message?.protocolMessage?.key?.id : msg.key.id,
+    id: msg.key.id,
     ticketId: ticket.id,
     contactId: msg.key.fromMe ? undefined : contact.id,
     body,
