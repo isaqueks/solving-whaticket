@@ -1,4 +1,3 @@
-import gracefulShutdown from "http-graceful-shutdown";
 import app from "./app";
 import { initIO } from "./libs/socket";
 import { logger } from "./utils/logger";
@@ -41,4 +40,3 @@ if (process.env.PORT === process.env.MAIN_PORT) {
 
   initIO(server);
 }
-gracefulShutdown(server);
