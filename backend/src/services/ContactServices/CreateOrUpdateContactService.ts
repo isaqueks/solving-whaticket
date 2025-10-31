@@ -44,7 +44,27 @@ const CreateOrUpdateContactService = async (data: Request): Promise<Contact> => 
     lidNumber
   } = data;
 
-  const GP = isGroup || number.length > 13;
+  if (!number) {
+    if (!lidNumber) {
+      throw new Error("Number or LID Number is required to create or update a contact.");
+    }
+
+    const existing = await Contact.findOne({
+      where: {
+        lidNumber,
+        companyId
+      }
+    });
+
+    if (existing) {
+      number = existing.number;
+    }
+    else {
+      throw new Error("Number is required to create or update a contact when LID Number does not exist.");
+    }
+  }
+
+  const GP = isGroup || (number && number.length > 13);
   number = GP ? number : number.replace(/[^0-9|-]/g, "");
 
   const io = getIO();
