@@ -59,10 +59,10 @@ import { getMessageOptions } from "./SendWhatsAppMedia";
 import { getCachedPFP } from "./GetCachedPFP";
 import { getContactMetadata, getGroupMetadata } from "../getContactMetadata";
 import { getContactJid } from "../../helpers/getContactJid";
+import fs from 'fs';
 
 const request = require("request");
 
-const fs = require('fs')
 
 type Session = WASocket & {
   id?: number;
@@ -158,7 +158,7 @@ export const sendMessageImage = async (
   try {
     sentMessage = await wbot.sendMessage(getContactJid(contact),
       {
-        image: url ? { url } : fs.readFileSync(`public/temp/${caption}-${makeid(10)}`),
+        image: url ? { url } : await fs.promises.readFile(`public/temp/${caption}-${makeid(10)}`),
         fileName: caption,
         caption: caption,
         mimetype: 'image/jpeg'
@@ -185,7 +185,7 @@ export const sendMessageLink = async (
   let sentMessage: proto.IWebMessageInfo;
   try {
     sentMessage = await wbot.sendMessage(getContactJid(contact), {
-      document: url ? { url } : fs.readFileSync(`public/temp/${caption}-${makeid(10)}`),
+      document: url ? { url } : await fs.promises.readFile(`public/temp/${caption}-${makeid(10)}`),
       fileName: caption,
       caption: caption,
       mimetype: 'application/pdf'
@@ -656,8 +656,8 @@ const handleOpenAi = async (
     }
   } else if (msg.message?.audioMessage) {
     const mediaUrl = mediaSent!.mediaUrl!.split("/").pop();
-    const file = fs.createReadStream(`${publicFolder}/${mediaUrl}`) as any;
-    const transcription = await openai.createTranscription(file, "whisper-1");
+    const file = fs.createReadStream(`${publicFolder}/${mediaUrl}`);
+    const transcription = await openai.createTranscription(file as any, "whisper-1");
 
     messagesOpenAi = [];
     messagesOpenAi.push({ role: "system", content: promptSystem });

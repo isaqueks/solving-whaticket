@@ -63,7 +63,7 @@ export const getMessageOptions = async (
 
     if (typeMessage === "video") {
       options = {
-        video: fs.readFileSync(pathMedia),
+        video: await fs.promises.readFile(pathMedia),
         caption: body ? body : '',
         fileName: fileName
         // gifPlayback: true
@@ -73,14 +73,14 @@ export const getMessageOptions = async (
       const convert = await processAudio(pathMedia);
       if (typeAudio) {
         options = {
-          audio: fs.readFileSync(convert),
+          audio: await fs.promises.readFile(convert),
           mimetype: typeAudio ? "audio/mp4" : mimeType,
           caption: body ? body : null,
           ptt: true
         };
       } else {
         options = {
-          audio: fs.readFileSync(convert),
+          audio: await fs.promises.readFile(convert),
           mimetype: typeAudio ? "audio/mp4" : mimeType,
           caption: body ? body : null,
           ptt: true
@@ -88,21 +88,21 @@ export const getMessageOptions = async (
       }
     } else if (typeMessage === "document") {
       options = {
-        document: fs.readFileSync(pathMedia),
+        document: await fs.promises.readFile(pathMedia),
         caption: body ? body : null,
         fileName: fileName,
         mimetype: mimeType
       };
     } else if (typeMessage === "application") {
       options = {
-        document: fs.readFileSync(pathMedia),
+        document: await fs.promises.readFile(pathMedia),
         caption: body ? body : null,
         fileName: fileName,
         mimetype: mimeType
       };
     } else {
       options = {
-        image: fs.readFileSync(pathMedia),
+        image: await fs.promises.readFile(pathMedia),
         caption: body ? body : null
       };
     }
@@ -130,7 +130,7 @@ const SendWhatsAppMedia = async ({
 
     if (typeMessage === "video") {
       options = {
-        video: fs.readFileSync(pathMedia),
+        video: await fs.promises.readFile(pathMedia),
         caption: bodyMessage,
         fileName: media.originalname
         // gifPlayback: true
@@ -140,34 +140,34 @@ const SendWhatsAppMedia = async ({
       if (typeAudio) {
         const convert = await processAudio(media.path);
         options = {
-          audio: fs.readFileSync(convert),
+          audio: await fs.promises.readFile(convert),
           mimetype: typeAudio ? "audio/mp4" : media.mimetype,
           ptt: true
         };
       } else {
         const convert = await processAudioFile(media.path);
         options = {
-          audio: fs.readFileSync(convert),
+          audio: await fs.promises.readFile(convert),
           mimetype: typeAudio ? "audio/mp4" : media.mimetype
         };
       }
     } else if (typeMessage === "document" || typeMessage === "text") {
       options = {
-        document: fs.readFileSync(pathMedia),
+        document: await fs.promises.readFile(pathMedia),
         caption: bodyMessage,
         fileName: media.originalname,
         mimetype: media.mimetype
       };
     } else if (typeMessage === "application") {
       options = {
-        document: fs.readFileSync(pathMedia),
+        document: await fs.promises.readFile(pathMedia),
         caption: bodyMessage,
         fileName: media.originalname,
         mimetype: media.mimetype
       };
     } else {
       options = {
-        image: fs.readFileSync(pathMedia),
+        image: await fs.promises.readFile(pathMedia),
         caption: bodyMessage,
       };
     }
