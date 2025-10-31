@@ -39,6 +39,7 @@
     "gn-api-sdk-typescript": "^1.0.7",
     "http-graceful-shutdown": "^3.1.6",
     "jsonwebtoken": "^8.5.1",
+    "link-preview-js": "^3.1.0",
     "microsoft-cognitiveservices-speech-sdk": "1.31.0",
     "multer": "^1.4.4",
     "mustache": "^4.2.0",
