@@ -766,7 +766,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, pendingMessages = [], setPend
       const viewMessagesList = [...messagesList, ...pendingMessages].map((message, index) => {
 
         if (message.isEdited) {
-          return <></>
+          return undefined;
         }
 
         const overwritten = editedMessages.filter(msg => {
@@ -785,6 +785,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, pendingMessages = [], setPend
         if (overwritten) {
           message = {
             ...message,
+            id: overwritten.id,
             isEdited: true,
             body: overwritten.body,
           }
