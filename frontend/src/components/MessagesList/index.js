@@ -67,7 +67,8 @@ const useStyles = makeStyles((theme) => ({
   },
 
   messageLeft: {
-    marginRight: 20,
+    marginRight: 'auto',
+    width: 'fit-content',
     marginTop: 2,
     minWidth: 100,
     maxWidth: 600,
@@ -121,7 +122,8 @@ const useStyles = makeStyles((theme) => ({
   },
 
   messageRight: {
-    marginLeft: 20,
+    marginLeft: 'auto',
+    width: 'fit-content',
     marginTop: 2,
     minWidth: 100,
     maxWidth: 600,
@@ -271,18 +273,14 @@ const useStyles = makeStyles((theme) => ({
 
 const useSelectStyles = makeStyles((theme) => ({
   messageWrapper: {
-    position: "relative",
-    display: "flex",
-    alignItems: "flex-start",
+    display: "grid",
+    gridTemplateColumns: '50px 1fr',
     width: "100%",
     "&:hover .message-checkbox": {
       opacity: 0.7,
     },
   },
   messageCheckbox: {
-    position: "absolute",
-    left: "-35px",
-    top: "8px",
     opacity: 0,
     transition: "opacity 0.2s ease-in-out",
     cursor: "pointer",
@@ -314,8 +312,6 @@ const useSelectStyles = makeStyles((theme) => ({
     },
   },
   messageContent: {
-    flex: 1,
-    position: "relative",
   },
 }));
 
