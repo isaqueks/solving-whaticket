@@ -36,6 +36,7 @@ import { useLocalStorage } from "../../hooks/useLocalStorage";
 import toastError from "../../errors/toastError";
 
 import useQuickMessages from "../../hooks/useQuickMessages";
+import ForwardModal from "../ForwardModal";
 
 const Mp3Recorder = new MicRecorder({ bitRate: 128 });
 
@@ -597,7 +598,7 @@ const MessageInputCustom = (props) => {
     setInputMessage(value.value);
   };
 
-  const doForwardMessages = async () => {
+  const openForwardModal = async () => {
     console.log('forwarding messages', selectedForwardMessages);
 
     setIsForwarding(false);
@@ -804,29 +805,35 @@ const MessageInputCustom = (props) => {
 
   if (isForwarding) {
     return (
-      <Paper elevation={0} square className={classes.viewMediaInputWrapper}>
-        <IconButton
-          aria-label="cancel-upload"
-          component="span"
-          onClick={(e) => setIsForwarding(false)}
-        >
-          <CancelIcon className={classes.sendMessageIcons} />
-        </IconButton>
+      <>
+        <ForwardModal
+          modalOpen={isForwarding}
+          onClose={(e) => setIsForwarding(false)}
+        />
+        <Paper elevation={0} square className={classes.viewMediaInputWrapper}>
+          <IconButton
+            aria-label="cancel-upload"
+            component="span"
+            onClick={(e) => setIsForwarding(false)}
+          >
+            <CancelIcon className={classes.sendMessageIcons} />
+          </IconButton>
 
-        
-        <span>
-          Selecione mensagens para encaminhar
-        </span>
 
-        <IconButton
-          aria-label="send-upload"
-          component="span"
-          onClick={doForwardMessages}
-          disabled={loading}
-        >
-          <ForwardIcon className={classes.sendMessageIcons} />
-        </IconButton>
-      </Paper>
+          <span>
+            Encaminhar mensagens
+          </span>
+
+          <IconButton
+            aria-label="send-upload"
+            component="span"
+            onClick={openForwardModal}
+            disabled={loading}
+          >
+            <ForwardIcon className={classes.sendMessageIcons} />
+          </IconButton>
+        </Paper>
+      </>
     );
   }
 
