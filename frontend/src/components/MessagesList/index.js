@@ -293,7 +293,6 @@ const useSelectStyles = makeStyles((theme) => ({
     "&.selected": {
       opacity: 1,
       color: "#00bfa5",
-      backgroundColor: "#ffffff"
     },
     '& *': {
       display: 'grid',
@@ -397,6 +396,10 @@ function MessageSelect({
       handleSelect(e);
     }
   };
+
+  if (!isSelectionEnabled) {
+    return <>{children}</>;
+  }
 
   return (
     <div
