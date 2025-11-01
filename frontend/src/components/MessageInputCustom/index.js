@@ -809,6 +809,7 @@ const MessageInputCustom = (props) => {
         <ForwardModal
           modalOpen={isForwarding}
           onClose={(e) => setIsForwarding(false)}
+          messages={selectedForwardMessages}
         />
         <Paper elevation={0} square className={classes.viewMediaInputWrapper}>
           <IconButton
