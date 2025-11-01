@@ -379,14 +379,14 @@ function MessageSelect({
 
   const classes = useSelectStyles();
 
-  const isSelected = selectedList.includes(message.id);
+  const isSelected = !!selectedList.find(msg => msg.id === message.id);
 
   const handleSelect = (e) => {
     e.stopPropagation();
     if (isSelected) {
-      setSelectedList(selectedList.filter((id) => id !== message.id));
+      setSelectedList(selectedList.filter(({ id }) => id !== message.id));
     } else {
-      setSelectedList([...selectedList, message.id]);
+      setSelectedList([...selectedList, message]);
     }
   };
 
