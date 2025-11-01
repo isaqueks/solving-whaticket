@@ -880,7 +880,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, pendingMessages = [], setPend
               {renderDailyTimestamps(message, index)}
               {renderNumberTicket(message, index)}
               {renderMessageDivider(message, index)}
-              <div className={classes.messageRight}>
+              <div className={classes.messageRight} style={message.isEdited ? { minWidth: '170px' } : {}}>
                 <IconButton
                   variant="contained"
                   size="small"
