@@ -762,7 +762,30 @@ const MessagesList = ({ ticket, ticketId, isGroup, pendingMessages = [], setPend
 
   const renderMessages = () => {
     if (messagesList.length > 0) {
+      const editedMessages = messagesList.filter(msg => msg.isEdited);
       const viewMessagesList = [...messagesList, ...pendingMessages].map((message, index) => {
+
+        if (message.isEdited) {
+          return <></>
+        }
+
+        const overwritten = editedMessages.filter(msg => {
+          try {
+            const raw = JSON.parse(msg.dataJson);
+            return (
+              raw?.message?.editedMessage?.message?.protocolMessage?.key?.id || 
+              raw?.message?.protocolMessage?.key?.id
+            ) === message.id;
+          }
+          catch {
+            return false;
+          }
+        }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+
+        if (overwritten) {
+          message.isEdited = true;
+          message.body = overwritten.body;
+        }
 
         if (message.mediaType === "call_log") {
           return (
