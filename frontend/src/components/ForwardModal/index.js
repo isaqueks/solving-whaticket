@@ -306,7 +306,7 @@ const ForwardModal = ({ modalOpen, onClose, initialContact, messages }) => {
                     return "Selecione uma Conexão"
                   }
                   const whatsapp = whatsapps.find(w => w.id === selectedWhatsapp)
-                  return whatsapp.name
+                  return whatsapp?.name
                 }}
               >
                 {whatsapps?.length > 0 &&
