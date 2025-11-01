@@ -1666,7 +1666,8 @@ const handleMessage = async (
         !hasMedia &&
         msgType !== "conversation" &&
         msgType !== "extendedTextMessage" &&
-        msgType !== "vcard"
+        msgType !== "vcard" &&
+        msgType !== "editedMessage"
       ) {
         return;
       }
