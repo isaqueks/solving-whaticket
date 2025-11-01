@@ -501,6 +501,12 @@ const MessageInputCustom = (props) => {
     inputRef.current.focus();
   }, [replyingMessage, editingMessage]);
 
+    useEffect(() => {
+      if (editingMessage) {
+        setInputMessage(editingMessage.body);
+      }
+  }, [editingMessage]);
+
   useEffect(() => {
     inputRef.current.focus();
     return () => {
