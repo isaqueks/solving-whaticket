@@ -146,7 +146,13 @@ const ForwardModal = ({ modalOpen, onClose, initialContact, messages }) => {
         contactId,
         whatsappId,
         messages
-      })
+      });
+
+      await api.post("/messages/forward", {
+        contactId,
+        whatsappId,
+        messagesId: messages.map(m => m.id)
+      });
 
       onClose(true);
     } catch (err) {

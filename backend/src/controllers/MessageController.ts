@@ -19,6 +19,7 @@ import DeleteWhatsAppMessage from "../services/WbotServices/DeleteWhatsAppMessag
 import GetProfilePicUrl from "../services/WbotServices/GetProfilePicUrl";
 import SendWhatsAppMedia from "../services/WbotServices/SendWhatsAppMedia";
 import SendWhatsAppMessage from "../services/WbotServices/SendWhatsAppMessage";
+import ForwardWhatsAppMessage from "../services/WbotServices/ForwardWhatsAppMessage";
 type IndexQuery = {
   pageNumber: string;
 };
@@ -59,6 +60,25 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
 
   return res.json({ count, messages, ticket, hasMore });
 };
+
+type ForwardData = {
+  contactId: number;
+  whatsappId?: number;
+  messagesId: string[];
+}
+
+export const forward = async (req: Request, res: Response): Promise<Response> => {
+  const { contactId, whatsappId, messagesId }: ForwardData = req.body;
+  const { companyId } = req.user;
+
+  await ForwardWhatsAppMessage({
+    contactId,
+    whatsappId,
+    messagesId,
+  });
+
+  return res.send();
+}
 
 export const store = async (req: Request, res: Response): Promise<Response> => {
   const { ticketId } = req.params;
@@ -192,3 +212,4 @@ export const send = async (req: Request, res: Response): Promise<Response> => {
     }
   }
 };
+
