@@ -329,6 +329,7 @@ const CustomInput = (props) => {
     handleInputPaste,
     disableOption,
     handleQuickAnswersClick,
+    isEditingMessage,
   } = props;
   const classes = useStyles();
   const [quickMessages, setQuickMessages] = useState([]);
@@ -402,6 +403,9 @@ const CustomInput = (props) => {
       return disabledReason;
     }
     if (isOpen()) {
+      if (isEditingMessage) {
+        return 'Editar mensagem';
+      }
       return i18n.t("messagesInput.placeholderOpen");
     }
     return i18n.t("messagesInput.placeholderClosed");
@@ -840,6 +844,7 @@ const MessageInputCustom = (props) => {
             handleInputPaste={handleInputPaste}
             disableOption={disableOption}
             handleQuickAnswersClick={handleQuickAnswersClick}
+            isEditingMessage={!!editingMessage}
           />
 
           <ActionButtons
