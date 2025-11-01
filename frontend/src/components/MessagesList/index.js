@@ -865,7 +865,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, pendingMessages = [], setPend
                     {message.mediaType === "locationMessage" || message.mediaType === "contactMessage" ? null : message.body}
                   </MarkdownWrapper>
                   <span className={classes.timestamp}>
-                    {format(parseISO(message.createdAt), "HH:mm")}
+                    {message.isEdited ? 'Editada' : ''}&nbsp;{format(parseISO(message.createdAt), "HH:mm")}
                   </span>
                 </div>
               </div>
@@ -906,7 +906,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, pendingMessages = [], setPend
                   {message.quotedMsg && renderQuotedMessage(message)}
                   <MarkdownWrapper>{message.body}</MarkdownWrapper>
                   <span className={classes.timestamp}>
-                    {format(parseISO(message.createdAt), "HH:mm")}
+                    {message.isEdited ? 'Editada' : ''}&nbsp;{format(parseISO(message.createdAt), "HH:mm")}
                     {renderMessageAck(message)}
                   </span>
                 </div>
