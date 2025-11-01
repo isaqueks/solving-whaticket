@@ -458,7 +458,7 @@ const MessagesList = ({
   useEffect(() => {
     dispatch({ type: "RESET" });
     setPageNumber(1);
-    setForwardSelection([]);
+    setSelectedForwardMessages([]);
     setIsForwarding(false);
 
     currentTicketId.current = ticketId;
