@@ -783,8 +783,11 @@ const MessagesList = ({ ticket, ticketId, isGroup, pendingMessages = [], setPend
         }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
 
         if (overwritten) {
-          message.isEdited = true;
-          message.body = overwritten.body;
+          message = {
+            ...message,
+            isEdited: true,
+            body: overwritten.body,
+          }
         }
 
         if (message.mediaType === "call_log") {
