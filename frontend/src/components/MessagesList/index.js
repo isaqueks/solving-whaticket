@@ -33,6 +33,7 @@ import VCardPreview from "../VCardPreview";
 import api from "../../services/api";
 import toastError from "../../errors/toastError";
 import { SocketContext } from "../../context/Socket/SocketContext";
+import { ReplyMessageContext } from "../../context/ReplyingMessage/ReplyingMessageContext";
 
 const useStyles = makeStyles((theme) => ({
   messagesListWrapper: {
@@ -371,12 +372,12 @@ const reducer = (state, action) => {
   }
 };
 
-function MessageSelect({ 
-  children, 
-  isSelectionEnabled, 
-  selectedList, 
-  setSelectedList, 
-  message 
+function MessageSelect({
+  children,
+  isSelectionEnabled,
+  selectedList,
+  setSelectedList,
+  message
 }) {
 
   const classes = useSelectStyles();
@@ -400,14 +401,13 @@ function MessageSelect({
   };
 
   return (
-    <div 
+    <div
       className={`${classes.messageWrapper} ${isSelected ? classes.selectedMessage : ''}`}
       onClick={handleMessageClick}
     >
-      <div 
-        className={`${classes.messageCheckbox} message-checkbox ${
-          isSelectionEnabled ? 'visible' : ''
-        } ${isSelected ? 'selected' : ''}`}
+      <div
+        className={`${classes.messageCheckbox} message-checkbox ${isSelectionEnabled ? 'visible' : ''
+          } ${isSelected ? 'selected' : ''}`}
         onClick={handleSelect}
       >
         {isSelected ? (
@@ -423,15 +423,15 @@ function MessageSelect({
   );
 }
 
-const MessagesList = ({ 
-  ticket, 
-  ticketId, 
-  isGroup, 
-  pendingMessages = [], 
-  setPendingMessages = ()=>0, 
-  allowSelection = false,
-  selection = [], 
-  setSelection = (arr) => {} 
+const MessagesList = ({
+  ticket,
+  ticketId,
+  isGroup,
+  pendingMessages = [],
+  setPendingMessages = () => 0,
+  // allowSelection = false,
+  // selection = [], 
+  // setSelection = (arr) => {} 
 }) => {
   const classes = useStyles();
 
@@ -447,6 +447,13 @@ const MessagesList = ({
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
   const socketManager = useContext(SocketContext);
   const lastMessageRef = useRef();
+
+  const {
+    isForwarding,
+    setIsForwarding,
+    selectedForwardMessages,
+    setSelectedForwardMessages
+  } = useContext(ReplyMessageContext);
 
   useEffect(() => {
     dispatch({ type: "RESET" });
@@ -521,9 +528,9 @@ const MessagesList = ({
 
     for (const pending of pendingMessages) {
       const correspondingMessage = messagesList.find(
-        m => 
-          m.body === pending.body && 
-          m.fromMe === pending.fromMe && 
+        m =>
+          m.body === pending.body &&
+          m.fromMe === pending.fromMe &&
           m.mediaType === pending.mediaType &&
           +new Date(m.createdAt) >= (+new Date(pending.createdAt) - 5 * 60 * 1000)
       );
@@ -830,7 +837,7 @@ const MessagesList = ({
           try {
             const raw = JSON.parse(msg.dataJson);
             return (
-              raw?.message?.editedMessage?.message?.protocolMessage?.key?.id || 
+              raw?.message?.editedMessage?.message?.protocolMessage?.key?.id ||
               raw?.message?.protocolMessage?.key?.id
             ) === message.id;
           }
@@ -886,51 +893,51 @@ const MessagesList = ({
               {renderDailyTimestamps(message, index)}
               {renderNumberTicket(message, index)}
               {renderMessageDivider(message, index)}
-              <MessageSelect selectedList={selection} setSelectedList={setSelection} isSelectionEnabled={allowSelection} message={message}>
-              <div className={classes.messageLeft}>
-                <IconButton
-                  variant="contained"
-                  size="small"
-                  id="messageActionsButton"
-                  disabled={message.isDeleted}
-                  className={classes.messageActionsButton}
-                  onClick={(e) => handleOpenMessageOptionsMenu(e, message)}
-                >
-                  <ExpandMore />
-                </IconButton>
-                {isGroup && (
-                  <span className={classes.messageContactName}>
-                    {message.contact?.name}
-                  </span>
-                )}
+              <MessageSelect selectedList={selectedForwardMessages} setSelectedList={setSelectedForwardMessages} isSelectionEnabled={isForwarding} message={message}>
+                <div className={classes.messageLeft}>
+                  <IconButton
+                    variant="contained"
+                    size="small"
+                    id="messageActionsButton"
+                    disabled={message.isDeleted}
+                    className={classes.messageActionsButton}
+                    onClick={(e) => handleOpenMessageOptionsMenu(e, message)}
+                  >
+                    <ExpandMore />
+                  </IconButton>
+                  {isGroup && (
+                    <span className={classes.messageContactName}>
+                      {message.contact?.name}
+                    </span>
+                  )}
 
-                {/* aviso de mensagem apagado pelo contato */}
-                {message.isDeleted && (
-                  <div>
-                    <span className={"message-deleted"}
-                    >Essa mensagem foi apagada pelo contato &nbsp;
-                      <Block
-                        color="error"
-                        fontSize="small"
-                        className={classes.deletedIcon}
-                      />
+                  {/* aviso de mensagem apagado pelo contato */}
+                  {message.isDeleted && (
+                    <div>
+                      <span className={"message-deleted"}
+                      >Essa mensagem foi apagada pelo contato &nbsp;
+                        <Block
+                          color="error"
+                          fontSize="small"
+                          className={classes.deletedIcon}
+                        />
+                      </span>
+                    </div>
+                  )}
+
+                  {(message.mediaUrl || message.mediaType === "locationMessage" || message.mediaType === "vcard" || message.mediaType === "contactMessage"
+                    //|| message.mediaType === "multi_vcard" 
+                  ) && checkMessageMedia(message)}
+                  <div className={classes.textContentItem}>
+                    {message.quotedMsg && renderQuotedMessage(message)}
+                    <MarkdownWrapper>
+                      {message.mediaType === "locationMessage" || message.mediaType === "contactMessage" ? null : message.body}
+                    </MarkdownWrapper>
+                    <span className={classes.timestamp}>
+                      {message.isEdited ? 'Editada' : ''}&nbsp;{format(parseISO(message.createdAt), "HH:mm")}
                     </span>
                   </div>
-                )}
-
-                {(message.mediaUrl || message.mediaType === "locationMessage" || message.mediaType === "vcard" || message.mediaType === "contactMessage"
-                  //|| message.mediaType === "multi_vcard" 
-                ) && checkMessageMedia(message)}
-                <div className={classes.textContentItem}>
-                  {message.quotedMsg && renderQuotedMessage(message)}
-                  <MarkdownWrapper>
-                    {message.mediaType === "locationMessage" || message.mediaType === "contactMessage" ? null : message.body}
-                  </MarkdownWrapper>
-                  <span className={classes.timestamp}>
-                    {message.isEdited ? 'Editada' : ''}&nbsp;{format(parseISO(message.createdAt), "HH:mm")}
-                  </span>
                 </div>
-              </div>
               </MessageSelect>
             </React.Fragment>
           );
@@ -940,41 +947,41 @@ const MessagesList = ({
               {renderDailyTimestamps(message, index)}
               {renderNumberTicket(message, index)}
               {renderMessageDivider(message, index)}
-              <MessageSelect selectedList={selection} setSelectedList={setSelection} isSelectionEnabled={allowSelection} message={message}>
-              <div className={classes.messageRight} style={message.isEdited ? { minWidth: '170px' } : {}}>
-                <IconButton
-                  variant="contained"
-                  size="small"
-                  id="messageActionsButton"
-                  disabled={message.isDeleted}
-                  className={classes.messageActionsButton}
-                  onClick={(e) => handleOpenMessageOptionsMenu(e, message)}
-                >
-                  <ExpandMore />
-                </IconButton>
-                {(message.mediaUrl || message.mediaType === "locationMessage" || message.mediaType === "vcard" || message.mediaType === "contactMessage"
-                  //|| message.mediaType === "multi_vcard" 
-                ) && checkMessageMedia(message)}
-                <div
-                  className={clsx(classes.textContentItem, {
-                    [classes.textContentItemDeleted]: message.isDeleted,
-                  })}
-                >
-                  {message.isDeleted && (
-                    <Block
-                      color="disabled"
-                      fontSize="small"
-                      className={classes.deletedIcon}
-                    />
-                  )}
-                  {message.quotedMsg && renderQuotedMessage(message)}
-                  <MarkdownWrapper>{message.body}</MarkdownWrapper>
-                  <span className={classes.timestamp}>
-                    {message.isEdited ? 'Editada' : ''}&nbsp;{format(parseISO(message.createdAt), "HH:mm")}
-                    {renderMessageAck(message)}
-                  </span>
+              <MessageSelect selectedList={selectedForwardMessages} setSelectedList={setSelectedForwardMessages} isSelectionEnabled={isForwarding} message={message}>
+                <div className={classes.messageRight} style={message.isEdited ? { minWidth: '170px' } : {}}>
+                  <IconButton
+                    variant="contained"
+                    size="small"
+                    id="messageActionsButton"
+                    disabled={message.isDeleted}
+                    className={classes.messageActionsButton}
+                    onClick={(e) => handleOpenMessageOptionsMenu(e, message)}
+                  >
+                    <ExpandMore />
+                  </IconButton>
+                  {(message.mediaUrl || message.mediaType === "locationMessage" || message.mediaType === "vcard" || message.mediaType === "contactMessage"
+                    //|| message.mediaType === "multi_vcard" 
+                  ) && checkMessageMedia(message)}
+                  <div
+                    className={clsx(classes.textContentItem, {
+                      [classes.textContentItemDeleted]: message.isDeleted,
+                    })}
+                  >
+                    {message.isDeleted && (
+                      <Block
+                        color="disabled"
+                        fontSize="small"
+                        className={classes.deletedIcon}
+                      />
+                    )}
+                    {message.quotedMsg && renderQuotedMessage(message)}
+                    <MarkdownWrapper>{message.body}</MarkdownWrapper>
+                    <span className={classes.timestamp}>
+                      {message.isEdited ? 'Editada' : ''}&nbsp;{format(parseISO(message.createdAt), "HH:mm")}
+                      {renderMessageAck(message)}
+                    </span>
+                  </div>
                 </div>
-              </div>
               </MessageSelect>
             </React.Fragment>
           );
