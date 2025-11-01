@@ -490,6 +490,7 @@ const MessageInputCustom = (props) => {
   const [showEmoji, setShowEmoji] = useState(false);
   const [loading, setLoading] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [forwardModalOpen, setForwardModalOpen] = useState(false);
   const inputRef = useRef();
   const {
     setReplyingMessage,
@@ -807,8 +808,11 @@ const MessageInputCustom = (props) => {
     return (
       <>
         <ForwardModal
-          modalOpen={isForwarding}
-          onClose={(e) => setIsForwarding(false)}
+          modalOpen={forwardModalOpen && isForwarding}
+          onClose={(e) => {
+            setIsForwarding(false);
+            setForwardModalOpen(false);
+          }}
           messages={selectedForwardMessages}
         />
         <Paper elevation={0} square className={classes.viewMediaInputWrapper}>
