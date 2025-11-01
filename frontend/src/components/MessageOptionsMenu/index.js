@@ -1,6 +1,11 @@
 import React, { useState, useContext } from "react";
 
 import MenuItem from "@material-ui/core/MenuItem";
+import ListItemIcon from "@material-ui/core/ListItemIcon";
+import DeleteIcon from "@material-ui/icons/Delete";
+import EditIcon from "@material-ui/icons/Edit";
+import ForwardIcon from "@material-ui/icons/Forward";
+import ReplyIcon from "@material-ui/icons/Reply";
 
 import { i18n } from "../../translate/i18n";
 import api from "../../services/api";
@@ -66,16 +71,28 @@ const MessageOptionsMenu = ({ message, menuOpen, handleClose, anchorEl }) => {
 			>
 				{message.fromMe && <>
 					<MenuItem onClick={handleOpenConfirmationModal}>
+						<ListItemIcon>
+							<DeleteIcon fontSize="small" />
+						</ListItemIcon>
 						{i18n.t("messageOptionsMenu.delete")}
 					</MenuItem>
 					{['extendedTextMessage', 'conversation'].includes(message.mediaType) && <MenuItem disabled={(Date.now() - new Date(message.createdAt)) > 15 * 60 * 1000} onClick={handleEditMessage}>
+						<ListItemIcon>
+							<EditIcon fontSize="small" />
+						</ListItemIcon>
 						Editar
 					</MenuItem>}
 					<MenuItem disabled onClick={handleForwardMessage}>
+						<ListItemIcon>
+							<ForwardIcon fontSize="small" />
+						</ListItemIcon>
 						Encaminhar
 					</MenuItem>
 				</>}
 				<MenuItem onClick={hanldeReplyMessage}>
+					<ListItemIcon>
+						<ReplyIcon fontSize="small" />
+					</ListItemIcon>
 					{i18n.t("messageOptionsMenu.reply")}
 				</MenuItem>
 			</Menu>
