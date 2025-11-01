@@ -274,7 +274,7 @@ const useStyles = makeStyles((theme) => ({
 const useSelectStyles = makeStyles((theme) => ({
   messageWrapper: {
     display: "grid",
-    gridTemplateColumns: '50px 1fr',
+    gridTemplateColumns: '40px 1fr',
     width: "100%",
     "&:hover .message-checkbox": {
       opacity: 0.7,
@@ -285,18 +285,20 @@ const useSelectStyles = makeStyles((theme) => ({
     transition: "opacity 0.2s ease-in-out",
     cursor: "pointer",
     zIndex: 10,
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
-    borderRadius: "50%",
     padding: "4px",
-    boxShadow: "0 2px 5px rgba(0,0,0,0.15)",
+    display: 'grid',
     "&.visible": {
       opacity: 1,
     },
     "&.selected": {
       opacity: 1,
       color: "#00bfa5",
-      backgroundColor: "#ffffff",
+      backgroundColor: "#ffffff"
     },
+    '& *': {
+      display: 'grid',
+      margin: 'auto'
+    }
   },
   selectedMessage: {
     backgroundColor: "rgba(0, 191, 165, 0.08) !important",
