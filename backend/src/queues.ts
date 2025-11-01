@@ -97,7 +97,7 @@ async function handleSendMessage(job) {
 
 
 async function handleAttachTickets() {
-  const job = new CronJob('*/3 * * * *', async () => {
+  const job = new CronJob('*/10 * * * *', async () => {
     const companies = await Company.findAll();
     companies.map(async c => {
 
@@ -730,7 +730,7 @@ const getUserByEmail = async (email: string): Promise<User> => {
 }
 
 async function handleCreateTicketAutomatic() {
-  const job = new CronJob('*/5 * * * *', async () => {
+  const job = new CronJob('*/10 * * * *', async () => {
     const contacts = await sequelize.query(/*sql*/`
     SELECT 
       c.id as id,

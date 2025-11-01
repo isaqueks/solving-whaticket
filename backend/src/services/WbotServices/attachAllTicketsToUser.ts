@@ -4,8 +4,6 @@ import { Op } from "sequelize";
 import User from "../../models/User";
 import { getIO } from "../../libs/socket";
 
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
 const QUEUE_FALAR_COM_ATENDENTE = 1;
 
 export async function attachAllTicketsToUser(companyId: number) {
@@ -16,7 +14,10 @@ export async function attachAllTicketsToUser(companyId: number) {
         [Op.is]: null
       },
       companyId,
-      queueId: QUEUE_FALAR_COM_ATENDENTE
+      queueId: QUEUE_FALAR_COM_ATENDENTE,
+      contact: {
+        attachedToEmail: { [Op.not]: null }
+      }
     },
     include: [
       'contact'
@@ -25,15 +26,26 @@ export async function attachAllTicketsToUser(companyId: number) {
 
   const io = getIO();
 
+  const userCache = new Map<string, User>();
+  async function getCachedUserByEmail(email: string, companyId: number): Promise<User | null> {
+    if (userCache.has(email)) {
+      return userCache.get(email) || null;
+    }
+
+    const user = await User.findOne({
+      where: {
+        email,
+        companyId
+      }
+    });
+
+    userCache.set(email, user);
+    return user;
+  }
+
   for (const ticket of nonAttached) {
-    await sleep(100);
     if (ticket.contact.attachedToEmail) {
-      const user = await User.findOne({
-        where: {
-          email: ticket.contact.attachedToEmail,
-          companyId
-        }
-      });
+      const user = await getCachedUserByEmail(ticket.contact.attachedToEmail, companyId);
 
       if (user) {
         await ticket.update({
