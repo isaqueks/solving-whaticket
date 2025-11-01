@@ -68,7 +68,7 @@ const MessageOptionsMenu = ({ message, menuOpen, handleClose, anchorEl }) => {
 					<MenuItem onClick={handleOpenConfirmationModal}>
 						{i18n.t("messageOptionsMenu.delete")}
 					</MenuItem>
-					{['extendedTextMessage', 'conversation'].includes(message.mediaType) && <MenuItem onClick={handleEditMessage}>
+					{['extendedTextMessage', 'conversation'].includes(message.mediaType) && <MenuItem disabled={(Date.now() - new Date(message.createdAt)) > 15 * 60 * 1000} onClick={handleEditMessage}>
 						Editar
 					</MenuItem>}
 					<MenuItem disabled onClick={handleForwardMessage}>
