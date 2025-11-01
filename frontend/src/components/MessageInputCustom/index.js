@@ -600,10 +600,7 @@ const MessageInputCustom = (props) => {
   };
 
   const openForwardModal = async () => {
-    console.log('forwarding messages', selectedForwardMessages);
-
-    setIsForwarding(false);
-    setSelectedForwardMessages([]);
+    setForwardModalOpen(true);
   }
 
   const handleUploadMedia = async (e) => {
