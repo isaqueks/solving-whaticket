@@ -33,7 +33,7 @@ const ListMessagesService = async ({
   }
 
   // await setMessagesAsRead(ticket);
-  const limit = 15;
+  const limit = 22;
   const offset = limit * (+pageNumber - 1);
 
   const options: FindOptions = {
