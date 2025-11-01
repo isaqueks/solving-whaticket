@@ -489,7 +489,16 @@ const MessageInputCustom = (props) => {
   const [loading, setLoading] = useState(false);
   const [recording, setRecording] = useState(false);
   const inputRef = useRef();
-  const { setReplyingMessage, replyingMessage, editingMessage, setEditingMessage } =
+  const { 
+    setReplyingMessage, 
+    replyingMessage, 
+    editingMessage, 
+    setEditingMessage,
+    isForwarding,
+    setIsForwarding,
+    setSelectedForwardMessages,
+    selectedForwardMessages
+  } =
     useContext(ReplyMessageContext);
   const { user } = useContext(AuthContext);
 
@@ -515,6 +524,8 @@ const MessageInputCustom = (props) => {
       setMedias([]);
       setReplyingMessage(null);
       setEditingMessage(null);
+      setIsForwarding(false);
+      setSelectedForwardMessages([]);
     };
   }, [ticketId, setReplyingMessage]);
   

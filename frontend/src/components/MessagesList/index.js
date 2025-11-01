@@ -19,6 +19,8 @@ import {
   DoneAll,
   ExpandMore,
   GetApp,
+  CheckCircle,
+  RadioButtonUnchecked,
 } from "@material-ui/icons";
 
 import MarkdownWrapper from "../MarkdownWrapper";
@@ -266,6 +268,56 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
+const useSelectStyles = makeStyles((theme) => ({
+  messageWrapper: {
+    position: "relative",
+    display: "flex",
+    alignItems: "flex-start",
+    width: "100%",
+    "&:hover .message-checkbox": {
+      opacity: 0.7,
+    },
+  },
+  messageCheckbox: {
+    position: "absolute",
+    left: "-35px",
+    top: "8px",
+    opacity: 0,
+    transition: "opacity 0.2s ease-in-out",
+    cursor: "pointer",
+    zIndex: 10,
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
+    borderRadius: "50%",
+    padding: "4px",
+    boxShadow: "0 2px 5px rgba(0,0,0,0.15)",
+    "&.visible": {
+      opacity: 1,
+    },
+    "&.selected": {
+      opacity: 1,
+      color: "#00bfa5",
+      backgroundColor: "#ffffff",
+    },
+  },
+  selectedMessage: {
+    backgroundColor: "rgba(0, 191, 165, 0.08) !important",
+    "&::before": {
+      content: '""',
+      position: "absolute",
+      left: "-20px",
+      top: 0,
+      bottom: 0,
+      width: "4px",
+      backgroundColor: "#00bfa5",
+      borderRadius: "0 2px 2px 0",
+    },
+  },
+  messageContent: {
+    flex: 1,
+    position: "relative",
+  },
+}));
+
 const ACK_SENDING = 0;
 
 const reducer = (state, action) => {
@@ -319,14 +371,74 @@ const reducer = (state, action) => {
   }
 };
 
-const MessagesList = ({ ticket, ticketId, isGroup, pendingMessages = [], setPendingMessages = ()=>0 }) => {
+function MessageSelect({ 
+  children, 
+  isSelectionEnabled, 
+  selectedList, 
+  setSelectedList, 
+  message 
+}) {
+
+  const classes = useSelectStyles();
+
+  const isSelected = selectedList.includes(message.id);
+
+  const handleSelect = (e) => {
+    e.stopPropagation();
+    if (isSelected) {
+      setSelectedList(selectedList.filter((id) => id !== message.id));
+    } else {
+      setSelectedList([...selectedList, message.id]);
+    }
+  };
+
+  const handleMessageClick = (e) => {
+    if (isSelectionEnabled) {
+      e.preventDefault();
+      handleSelect(e);
+    }
+  };
+
+  return (
+    <div 
+      className={`${classes.messageWrapper} ${isSelected ? classes.selectedMessage : ''}`}
+      onClick={handleMessageClick}
+    >
+      <div 
+        className={`${classes.messageCheckbox} message-checkbox ${
+          isSelectionEnabled ? 'visible' : ''
+        } ${isSelected ? 'selected' : ''}`}
+        onClick={handleSelect}
+      >
+        {isSelected ? (
+          <CheckCircle style={{ fontSize: 22, color: "#00bfa5" }} />
+        ) : (
+          <RadioButtonUnchecked style={{ fontSize: 22, color: "#54656f" }} />
+        )}
+      </div>
+      <div className={classes.messageContent}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+const MessagesList = ({ 
+  ticket, 
+  ticketId, 
+  isGroup, 
+  pendingMessages = [], 
+  setPendingMessages = ()=>0, 
+  allowSelection = false,
+  selection = [], 
+  setSelection = (arr) => {} 
+}) => {
   const classes = useStyles();
 
   const [messagesList, dispatch] = useReducer(reducer, []);
   const [pageNumber, setPageNumber] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(false);
-  const lastMessageRef = useRef();
 
   const [selectedMessage, setSelectedMessage] = useState({});
   const [anchorEl, setAnchorEl] = useState(null);
@@ -334,10 +446,13 @@ const MessagesList = ({ ticket, ticketId, isGroup, pendingMessages = [], setPend
   const currentTicketId = useRef(ticketId);
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
   const socketManager = useContext(SocketContext);
+  const lastMessageRef = useRef();
 
   useEffect(() => {
     dispatch({ type: "RESET" });
     setPageNumber(1);
+    setForwardSelection([]);
+    setIsForwarding(false);
 
     currentTicketId.current = ticketId;
   }, [ticketId]);
@@ -494,52 +609,11 @@ const MessagesList = ({ ticket, ticketId, isGroup, pendingMessages = [], setPend
             }
           }
         }
-        //console.log(array);
-        //console.log(contact);
-        //console.log(obj[0].number);
         return <VCardPreview contact={contact} numbers={obj[0].number} />
       }
-      /* else if (message.mediaType === "vcard") {
-        let array = message.body.split("\n");
-        let obj = [];
-        let contact = "";
-        for (let index = 0; index < array.length; index++) {
-          const v = array[index];
-          let values = v.split(":");
-          for (let ind = 0; ind < values.length; ind++) {
-            if (values[ind].indexOf("+") !== -1) {
-              obj.push({ number: values[ind] });
-            }
-            if (values[ind].indexOf("FN") !== -1) {
-              contact = values[ind + 1];
-            }
-          }
-        }
-        return <VcardPreview contact={contact} numbers={obj[0].number} />
-      } */
-      /*else if (message.mediaType === "multi_vcard") {
-        console.log("multi_vcard")
-        console.log(message)
-        
-        if(message.body !== null && message.body !== "") {
-          let newBody = JSON.parse(message.body)
-          return (
-            <>
-              {
-              newBody.map(v => (
-                <VcardPreview contact={v.name} numbers={v.number} />
-              ))
-              }
-            </>
-          )
-        } else return (<></>)
-      }*/
       else if (message.mediaType === "image") {
         return <ModalImageCors imageUrl={message.mediaUrl} />;
       } else if (message.mediaType === "audio") {
-
-        //console.log(isIOS);
-
         if (isIOS) {
           message.mediaUrl = message.mediaUrl.replace("ogg", "mp3");
 
@@ -583,23 +657,6 @@ const MessagesList = ({ ticket, ticketId, isGroup, pendingMessages = [], setPend
         );
       }
   };
-
-  /*
-    const renderMessageAck = (message) => {
-      if (message.ack === 1) {
-        return <AccessTime fontSize="small" className={classes.ackIcons} />;
-      }
-      if (message.ack === 2) {
-        return <Done fontSize="small" className={classes.ackIcons} />;
-      }
-      if (message.ack === 3) {
-        return <DoneAll fontSize="small" className={classes.ackIcons} />;
-      }
-      if (message.ack === 4 || message.ack === 5) {
-        return <DoneAll fontSize="small" className={classes.ackDoneAllIcon} />;
-      }
-    };
-    */
 
   const renderMessageAck = (message) => {
     if (message.ack === 0) {
@@ -829,6 +886,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, pendingMessages = [], setPend
               {renderDailyTimestamps(message, index)}
               {renderNumberTicket(message, index)}
               {renderMessageDivider(message, index)}
+              <MessageSelect selectedList={selection} setSelectedList={setSelection} isSelectionEnabled={allowSelection} message={message}>
               <div className={classes.messageLeft}>
                 <IconButton
                   variant="contained"
@@ -873,6 +931,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, pendingMessages = [], setPend
                   </span>
                 </div>
               </div>
+              </MessageSelect>
             </React.Fragment>
           );
         } else {
@@ -881,6 +940,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, pendingMessages = [], setPend
               {renderDailyTimestamps(message, index)}
               {renderNumberTicket(message, index)}
               {renderMessageDivider(message, index)}
+              <MessageSelect selectedList={selection} setSelectedList={setSelection} isSelectionEnabled={allowSelection} message={message}>
               <div className={classes.messageRight} style={message.isEdited ? { minWidth: '170px' } : {}}>
                 <IconButton
                   variant="contained"
@@ -915,6 +975,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, pendingMessages = [], setPend
                   </span>
                 </div>
               </div>
+              </MessageSelect>
             </React.Fragment>
           );
         }
