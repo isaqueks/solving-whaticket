@@ -18,6 +18,7 @@ import SendIcon from "@material-ui/icons/Send";
 import CancelIcon from "@material-ui/icons/Cancel";
 import ClearIcon from "@material-ui/icons/Clear";
 import MicIcon from "@material-ui/icons/Mic";
+import ForwardIcon from "@material-ui/icons/Forward";
 import CheckCircleOutlineIcon from "@material-ui/icons/CheckCircleOutline";
 import HighlightOffIcon from "@material-ui/icons/HighlightOff";
 import { FormControlLabel, Switch } from "@material-ui/core";
@@ -437,7 +438,7 @@ const CustomInput = (props) => {
           }
         }}
         onChange={(event, opt) => {
-         
+
           if (isObject(opt) && has(opt, "value") && isNil(opt.mediaPath)) {
             setInputMessage(opt.value);
             setTimeout(() => {
@@ -489,10 +490,10 @@ const MessageInputCustom = (props) => {
   const [loading, setLoading] = useState(false);
   const [recording, setRecording] = useState(false);
   const inputRef = useRef();
-  const { 
-    setReplyingMessage, 
-    replyingMessage, 
-    editingMessage, 
+  const {
+    setReplyingMessage,
+    replyingMessage,
+    editingMessage,
     setEditingMessage,
     isForwarding,
     setIsForwarding,
@@ -510,10 +511,10 @@ const MessageInputCustom = (props) => {
     inputRef.current.focus();
   }, [replyingMessage, editingMessage]);
 
-    useEffect(() => {
-      if (editingMessage) {
-        setInputMessage(signMessage ? editingMessage.body.replace(`*${user?.name}:*\n`, '') : editingMessage.body);
-      }
+  useEffect(() => {
+    if (editingMessage) {
+      setInputMessage(signMessage ? editingMessage.body.replace(`*${user?.name}:*\n`, '') : editingMessage.body);
+    }
   }, [editingMessage]);
 
   useEffect(() => {
@@ -528,7 +529,7 @@ const MessageInputCustom = (props) => {
       setSelectedForwardMessages([]);
     };
   }, [ticketId, setReplyingMessage]);
-  
+
   // const handleChangeInput = e => {
   // 	if (isObject(e) && has(e, 'value')) {
   // 		setInputMessage(e.value);
@@ -565,7 +566,7 @@ const MessageInputCustom = (props) => {
       const formData = new FormData();
       const filename = `${new Date().getTime()}.${extension}`;
       formData.append("medias", blob, filename);
-      formData.append("body",  message);
+      formData.append("body", message);
       formData.append("fromMe", true);
 
       await api.post(`/messages/${ticketId}`, formData);
@@ -575,7 +576,7 @@ const MessageInputCustom = (props) => {
     }
     setLoading(false);
   };
-  
+
   const handleQuickAnswersClick = async (value) => {
     if (value.mediaPath) {
       try {
@@ -595,6 +596,13 @@ const MessageInputCustom = (props) => {
     setInputMessage("");
     setInputMessage(value.value);
   };
+
+  const doForwardMessages = async () => {
+    console.log('forwarding messages', selectedForwardMessages);
+
+    setIsForwarding(false);
+    setSelectedForwardMessages([]);
+  }
 
   const handleUploadMedia = async (e) => {
     setLoading(true);
@@ -658,7 +666,7 @@ const MessageInputCustom = (props) => {
       setPendingMessages(prev => [...prev, pendingMsg]);
     }
     setTimeout(() => setInputMessage(""), 1);
-    
+
     try {
       await api.post(`/messages/${ticketId}`, message);
     } catch (err) {
@@ -764,7 +772,7 @@ const MessageInputCustom = (props) => {
     );
   };
 
-    const renderEditingMessage = (message) => {
+  const renderEditingMessage = (message) => {
     return (
       <div className={classes.replyginMsgWrapper}>
         <div className={classes.replyginMsgContainer}>
@@ -794,6 +802,33 @@ const MessageInputCustom = (props) => {
     );
   };
 
+  if (isForwarding) {
+    return (
+      <Paper elevation={0} square className={classes.viewMediaInputWrapper}>
+        <IconButton
+          aria-label="cancel-upload"
+          component="span"
+          onClick={(e) => setIsForwarding(false)}
+        >
+          <CancelIcon className={classes.sendMessageIcons} />
+        </IconButton>
+
+        
+        <span>
+          Selecione mensagens para encaminhar
+        </span>
+
+        <IconButton
+          aria-label="send-upload"
+          component="span"
+          onClick={doForwardMessages}
+          disabled={loading}
+        >
+          <ForwardIcon className={classes.sendMessageIcons} />
+        </IconButton>
+      </Paper>
+    );
+  }
 
   if (medias.length > 0)
     return (
