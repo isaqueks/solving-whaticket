@@ -503,7 +503,7 @@ const MessageInputCustom = (props) => {
 
     useEffect(() => {
       if (editingMessage) {
-        setInputMessage(editingMessage.body);
+        setInputMessage(signMessage ? editingMessage.body.replace(`*${user?.name}:*\n`, '') : editingMessage.body);
       }
   }, [editingMessage]);
 
