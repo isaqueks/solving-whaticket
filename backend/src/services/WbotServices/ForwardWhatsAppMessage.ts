@@ -58,15 +58,17 @@ const ForwardWhatsAppMessage = async ({
       } as any;
 
       if (message.mediaType === 'audio') {
-        opt.audio = fs.createReadStream(`${publicFolder}/${fileName}`);
+        opt.audio = await fs.promises.readFile(`${publicFolder}/${fileName}`);
         opt.ptt = message.mediaType === 'audio' && mime.lookup(message.mediaUrl) === 'audio/ogg' ? true : false;
       } else if (message.mediaType === 'image') {
-        opt.image = fs.createReadStream(`${publicFolder}/${fileName}`);
+        opt.image = await fs.promises.readFile(`${publicFolder}/${fileName}`);
       } else if (message.mediaType === 'application') {
-        opt.document = fs.createReadStream(`${publicFolder}/${fileName}`);
+        opt.document = await fs.promises.readFile(`${publicFolder}/${fileName}`);
       } else if (message.mediaType === 'video') {
-        opt.video = fs.createReadStream(`${publicFolder}/${fileName}`);
+        opt.video = await fs.promises.readFile(`${publicFolder}/${fileName}`);
       }
+
+      console.log(opt)
 
       await wbot.sendMessage(jid, {
         ...opt,
