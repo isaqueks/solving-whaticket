@@ -8,6 +8,7 @@ import { Op } from "sequelize";
 import mime from "mime-types";
 import path from "path";
 import fs from 'fs';
+import { processAudio } from "./SendWhatsAppMedia";
 
 interface Request {
   contactId: number;
@@ -58,9 +59,9 @@ const ForwardWhatsAppMessage = async ({
       } as any;
 
       if (message.mediaType === 'audio') {
-        opt.audio = await fs.promises.readFile(`${publicFolder}/${fileName}`);
-        opt.ptt = message.mediaType === 'audio' && mime.lookup(message.mediaUrl) === 'audio/ogg' ? true : false;
-        opt.mimetype = mime.lookup(message.mediaUrl) || 'audio/ogg';
+        opt.audio = await fs.promises.readFile(await processAudio(`${publicFolder}/${fileName}`));
+        opt.ptt = true
+        opt.mimetype = 'audio/mp3';
       } else if (message.mediaType === 'image') {
         opt.image = await fs.promises.readFile(`${publicFolder}/${fileName}`);
       } else if (message.mediaType === 'application') {
