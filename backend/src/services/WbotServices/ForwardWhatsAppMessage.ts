@@ -60,6 +60,7 @@ const ForwardWhatsAppMessage = async ({
       if (message.mediaType === 'audio') {
         opt.audio = await fs.promises.readFile(`${publicFolder}/${fileName}`);
         opt.ptt = message.mediaType === 'audio' && mime.lookup(message.mediaUrl) === 'audio/ogg' ? true : false;
+        opt.mimetype = mime.lookup(message.mediaUrl) || 'audio/ogg';
       } else if (message.mediaType === 'image') {
         opt.image = await fs.promises.readFile(`${publicFolder}/${fileName}`);
       } else if (message.mediaType === 'application') {
