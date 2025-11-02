@@ -59,9 +59,9 @@ const ForwardWhatsAppMessage = async ({
       } as any;
 
       if (message.mediaType === 'audio') {
-        opt.audio = await fs.promises.readFile(await processAudio(`${publicFolder}/${fileName}`));
+        opt.audio = await fs.promises.readFile(`${publicFolder}/${fileName}`);
         opt.ptt = true
-        opt.mimetype = 'audio/mp3';
+        opt.mimetype = 'audio/ogg; codecs=opus';
       } else if (message.mediaType === 'image') {
         opt.image = await fs.promises.readFile(`${publicFolder}/${fileName}`);
       } else if (message.mediaType === 'application') {
