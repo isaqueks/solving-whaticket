@@ -823,7 +823,7 @@ const MessageInputCustom = (props) => {
 
 
           <span>
-            Encaminhar mensagens
+            Encaminhe até 6 mensagens
           </span>
 
           <IconButton

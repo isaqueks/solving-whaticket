@@ -70,13 +70,11 @@ const ForwardWhatsAppMessage = async ({
         opt.video = await fs.promises.readFile(`${publicFolder}/${fileName}`);
       }
 
-      console.log(opt)
-
       await wbot.sendMessage(jid, {
         ...opt,
       });
 
-      await sleep(1000); // wait 1 second between messages to avoid spamming
+      await sleep(1500);
     }
   }
   

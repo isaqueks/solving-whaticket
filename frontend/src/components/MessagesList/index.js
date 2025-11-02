@@ -386,6 +386,8 @@ function MessageSelect({
     if (isSelected) {
       setSelectedList(selectedList.filter(({ id }) => id !== message.id));
     } else {
+      if (selectedList.length >= 6) 
+        return;
       setSelectedList([...selectedList, message]);
     }
   };

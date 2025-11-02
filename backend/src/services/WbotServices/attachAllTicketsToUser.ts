@@ -15,12 +15,15 @@ export async function attachAllTicketsToUser(companyId: number) {
       },
       companyId,
       queueId: QUEUE_FALAR_COM_ATENDENTE,
-      contact: {
-        attachedToEmail: { [Op.not]: null }
-      }
     },
     include: [
-      'contact'
+      {
+        association: 'contact',
+        required: true, // INNER JOIN (coloca false se quiser LEFT)
+        where: {
+          attachedToEmail: { [Op.not]: null }
+        }
+      }
     ]
   });
 

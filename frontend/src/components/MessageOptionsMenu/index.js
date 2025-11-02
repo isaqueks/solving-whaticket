@@ -15,9 +15,9 @@ import { ReplyMessageContext } from "../../context/ReplyingMessage/ReplyingMessa
 import toastError from "../../errors/toastError";
 
 const MessageOptionsMenu = ({ message, menuOpen, handleClose, anchorEl }) => {
-	const { 
-		setReplyingMessage, 
-		setEditingMessage, 
+	const {
+		setReplyingMessage,
+		setEditingMessage,
 		setIsForwarding,
 		setSelectedForwardMessages
 	} = useContext(ReplyMessageContext);
@@ -89,13 +89,13 @@ const MessageOptionsMenu = ({ message, menuOpen, handleClose, anchorEl }) => {
 						</ListItemIcon>
 						Editar
 					</MenuItem>}
-					<MenuItem disabled={false} onClick={handleForwardMessage}>
-						<ListItemIcon>
-							<ForwardIcon fontSize="small" />
-						</ListItemIcon>
-						Encaminhar
-					</MenuItem>
 				</>}
+				<MenuItem onClick={handleForwardMessage}>
+					<ListItemIcon>
+						<ForwardIcon fontSize="small" />
+					</ListItemIcon>
+					Encaminhar
+				</MenuItem>
 				<MenuItem onClick={hanldeReplyMessage}>
 					<ListItemIcon>
 						<ReplyIcon fontSize="small" />

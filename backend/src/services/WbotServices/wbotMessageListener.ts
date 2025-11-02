@@ -1629,7 +1629,7 @@ const handleMessage = async (
 
   let mediaSent: Message | undefined;
 
-  console.log('HANDLE MESSAGE', JSON.stringify(msg, null, 2))
+  // console.log('HANDLE MESSAGE', JSON.stringify(msg, null, 2))
   
   if (!isValidMsg(msg)) {
     console.log('Not valid')
