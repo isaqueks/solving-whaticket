@@ -166,14 +166,14 @@ const MarkdownWrapper = ({ children, message }) => {
 	const options = React.useMemo(() => {
 		const markdownOptions = {
 			disableParsingRawHTML: true,
-			forceInline: true,
+			forceInline: false,
 			overrides: {
-				a: { component: CustomLink },
+				a: CustomLink,
 			},
 		};
 
 		elements.forEach(element => {
-			if (!allowedElements.includes(element)) {
+			if (!allowedElements.includes(element) && element !== 'a') {
 				markdownOptions.overrides[element] = el => el.children || null;
 			}
 		});
