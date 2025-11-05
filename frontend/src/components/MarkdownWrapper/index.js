@@ -163,13 +163,12 @@ const MarkdownWrapper = ({ children, message }) => {
 		children = children.replace(tildaRegex, "~~$1~~");
 	}
 
-	// remove markdown link syntax [text](url)
-	const markdownLinkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
-	children = children.replace(markdownLinkRegex, "[$1] ($2)");
+	// remove links markdown: [texto](url) → texto (url)
+	children = children.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/gi, "[$1] ($2)");
 
-	// linkify plain URLs only
-	const urlRegex = /((https?:\/\/|www\.)[^\s]+)/g;
-	children = children.replace(urlRegex, url => {
+	// autolink só URLs cruas
+	const urlRegex = /((https?:\/\/|www\.)[^\s]+)/gi;
+	children = children.replace(urlRegex, (url) => {
 		const normalized = url.startsWith("http") ? url : `https://${url}`;
 		return `[${url}](${normalized})`;
 	});
