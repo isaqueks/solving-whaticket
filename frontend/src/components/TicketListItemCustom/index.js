@@ -541,11 +541,11 @@ const TicketListItemCustom = ({ ticket }) => {
 
           {/* Badges (ex: conexão, usuário, fila, tags) */}
           <div className={classes.secondaryContentSecond}>
-            {ticket?.whatsapp?.name && (
+            {/* {ticket?.whatsapp?.name && (
               <Badge className={classes.connectionTag}>
                 {ticket?.whatsapp?.name?.toUpperCase()}
               </Badge>
-            )}
+            )} */}
             {ticketUser && (
               <Badge
                 style={{ backgroundColor: "#000" }}
