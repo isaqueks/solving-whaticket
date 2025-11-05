@@ -246,7 +246,11 @@ export const getBodyMessage = (msg: proto.IWebMessageInfo): string | null => {
 
     const types = {
       conversation: msg?.message?.conversation,
-      editedMessage: msg?.message?.protocolMessage?.editedMessage?.conversation || msg?.message?.protocolMessage?.editedMessage?.extendedTextMessage?.text,
+      editedMessage: 
+        msg?.message?.protocolMessage?.editedMessage?.conversation || 
+        msg?.message?.protocolMessage?.editedMessage?.extendedTextMessage?.text ||
+        msg?.message.editedMessage?.['protocolMessage']?.editedMessage?.conversation || 
+        msg?.message.editedMessage?.['protocolMessage']?.editedMessage?.extendedTextMessage?.text,
       imageMessage: msg.message?.imageMessage?.caption,
       videoMessage: msg.message?.videoMessage?.caption,
       extendedTextMessage: msg.message?.extendedTextMessage?.text,
