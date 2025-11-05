@@ -163,6 +163,17 @@ const MarkdownWrapper = ({ children, message }) => {
 		children = children.replace(tildaRegex, "~~$1~~");
 	}
 
+	// remove markdown link syntax [text](url)
+	const markdownLinkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+	children = children.replace(markdownLinkRegex, "[$1] ($2)");
+
+	// linkify plain URLs only
+	const urlRegex = /((https?:\/\/|www\.)[^\s]+)/g;
+	children = children.replace(urlRegex, url => {
+		const normalized = url.startsWith("http") ? url : `https://${url}`;
+		return `[${url}](${normalized})`;
+	});
+
 	const options = React.useMemo(() => {
 		const markdownOptions = {
 			disableParsingRawHTML: true,
