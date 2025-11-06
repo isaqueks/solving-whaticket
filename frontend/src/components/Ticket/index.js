@@ -102,7 +102,7 @@ const Ticket = (props) => {
         }
       };
       fetchTicket();
-    }, 100);
+    }, 10);
     return () => clearTimeout(delayDebounceFn);
   }, [ticketId, user, history]);
 
