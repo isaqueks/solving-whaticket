@@ -121,7 +121,7 @@ const Quickemessages = () => {
     setLoading(true);
     const delayDebounceFn = setTimeout(() => {
       fetchQuickemessages();
-    }, 500);
+    }, 50);
     return () => clearTimeout(delayDebounceFn);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParam, pageNumber]);

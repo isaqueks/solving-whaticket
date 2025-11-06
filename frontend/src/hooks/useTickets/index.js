@@ -63,7 +63,7 @@ const useTickets = ({
         }
       };
       fetchTickets();
-    }, 500);
+    }, 50);
     return () => clearTimeout(delayDebounceFn);
   }, [
     searchParam,

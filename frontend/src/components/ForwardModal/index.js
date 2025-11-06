@@ -79,7 +79,7 @@ const ForwardModal = ({ modalOpen, onClose, initialContact, messages }) => {
 
       fetchContacts();
       setLoading(false);
-    }, 500);
+    }, 50);
     return () => clearTimeout(delayDebounceFn);
   }, [])
 
@@ -103,7 +103,7 @@ const ForwardModal = ({ modalOpen, onClose, initialContact, messages }) => {
         }
       };
       fetchContacts();
-    }, 500);
+    }, 50);
     return () => clearTimeout(delayDebounceFn);
   }, [searchParam, modalOpen]);
 

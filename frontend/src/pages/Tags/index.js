@@ -130,7 +130,7 @@ const Tags = () => {
     setLoading(true);
     const delayDebounceFn = setTimeout(() => {
       fetchTags();
-    }, 500);
+    }, 50);
     return () => clearTimeout(delayDebounceFn);
   }, [searchParam, pageNumber, fetchTags]);
 

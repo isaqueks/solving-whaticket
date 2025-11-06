@@ -198,7 +198,7 @@ const MainListItems = (props) => {
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       fetchChats();
-    }, 500);
+    }, 100);
     return () => clearTimeout(delayDebounceFn);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParam, pageNumber]);

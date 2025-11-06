@@ -35,7 +35,7 @@ const useContacts = ({ searchParam, pageNumber, date, dateStart, dateEnd }) => {
             };
 
             fetchContacts();
-        }, 500);
+        }, 100);
         return () => clearTimeout(delayDebounceFn);
     }, [searchParam, pageNumber, date, dateStart, dateEnd]);
 

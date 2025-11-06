@@ -126,7 +126,7 @@ const ContactLists = () => {
         }
       };
       fetchContactLists();
-    }, 500);
+    }, 100);
     return () => clearTimeout(delayDebounceFn);
   }, [searchParam, pageNumber]);
 

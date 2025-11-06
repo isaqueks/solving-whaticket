@@ -28,7 +28,7 @@ const useMessages = ({ fromMe, dateStart, dateEnd }) => {
             };
 
             fetchMessages();
-        }, 500);
+        }, 100);
         return () => clearTimeout(delayDebounceFn);
     }, [dateStart, dateEnd]);
 

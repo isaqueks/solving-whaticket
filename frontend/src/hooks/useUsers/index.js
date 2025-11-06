@@ -28,7 +28,7 @@ const useUsers = () => {
             };
 
             fetchUsers();
-        }, 500);
+        }, 50);
         return () => clearTimeout(delayDebounceFn);
     }, []);
 

@@ -158,7 +158,7 @@ const QueueIntegration = () => {
         }
       };
       fetchIntegrations();
-    }, 500);
+    }, 50);
     return () => clearTimeout(delayDebounceFn);
   }, [searchParam, pageNumber]);
 

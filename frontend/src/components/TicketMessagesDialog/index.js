@@ -96,7 +96,7 @@ export default function TicketMessagesDialog({ open, handleClose, ticketId }) {
           }
         };
         fetchTicket();
-      }, 500);
+      }, 50);
     }
     return () => {
       if (delayDebounceFn !== null) {
