@@ -141,7 +141,6 @@ const TicketListItemCustom = ({ ticket }) => {
   const [ticketQueueColor, setTicketQueueColor] = useState(null);
   const [tag, setTag] = useState([]);
   const [whatsAppName, setWhatsAppName] = useState(null);
-  const [lastInteractionLabel, setLastInteractionLabel] = useState("");
   const [openTicketMessageDialog, setOpenTicketMessageDialog] = useState(false);
   const { ticketId } = useParams();
   const isMounted = useRef(true);
@@ -192,53 +191,6 @@ const TicketListItemCustom = ({ ticket }) => {
     }
     history.push(`/tickets/`);
   };
-
-  // Controla a exibição do tempo de última interação (atualiza a cada 30s)
-  useEffect(() => {
-    const renderLastInteractionLabel = () => {
-      if (!ticket.lastMessage) return "";
-
-      const lastInteractionDate = parseISO(ticket.updatedAt);
-      const currentDate = new Date();
-      const timeDifference = currentDate - lastInteractionDate;
-      const hoursDifference = Math.floor(timeDifference / (1000 * 60 * 60));
-      const minutesDifference = Math.floor(timeDifference / (1000 * 60));
-
-      let labelText = "";
-      let labelColor = "";
-
-      if (minutesDifference >= 3 && minutesDifference <= 10) {
-        labelText = `(${minutesDifference} m atrás)`;
-        labelColor = "green";
-      } else if (minutesDifference >= 30 && minutesDifference < 60) {
-        labelText = `(${minutesDifference} m atrás)`;
-        labelColor = "orange";
-      } else if (minutesDifference > 60 && hoursDifference < 24) {
-        labelText = `(${hoursDifference} h atrás)`;
-        labelColor = "red";
-      } else if (hoursDifference >= 24) {
-        labelText = `(${Math.floor(hoursDifference / 24)} dias atrás)`;
-        labelColor = "red";
-      }
-
-      return { labelText, labelColor };
-    };
-
-    const updateLastInteractionLabel = () => {
-      const { labelText, labelColor } = renderLastInteractionLabel() || {};
-      if (labelText) {
-        setLastInteractionLabel(
-          <Badge style={{ color: labelColor }}>{labelText}</Badge>
-        );
-      } else {
-        setLastInteractionLabel("");
-      }
-      setTimeout(updateLastInteractionLabel, 30000);
-    };
-
-    updateLastInteractionLabel();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ticket]);
 
   // Função para reabrir ticket
   const handleReopenTicket = async (id) => {
@@ -401,7 +353,7 @@ const TicketListItemCustom = ({ ticket }) => {
               <div className={classes.contactNameWrapper}>
                 <Typography noWrap component="span" variant="body2" color="textPrimary">
                   <strong>
-                    {ticket.contact.name} {lastInteractionLabel}
+                    {ticket.contact.name}
                   </strong>
                 </Typography>
               </div>
