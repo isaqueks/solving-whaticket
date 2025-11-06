@@ -44,7 +44,7 @@ const useStyles = makeStyles((theme) => ({
     marginBottom: 8,
     boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
     // Aumente o padding e a altura mínima para dar mais espaço
-    padding: "10px 15px",
+    padding: "4px 10px 8px 10px",
     minHeight: 90,
     "&:hover": {
       backgroundColor: "#f9f9f9",

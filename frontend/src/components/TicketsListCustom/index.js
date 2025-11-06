@@ -11,6 +11,7 @@ import useTickets from "../../hooks/useTickets";
 import { i18n } from "../../translate/i18n";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { SocketContext } from "../../context/Socket/SocketContext";
+import { useAutoAnimate } from '@formkit/auto-animate/react'
 
 const useStyles = makeStyles((theme) => ({
   ticketsListWrapper: {
@@ -167,9 +168,10 @@ const TicketsListCustom = (props) => {
   } = props;
   const classes = useStyles();
   const [pageNumber, setPageNumber] = useState(1);
-  const [ _ticketsList, dispatch ] = useReducer(reducer, []);
+  const [_ticketsList, dispatch] = useReducer(reducer, []);
   const { user } = useContext(AuthContext);
   const { profile, queues } = user;
+  const [animationParent] = useAutoAnimate();
 
 
   const ticketsList = _ticketsList.filter((ticket) => {
@@ -217,7 +219,7 @@ const TicketsListCustom = (props) => {
     } else {
       dispatch({ type: "LOAD_TICKETS", payload: tickets });
     }
-  }, [(tickets||[]).map(t=>t.id).join(","), status, searchParam, queues, profile]);
+  }, [(tickets || []).map(t => t.id).join(","), status, searchParam, queues, profile]);
 
   useEffect(() => {
     const companyId = localStorage.getItem("companyId");
@@ -239,7 +241,7 @@ const TicketsListCustom = (props) => {
     });
 
     socket.on(`company-${companyId}-ticket`, (data) => {
-      
+
       if (data.action === "updateUnread") {
         dispatch({
           type: "RESET_UNREAD",
@@ -273,7 +275,7 @@ const TicketsListCustom = (props) => {
         return;
       }
 
-      if (data.action === "create" && shouldUpdateTicket(data.ticket) && ( status === undefined || data.ticket.status === status)) {
+      if (data.action === "create" && shouldUpdateTicket(data.ticket) && (status === undefined || data.ticket.status === status)) {
         dispatch({
           type: "UPDATE_TICKET_UNREAD_MESSAGES",
           payload: data.ticket,
@@ -300,7 +302,7 @@ const TicketsListCustom = (props) => {
       updateCount(ticketsList.length);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [(ticketsList||[]).map(t=>t.id).join(",")]);
+  }, [(ticketsList || []).map(t => t.id).join(",")]);
 
   const loadMore = () => {
     setPageNumber((prevState) => prevState + 1);
@@ -326,23 +328,25 @@ const TicketsListCustom = (props) => {
         onScroll={handleScroll}
       >
         <List style={{ paddingTop: 0 }}>
-          {ticketsList.length === 0 && !loading ? (
-            <div className={classes.noTicketsDiv}>
-              <span className={classes.noTicketsTitle}>
-                {i18n.t("ticketsList.noTicketsTitle")}
-              </span>
-              <p className={classes.noTicketsText}>
-                {i18n.t("ticketsList.noTicketsMessage")}
-              </p>
-            </div>
-          ) : (
-            <>
-              {ticketsList.map((ticket) => (
-                <TicketListItem ticket={ticket} key={ticket.id} />
-              ))}
-            </>
-          )}
-          {loading && <TicketsListSkeleton />}
+          <div ref={animationParent}>
+            {ticketsList.length === 0 && !loading ? (
+              <div className={classes.noTicketsDiv}>
+                <span className={classes.noTicketsTitle}>
+                  {i18n.t("ticketsList.noTicketsTitle")}
+                </span>
+                <p className={classes.noTicketsText}>
+                  {i18n.t("ticketsList.noTicketsMessage")}
+                </p>
+              </div>
+            ) : (
+              <>
+                {ticketsList.map((ticket) => (
+                  <TicketListItem ticket={ticket} key={ticket.id} />
+                ))}
+              </>
+            )}
+            {loading && <TicketsListSkeleton />}
+          </div>
         </List>
       </Paper>
     </Paper>
