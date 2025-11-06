@@ -11,7 +11,7 @@ import useTickets from "../../hooks/useTickets";
 import { i18n } from "../../translate/i18n";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { SocketContext } from "../../context/Socket/SocketContext";
-import { useAutoAnimate } from '@formkit/auto-animate/react'
+import useAutoAnimateDefault from '@formkit/auto-animate/react'
 
 const useStyles = makeStyles((theme) => ({
   ticketsListWrapper: {
@@ -171,7 +171,7 @@ const TicketsListCustom = (props) => {
   const [_ticketsList, dispatch] = useReducer(reducer, []);
   const { user } = useContext(AuthContext);
   const { profile, queues } = user;
-  const [animationParent] = useAutoAnimate();
+  const [animationParent] = useAutoAnimateDefault();
 
 
   const ticketsList = _ticketsList.filter((ticket) => {

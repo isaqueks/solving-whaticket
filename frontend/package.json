@@ -95,8 +95,5 @@
   },
   "devDependencies": {
     "tailwindcss": "^3.4.17"
-  },
-  "resolutions": {
-    "@formkit/auto-animate": "1.0.0"
   }
 }
