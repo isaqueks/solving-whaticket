@@ -333,25 +333,23 @@ const TicketsListCustom = (props) => {
         onScroll={handleScroll}
       >
         <List style={{ paddingTop: 0 }}>
-          <div ref={parent}>
-            {ticketsList.length === 0 && !loading ? (
-              <div className={classes.noTicketsDiv}>
-                <span className={classes.noTicketsTitle}>
-                  {i18n.t("ticketsList.noTicketsTitle")}
-                </span>
-                <p className={classes.noTicketsText}>
-                  {i18n.t("ticketsList.noTicketsMessage")}
-                </p>
-              </div>
-            ) : (
-              <>
-                {ticketsList.map((ticket) => (
-                  <TicketListItem ticket={ticket} key={ticket.id} />
-                ))}
-              </>
-            )}
-            {loading && <TicketsListSkeleton />}
-          </div>
+          {ticketsList.length === 0 && !loading ? (
+            <div className={classes.noTicketsDiv}>
+              <span className={classes.noTicketsTitle}>
+                {i18n.t("ticketsList.noTicketsTitle")}
+              </span>
+              <p className={classes.noTicketsText}>
+                {i18n.t("ticketsList.noTicketsMessage")}
+              </p>
+            </div>
+          ) : (
+            <div ref={parent}>
+              {ticketsList.map((ticket) => (
+                <TicketListItem ticket={ticket} key={ticket.id} />
+              ))}
+            </div>
+          )}
+          {loading && <TicketsListSkeleton />}
         </List>
       </Paper>
     </Paper>
