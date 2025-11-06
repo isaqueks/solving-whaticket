@@ -11,7 +11,7 @@ import useTickets from "../../hooks/useTickets";
 import { i18n } from "../../translate/i18n";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { SocketContext } from "../../context/Socket/SocketContext";
-import useAutoAnimateDefault from '@formkit/auto-animate/react'
+import autoAnimate from '@formkit/auto-animate';
 
 const useStyles = makeStyles((theme) => ({
   ticketsListWrapper: {
@@ -171,8 +171,13 @@ const TicketsListCustom = (props) => {
   const [_ticketsList, dispatch] = useReducer(reducer, []);
   const { user } = useContext(AuthContext);
   const { profile, queues } = user;
-  const [animationParent] = useAutoAnimateDefault();
+  const parent = useRef(null)
 
+  useEffect(() => {
+    if (parent.current) {
+      autoAnimate(parent.current)
+    }
+  }, [])
 
   const ticketsList = _ticketsList.filter((ticket) => {
     if (!unread) {
@@ -328,7 +333,7 @@ const TicketsListCustom = (props) => {
         onScroll={handleScroll}
       >
         <List style={{ paddingTop: 0 }}>
-          <div ref={animationParent}>
+          <div ref={parent}>
             {ticketsList.length === 0 && !loading ? (
               <div className={classes.noTicketsDiv}>
                 <span className={classes.noTicketsTitle}>
