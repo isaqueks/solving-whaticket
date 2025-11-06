@@ -183,9 +183,9 @@ export const send = async (req: Request, res: Response): Promise<Response> => {
     } else {
       await SendWhatsAppMessage({ body: formatBody(body, contact), ticket, userId: +req.user.id });
 
-      await ticket.update({
-        lastMessage: body,
-      });
+      // await ticket.update({
+      //   lastMessage: body,
+      // });
 
     }
 

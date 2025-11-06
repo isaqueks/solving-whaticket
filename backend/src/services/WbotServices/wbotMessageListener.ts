@@ -847,16 +847,18 @@ export const verifyMessage = async (
     mediaType: getTypeMessage(msg),
     read: msg.key.fromMe,
     quotedMsgId: quotedMsg?.id,
-    ack: msg.status,
+    ack: msg.status || 1,
     remoteJid: msg.key.remoteJid,
     participant: msg.key['participantAlt'] || msg.key.participant,
     dataJson: JSON.stringify(msg),
     isEdited: isEdited,
   };
 
-  await ticket.update({
-    lastMessage: body
-  });
+  if (body) {
+    await ticket.update({
+      lastMessage: body
+    });
+  }
 
   if (process.env.MESSAGE_WEBHOOK) {
     await fetch(`${process.env.MESSAGE_WEBHOOK}?wppName=${ticket.whatsapp.name}`, {
@@ -2037,24 +2039,21 @@ const handleMessage = async (
   }
 };
 
+const ackMap = new Map<string, number>();
 const handleMsgAck = async (
   msg: WAMessage,
-  chat: number | null | undefined
+  chat: number
 ) => {
-  await new Promise((r) => setTimeout(r, 1700));
+  if (!chat || ackMap.get(msg.key.id) >= chat) {
+    return;
+  }
+  ackMap.set(msg.key.id, chat);
+  await new Promise((r) => setTimeout(r, 2000));
   const io = getIO();
 
   try {
-    const messageToUpdate = await Message.findByPk(msg.key.id, {
-      include: [
-        "contact",
-        {
-          model: Message,
-          as: "quotedMsg",
-          include: ["contact"],
-        },
-      ],
-    });
+    chat = ackMap.get(msg.key.id)!;
+    const messageToUpdate = await Message.findByPk(msg.key.id);
 
     if (!messageToUpdate) return;
     await messageToUpdate.update({ ack: chat });
