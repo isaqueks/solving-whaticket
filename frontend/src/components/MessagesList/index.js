@@ -492,7 +492,7 @@ const MessagesList = ({
         }
       };
       fetchMessages();
-    }, 500);
+    }, 20);
     return () => {
       clearTimeout(delayDebounceFn);
     };
