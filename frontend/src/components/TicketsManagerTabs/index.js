@@ -356,6 +356,7 @@ const TicketsManagerTabs = () => {
           <TicketsList
             // status="pending"
             unread="unread"
+            showAll={showAllTickets}
             selectedQueueIds={selectedQueueIds}
             updateCount={(val) => setPendingCount(val)}
             style={applyPanelStyle("unread")}
