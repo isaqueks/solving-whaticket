@@ -18,6 +18,7 @@ import { TagsContainer } from "../TagsContainer";
 import TicketActionButtons from "../TicketActionButtonsCustom";
 import TicketHeader from "../TicketHeader";
 import TicketInfo from "../TicketInfo";
+import { TicketCache } from "../../services/ticket-cache";
 
 const drawerWidth = 320;
 
@@ -80,7 +81,8 @@ const Ticket = (props) => {
     const delayDebounceFn = setTimeout(() => {
       const fetchTicket = async () => {
         try {
-          const { data } = await api.get("/tickets/u/" + ticketId);
+          // const { data } = await api.get("/tickets/u/" + ticketId);
+          const data = await TicketCache.getTicketByUUID(ticketId);
           const { queueId } = data;
           const { queues, profile } = user;
 
@@ -96,6 +98,11 @@ const Ticket = (props) => {
           setContact(data.contact);
           setTicket(data);
           setLoading(false);
+
+          if (!data.__network) {
+            const network = await TicketCache.getTicketByUUIDNetwork(ticketId);
+            setTicket(network);
+          }
         } catch (err) {
           setLoading(false);
           toastError(err);

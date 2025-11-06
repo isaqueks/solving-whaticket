@@ -129,7 +129,9 @@ export const send = async (req: Request, res: Response): Promise<Response> => {
   console.log('messageData;', messageData)
 
   try {
-    const whatsapp = await Whatsapp.findByPk(whatsappId);
+    const whatsapp = await Whatsapp.findByPk(whatsappId, {
+      attributes: { exclude: ["session"] }
+    });
 
     if (!whatsapp) {
       throw new Error("Não foi possível realizar a operação");

@@ -79,7 +79,10 @@ async function handleSendMessage(job) {
   try {
     const { data } = job;
 
-    const whatsapp = await Whatsapp.findByPk(data.whatsappId);
+    const whatsapp = await Whatsapp.findByPk(data.whatsappId, {
+      attributes: { exclude: ["session"] }
+    });
+
 
     if (whatsapp == null) {
       throw Error("Whatsapp não identificado");

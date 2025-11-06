@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import toastError from "../../errors/toastError";
 
 import api from "../../services/api";
+import { TicketCache } from "../../services/ticket-cache";
 
 const useTickets = ({
   searchParam,
@@ -25,20 +26,33 @@ const useTickets = ({
     const delayDebounceFn = setTimeout(() => {
       const fetchTickets = async () => {
         try {
-          const { data } = await api.get("/tickets", {
-            params: {
-              searchParam,
-              pageNumber,
-              tags,
-              users,
-              status,
-              date,
-              updatedAt,
-              showAll,
-              queueIds,
-              withUnreadMessages,
-              unread
-            },
+          // const { data } = await api.get("/tickets", {
+          //   params: {
+          //     searchParam,
+          //     pageNumber,
+          //     tags,
+          //     users,
+          //     status,
+          //     date,
+          //     updatedAt,
+          //     showAll,
+          //     queueIds,
+          //     withUnreadMessages,
+          //     unread
+          //   },
+          // });
+          const data = await TicketCache.getTickets({
+            searchParam,
+            pageNumber,
+            tags,
+            users,
+            status,
+            date,
+            updatedAt,
+            showAll,
+            queueIds,
+            withUnreadMessages,
+            unread
           });
           setTickets(data.tickets);
           setHasMore(data.hasMore);

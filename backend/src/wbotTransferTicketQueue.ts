@@ -32,7 +32,8 @@ export const TransferTicketQueue = async (): Promise<void> => {
     const wpp = await Whatsapp.findOne({
       where: {
         id: ticket.whatsappId
-      }
+      },
+      attributes: { exclude: ["session"] }
     });
 
     if (!wpp || !wpp.timeToTransfer || !wpp.transferQueueId || wpp.timeToTransfer == 0) return;
