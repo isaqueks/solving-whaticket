@@ -163,15 +163,17 @@ const MarkdownWrapper = ({ children, message }) => {
 		children = children.replace(tildaRegex, "~~$1~~");
 	}
 
-	// remove links markdown: [texto](url) → texto (url)
-	children = children.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/gi, "[$1] ($2)");
+	if (typeof children === "string") {
+		// remove links markdown: [texto](url) → texto (url)
+		children = children.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/gi, "[$1] ($2)");
 
-	// autolink só URLs cruas
-	const urlRegex = /((https?:\/\/|www\.)[^\s]+)/gi;
-	children = children.replace(urlRegex, (url) => {
-		const normalized = url.startsWith("http") ? url : `https://${url}`;
-		return `[${url}](${normalized})`;
-	});
+		// autolink só URLs cruas
+		const urlRegex = /((https?:\/\/|www\.)[^\s]+)/gi;
+		children = children.replace(urlRegex, (url) => {
+			const normalized = url.startsWith("http") ? url : `https://${url}`;
+			return `[${url}](${normalized})`;
+		});
+	}
 
 	const options = React.useMemo(() => {
 		const markdownOptions = {
