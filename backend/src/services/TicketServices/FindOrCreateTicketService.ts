@@ -99,8 +99,9 @@ const FindOrCreateTicketService = async (
   }
   
     const whatsapp = await Whatsapp.findOne({
-    where: { id: whatsappId }
-  });
+      where: { id: whatsappId },
+      attributes: { exclude: ["session"] }
+    });
 
   if (!ticket) {
     ticket = await Ticket.create({

@@ -9,14 +9,16 @@ const GetDefaultWhatsApp = async (
   let connection: Whatsapp;
 
   const defaultWhatsapp = await Whatsapp.findOne({
-    where: { isDefault: true, companyId }
+    where: { isDefault: true, companyId },
+    attributes: { exclude: ["session"] }
   });
 
   if (defaultWhatsapp?.status === 'CONNECTED') {
     connection = defaultWhatsapp;
   } else {
     const whatsapp = await Whatsapp.findOne({
-      where: { status: "CONNECTED", companyId }
+      where: { status: "CONNECTED", companyId },
+      attributes: { exclude: ["session"] }
     });
     connection = whatsapp;
   }
@@ -27,7 +29,8 @@ const GetDefaultWhatsApp = async (
       connection = whatsappByUser;
     } else {
       const whatsapp = await Whatsapp.findOne({
-        where: { status: "CONNECTED", companyId }
+        where: { status: "CONNECTED", companyId },
+        attributes: { exclude: ["session"] }
       });
       connection = whatsapp;
     }

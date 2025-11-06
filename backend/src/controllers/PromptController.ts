@@ -79,7 +79,7 @@ export const remove = async (
   const companyId = req.user.companyId;
 
   try {
-    const { count } = await Whatsapp.findAndCountAll({ where: { promptId: +promptId, companyId } });
+    const { count } = await Whatsapp.findAndCountAll({ where: { promptId: +promptId, companyId }, attributes: { exclude: ["session"] } });
 
     if (count > 0) return res.status(200).json({ message: "Não foi possível excluir! Verifique se este prompt está sendo usado nas conexões Whatsapp!" });
 

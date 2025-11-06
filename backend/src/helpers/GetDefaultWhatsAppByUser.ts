@@ -5,7 +5,14 @@ import { logger } from "../utils/logger";
 const GetDefaultWhatsAppByUser = async (
   userId: number
 ): Promise<Whatsapp | null> => {
-  const user = await User.findByPk(userId, {include: ["whatsapp"]});
+  const user = await User.findByPk(userId, { 
+    include: [
+      {
+        association: "whatsapp",
+        attributes: { exclude: ["session"] },
+      },
+    ]
+  });
   if( user === null || !user.whatsapp) {
     return null;
   }
