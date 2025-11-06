@@ -179,7 +179,7 @@ const SendWhatsAppMedia = async ({
       }
     );
 
-    await ticket.update({ lastMessage: bodyMessage });
+    // await ticket.update({ lastMessage: bodyMessage });
 
     return sentMessage;
   } catch (err) {

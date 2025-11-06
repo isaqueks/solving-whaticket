@@ -118,7 +118,7 @@ const SendWhatsAppMessage = async ({
         ...options
       }
     );
-    await ticket.update({ lastMessage: formatBody(body, ticket.contact) });
+    // await ticket.update({ lastMessage: formatBody(body, ticket.contact) });
     console.log("Message sent", sentMessage);
     return sentMessage;
   } catch (err) {
