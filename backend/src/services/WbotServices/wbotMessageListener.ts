@@ -2182,6 +2182,8 @@ const wbotMessageListener = async (wbot: Session, companyId: number): Promise<vo
       messageUpdate.forEach(async (message: WAMessageUpdate) => {
         (wbot as WASocket)!.readMessages([message.key])
 
+        console.log("MESSAGE UPDATE", message)
+
         handleMsgAck(message, message.update.status);
       });
     });
