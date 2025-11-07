@@ -173,11 +173,11 @@ const TicketsListCustom = (props) => {
   const { profile, queues } = user;
   const parent = useRef(null)
 
-  useEffect(() => {
-    if (parent.current) {
-      autoAnimate(parent.current)
-    }
-  }, [])
+  // useEffect(() => {
+  //   if (parent.current) {
+  //     autoAnimate(parent.current)
+  //   }
+  // }, [])
 
   const ticketsList = _ticketsList.filter((ticket) => {
     if (!unread) {
