@@ -28,7 +28,10 @@ import TicketTag from "./TicketTag";
 import QueueIntegrations from "./QueueIntegrations";
 import Prompt from "./Prompt";
 
-@Table
+@Table({
+  timestamps: true,
+  updatedAt: false
+})
 class Ticket extends Model<Ticket> {
   @PrimaryKey
   @AutoIncrement
