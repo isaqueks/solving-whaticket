@@ -18,7 +18,6 @@ export const ClosedAllOpenTickets = async (companyId: number): Promise<void> => 
       await ticket.update({
         status: "closed",
         //userId: ticket.userId || null,
-        lastMessage: body,
         unreadMessages: 0,
         amountUseBotQueues: 0
       });
@@ -28,7 +27,6 @@ export const ClosedAllOpenTickets = async (companyId: number): Promise<void> => 
       await ticket.update({
         status: "closed",
         //  userId: ticket.userId || null,
-        lastMessage: body,
         unreadMessages: 0,
         amountUseBotQueues: 0
       });

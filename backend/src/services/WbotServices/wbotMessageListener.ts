@@ -789,6 +789,7 @@ const verifyMediaMessage = async (
 
   await ticket.update({
     lastMessage: body || media.filename,
+    updatedAt: new Date()
   });
 
   const newMessage = await CreateMessageService({
@@ -856,7 +857,8 @@ export const verifyMessage = async (
 
   if (body) {
     await ticket.update({
-      lastMessage: body
+      lastMessage: body,
+      updatedAt: new Date()
     });
   }
 

@@ -86,6 +86,7 @@ const wbotMonitor = async (
 
           await ticket.update({
             lastMessage: body,
+            updatedAt: new Date(),
           });
 
 
