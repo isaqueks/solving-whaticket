@@ -81,7 +81,7 @@ export class TicketCache {
     const key = CACHE_KEY(`tickets/${urlParams.toString()}`);
     try {
       const cached = JSON.parse(localStorage.getItem(key));
-      for (const ticket of cached) {
+      for (const ticket of cached.tickets) {
         TicketCache.cache.set(ticket.uuid, ticket);
       }
       return {
