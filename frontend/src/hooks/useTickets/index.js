@@ -41,7 +41,7 @@ const useTickets = ({
           //     unread
           //   },
           // });
-          const data = await TicketCache.getTickets({
+          const params = {
             searchParam,
             pageNumber,
             tags,
@@ -53,10 +53,16 @@ const useTickets = ({
             queueIds,
             withUnreadMessages,
             unread
-          });
+          };
+          const data = await TicketCache.getTickets(params);
           setTickets(data.tickets);
           setHasMore(data.hasMore);
           setLoading(false);
+          if (!data.__network) {
+            const newData = await TicketCache.getTicketsNetwork(params);
+            setTickets(newData.tickets);
+            setHasMore(newData.hasMore);
+          }
         } catch (err) {
           setLoading(false);
           toastError(err);

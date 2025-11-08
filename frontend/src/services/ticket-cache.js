@@ -1,4 +1,5 @@
 import api from "./api";
+import { CACHE_KEY } from "./cache-key";
 
 
 export class TicketCache {
@@ -47,7 +48,19 @@ export class TicketCache {
       TicketCache.cache.set(ticket.uuid, ticket);
     }
 
-    return data;
+    try {
+      const urlParams = new URLSearchParams(params).toString();
+      const key = CACHE_KEY(`tickets/${urlParams.toString()}`);
+      localStorage.setItem(key, JSON.stringify(data));
+    }
+    catch (err) {
+      console.error("Error updating local ticket cache:", err);
+    }
+
+    return {
+      ...data,
+      __network: true
+    };
   }
 
   static async getTicketByUUIDNetwork(uuid) {
@@ -64,6 +77,21 @@ export class TicketCache {
   }
 
   static async getTickets(params) {
+    const urlParams = new URLSearchParams(params).toString();
+    const key = CACHE_KEY(`tickets/${urlParams.toString()}`);
+    try {
+      const cached = JSON.parse(localStorage.getItem(key));
+      for (const ticket of cached) {
+        TicketCache.cache.set(ticket.uuid, ticket);
+      }
+      return {
+        ...cached,
+        __network: false
+      }
+    }
+    catch (err) {
+      console.error("Error accessing local ticket cache:", err);
+    }
     return await this.getTicketsNetwork(params);
   }
 
@@ -76,3 +104,5 @@ export class TicketCache {
   }
 
 }
+
+TicketCache.initLocalCache();
