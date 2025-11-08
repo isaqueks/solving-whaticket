@@ -23,6 +23,7 @@ import {ImportContacts} from "../services/ContactServices/ImportContacts";
 type IndexQuery = {
   searchParam: string;
   pageNumber: string;
+  group?: string;
 };
 
 type IndexGetContactQuery = {
@@ -42,13 +43,14 @@ interface ContactData {
 }
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
-  const { searchParam, pageNumber } = req.query as IndexQuery;
+  const { searchParam, pageNumber, group } = req.query as IndexQuery;
   const { companyId } = req.user;
 
   const { contacts, count, hasMore } = await ListContactsService({
     searchParam,
     pageNumber,
-    companyId
+    companyId,
+    group
   });
 
   return res.json({ contacts, count, hasMore });
