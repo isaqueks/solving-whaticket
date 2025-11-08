@@ -104,5 +104,3 @@ export class TicketCache {
   }
 
 }
-
-TicketCache.initLocalCache();
