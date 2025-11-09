@@ -49,9 +49,11 @@ export class TicketCache {
     }
 
     try {
-      const urlParams = new URLSearchParams(params).toString();
-      const key = CACHE_KEY(`tickets/${urlParams.toString()}`);
-      localStorage.setItem(key, JSON.stringify(data));
+      if (String(pageNumber) === "1") {
+        const urlParams = new URLSearchParams(params).toString();
+        const key = CACHE_KEY(`tickets/${urlParams.toString()}`);
+        localStorage.setItem(key, JSON.stringify(data));
+      }
     }
     catch (err) {
       console.error("Error updating local ticket cache:", err);
