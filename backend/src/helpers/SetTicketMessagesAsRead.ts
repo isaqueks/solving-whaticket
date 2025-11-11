@@ -1,4 +1,4 @@
-import { proto, WASocket } from "baileys";
+import { proto, WAMessage, WASocket } from "baileys";
 // import cacheLayer from "../libs/cache";
 import { getIO } from "../libs/socket";
 import Message from "../models/Message";
@@ -28,7 +28,7 @@ const SetTicketMessagesAsRead = async (ticket: Ticket): Promise<void> => {
     });
 
     if (getJsonMessage.length > 0) {
-      const lastMessages: proto.IWebMessageInfo = JSON.parse(
+      const lastMessages: WAMessage = JSON.parse(
         JSON.stringify(getJsonMessage[0].dataJson)
       );
 

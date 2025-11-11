@@ -337,7 +337,7 @@ const getSenderMessage = (
   return senderId && jidNormalizedUser(senderId);
 };
 
-const downloadMedia = async (msg: proto.IWebMessageInfo) => {
+const downloadMedia = async (msg: WAMessage) => {
 
   let buffer
   try {
@@ -741,7 +741,7 @@ const transferQueue = async (
 };
 
 const verifyMediaMessage = async (
-  msg: proto.IWebMessageInfo,
+  msg: WAMessage,
   ticket: Ticket,
   contact: Contact
 ): Promise<Message> => {
@@ -1630,7 +1630,7 @@ export const handleMessageIntegration = async (
 }
 
 const handleMessage = async (
-  msg: proto.IWebMessageInfo,
+  msg: WAMessage,
   wbot: Session,
   companyId: number
 ): Promise<void> => {
@@ -2165,7 +2165,7 @@ const wbotMessageListener = async (wbot: Session, companyId: number): Promise<vo
 
       if (!messages) return;
 
-      messages.forEach(async (message: proto.IWebMessageInfo) => {
+      messages.forEach(async (message: WAMessage) => {
 
         const messageExists = await Message.count({
           where: { id: message.key.id!, companyId }

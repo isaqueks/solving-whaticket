@@ -8,8 +8,6 @@ import makeWASocket, {
   isJidBroadcast,
   CacheStore
 } from "baileys";
-import makeWALegacySocket from "baileys";
-import P from "pino";
 
 import Whatsapp from "../models/Whatsapp";
 import { logger } from "../utils/logger";
