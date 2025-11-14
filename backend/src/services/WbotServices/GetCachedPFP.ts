@@ -20,6 +20,6 @@ export async function getCachedPFP(wbot: WASocket, waId: string): Promise<string
   }
   catch {}
 
-  await cacheLayer.set(REDIS_KEY, pfp, 'EX', 1 * 60 * 60); // Cache 1 hour
+  await cacheLayer.set(REDIS_KEY, pfp, 'EX', 24 * 60 * 60); // Cache 24 hours
   return pfp;
 }
