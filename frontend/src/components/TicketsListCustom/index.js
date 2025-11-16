@@ -224,7 +224,7 @@ const TicketsListCustom = (props) => {
     } else {
       dispatch({ type: "LOAD_TICKETS", payload: tickets });
     }
-  }, [(tickets || []).map(t => t.id).join(","), status, searchParam, queues, profile]);
+  }, [(tickets || []).map(t => `${t.id}:${t.updatedAt}`).join(","), status, searchParam, queues, profile]);
 
   useEffect(() => {
     const companyId = localStorage.getItem("companyId");
