@@ -153,7 +153,38 @@ const typebotListener = async ({
                     },
                     data: reqData
                 };
-                requestContinue = await axios.request(config);
+                try {
+                    requestContinue = await axios.request(config);
+                }
+                catch (err) {
+                    if (err?.status === 404) {
+                        console.error(`[${jid}] Session ${sessionId} not found, creating a new one.`);
+                        dataStart = await createSession(msg, typebot, number);
+                        sessionId = dataStart.sessionId
+                        status = true;
+                        await ticket.update({
+                            typebotSessionId: sessionId,
+                            typebotStatus: true,
+                            useIntegration: true,
+                            integrationId: typebot.id
+                        });
+
+                        console.log(`[${jid}] New session created: `, sessionId);
+
+                        config = {
+                            method: 'post',
+                            maxBodyLength: Infinity,
+                            url: `${url}/api/v1/sessions/${sessionId}/continueChat`,
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
+                            },
+                            data: reqData
+                        };
+
+                        requestContinue = await axios.request(config);
+                    }
+                }
                 messages = requestContinue.data?.messages;
                 input = requestContinue.data?.input;
             } else {

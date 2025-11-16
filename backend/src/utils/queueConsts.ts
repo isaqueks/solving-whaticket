@@ -1,0 +1,5 @@
+
+export const QUEUES = {
+  FALAR_COM_ATENDENTE: 1,
+  BUSCAR_BOLETO: 2
+}

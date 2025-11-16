@@ -60,7 +60,7 @@ const UpdateWhatsAppService = async ({
     complationMessage,
     outOfHoursMessage,
     ratingMessage,
-    queueIds = [],
+    queueIds = undefined,
     token,
     //timeSendQueue,
     //sendIdQueue = null,
@@ -79,7 +79,7 @@ const UpdateWhatsAppService = async ({
     throw new AppError(err.message);
   }
 
-  if (queueIds.length > 1 && !greetingMessage) {
+  if (queueIds?.length > 1 && !greetingMessage) {
     throw new AppError("ERR_WAPP_GREETING_REQUIRED");
   }
 
@@ -122,7 +122,9 @@ const UpdateWhatsAppService = async ({
     expiresInactiveMessage
   });
 
-  await AssociateWhatsappQueue(whatsapp, queueIds);
+  if (queueIds) {
+    await AssociateWhatsappQueue(whatsapp, queueIds);
+  }
 
   return { whatsapp, oldDefaultWhatsapp };
 };
