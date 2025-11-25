@@ -24,7 +24,7 @@
     "@sentry/node": "^6.18.1",
     "@types/fs-extra": "^11.0.4",
     "axios": "^1.12.2",
-    "baileys": "github:WhiskeySockets/Baileys#v7.0.0-rc.6",
+    "baileys": "github:WhiskeySockets/Baileys#v7.0.0-rc.9",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.2",
     "bull": "^4.8.2",
