@@ -15,7 +15,7 @@ import { QUEUES } from "../../utils/queueConsts";
 interface Request {
   body: string;
   ticket: Ticket;
-  userId: number;
+  userId: number | null;
   quotedMsg?: Message;
   editMsg?: Message;
 }
