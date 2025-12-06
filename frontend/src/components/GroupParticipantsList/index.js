@@ -98,6 +98,18 @@ const GroupParticipantsList = ({ contactId }) => {
     return name.substring(0, 2).toUpperCase();
   };
 
+  const getParticipantName = (participant) => {
+    return participant.participantContact?.name || participant.participantContact?.number || "Sem nome";
+  };
+
+  const getParticipantNumber = (participant) => {
+    return participant.participantContact?.number || "";
+  };
+
+  const getParticipantAvatar = (participant) => {
+    return participant.participantContact?.profilePicUrl || "";
+  };
+
   if (loading) {
     return (
       <div className={classes.loadingContainer}>
@@ -118,47 +130,55 @@ const GroupParticipantsList = ({ contactId }) => {
 
   return (
     <List className={classes.root}>
-      {participants.map((participant) => (
-        <ListItem key={participant.id} className={classes.participantItem}>
-          <ListItemAvatar>
-            <Avatar
-              src={participant.profilePicUrl}
-              alt={participant.participantName}
-              className={classes.avatar}
-            >
-              {getInitials(participant.participantName || participant.participantNumber)}
-            </Avatar>
-          </ListItemAvatar>
-          <ListItemText
-            primary={
-              <div style={{ display: "flex", alignItems: "center" }}>
-                <Typography className={classes.participantName}>
-                  {participant.participantName || participant.participantNumber}
-                </Typography>
-                {participant.isSuperAdmin && (
-                  <Chip
-                    label="Super Admin"
-                    size="small"
-                    className={classes.superAdminChip}
-                  />
-                )}
-                {!participant.isSuperAdmin && participant.isAdmin && (
-                  <Chip
-                    label="Admin"
-                    size="small"
-                    className={classes.adminChip}
-                  />
-                )}
-              </div>
-            }
-            secondary={
-              <Typography className={classes.participantNumber}>
-                {participant.participantNumber}
-              </Typography>
-            }
-          />
-        </ListItem>
-      ))}
+      {participants.map((participant) => {
+        const participantName = getParticipantName(participant);
+        const participantNumber = getParticipantNumber(participant);
+        const participantAvatar = getParticipantAvatar(participant);
+        
+        return (
+          <ListItem key={participant.id} className={classes.participantItem}>
+            <ListItemAvatar>
+              <Avatar
+                src={participantAvatar}
+                alt={participantName}
+                className={classes.avatar}
+              >
+                {getInitials(participantName)}
+              </Avatar>
+            </ListItemAvatar>
+            <ListItemText
+              primary={
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <Typography className={classes.participantName}>
+                    {participantName}
+                  </Typography>
+                  {participant.isSuperAdmin && (
+                    <Chip
+                      label="Super Admin"
+                      size="small"
+                      className={classes.superAdminChip}
+                    />
+                  )}
+                  {!participant.isSuperAdmin && participant.isAdmin && (
+                    <Chip
+                      label="Admin"
+                      size="small"
+                      className={classes.adminChip}
+                    />
+                  )}
+                </div>
+              }
+              secondary={
+                participantNumber && (
+                  <Typography className={classes.participantNumber}>
+                    {participantNumber}
+                  </Typography>
+                )
+              }
+            />
+          </ListItem>
+        );
+      })}
     </List>
   );
 };

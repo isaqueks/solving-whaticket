@@ -21,10 +21,21 @@ const ListGroupParticipantsService = async ({
 
   const participants = await GroupParticipant.findAll({
     where: { groupContactId: contactId },
-    order: [["isSuperAdmin", "DESC"], ["isAdmin", "DESC"], ["participantName", "ASC"]]
+    include: [{ model: Contact, as: "participantContact" }]
   });
 
-  return participants;
+  // Ordena manualmente
+  return participants.sort((a, b) => {
+    if (a.isSuperAdmin !== b.isSuperAdmin) {
+      return b.isSuperAdmin ? 1 : -1;
+    }
+    if (a.isAdmin !== b.isAdmin) {
+      return b.isAdmin ? 1 : -1;
+    }
+    const nameA = a.participantContact?.name || "";
+    const nameB = b.participantContact?.name || "";
+    return nameA.localeCompare(nameB);
+  });
 };
 
 export default ListGroupParticipantsService;

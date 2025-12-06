@@ -26,15 +26,15 @@ class GroupParticipant extends Model<GroupParticipant> {
   @Column
   groupContactId: number;
 
-  @BelongsTo(() => Contact)
+  @BelongsTo(() => Contact, "groupContactId")
   groupContact: Contact;
 
+  @ForeignKey(() => Contact)
   @Column
-  participantNumber: string;
+  participantContactId: number;
 
-  @AllowNull(true)
-  @Column
-  participantName: string;
+  @BelongsTo(() => Contact, "participantContactId")
+  participantContact: Contact;
 
   @Default(false)
   @Column
@@ -43,11 +43,6 @@ class GroupParticipant extends Model<GroupParticipant> {
   @Default(false)
   @Column
   isSuperAdmin: boolean;
-
-  @AllowNull(true)
-  @Default("")
-  @Column
-  profilePicUrl: string;
 
   @ForeignKey(() => Company)
   @Column
