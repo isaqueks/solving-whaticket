@@ -20,6 +20,7 @@ import { CardHeader } from "@material-ui/core";
 import { ContactForm } from "../ContactForm";
 import ContactModal from "../ContactModal";
 import { ContactNotes } from "../ContactNotes";
+import GroupParticipantsList from "../GroupParticipantsList";
 
 const drawerWidth = 320;
 
@@ -166,6 +167,14 @@ const ContactDrawer = ({ open, handleDrawerClose, contact, ticket, loading }) =>
 							</Typography>
 							<ContactNotes ticket={ticket} />
 						</Paper>
+						{contact.isGroup && (
+							<Paper square variant="outlined" className={classes.contactDetails}>
+								<Typography variant="subtitle1" style={{marginBottom: 10}}>
+									Participantes
+								</Typography>
+								<GroupParticipantsList contactId={contact.id} />
+							</Paper>
+						)}
 						<Paper square variant="outlined" className={classes.contactDetails}>
 							<ContactModal
 								open={modalOpen}

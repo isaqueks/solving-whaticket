@@ -59,6 +59,7 @@ import { getMessageOptions } from "./SendWhatsAppMedia";
 import { getCachedPFP } from "./GetCachedPFP";
 import { getContactMetadata, getGroupMetadata } from "../getContactMetadata";
 import { getContactJid } from "../../helpers/getContactJid";
+import SyncGroupParticipantsService from "../GroupParticipantServices/SyncGroupParticipantsService";
 import fs from 'fs';
 
 const request = require("request");
@@ -433,6 +434,23 @@ const verifyGroup = async (
   };
 
   const contact = await CreateOrUpdateContactService(contactData);
+
+  // Sincroniza participantes do grupo com debounce para evitar flood
+  const syncParticipants = async () => {
+    try {
+      await SyncGroupParticipantsService({
+        contactId: contact.id,
+        wbot,
+        forceSync: false
+      });
+    } catch (error) {
+      logger.error(`Erro ao sincronizar participantes do grupo ${contact.id}:`, error);
+    }
+  };
+
+  // Debounce de 10 segundos para não sincronizar a cada mensagem
+  const debouncedSync = debounce(syncParticipants, 10000, contact.id);
+  debouncedSync();
 
   return contact;
 };

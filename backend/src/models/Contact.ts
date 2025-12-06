@@ -18,6 +18,7 @@ import Ticket from "./Ticket";
 import Company from "./Company";
 import Schedule from "./Schedule";
 import Whatsapp from "./Whatsapp";
+import GroupParticipant from "./GroupParticipant";
 
 @Table
 class Contact extends Model<Contact> {
@@ -80,6 +81,9 @@ class Contact extends Model<Contact> {
     hooks: true
   })
   schedules: Schedule[];
+
+  @HasMany(() => GroupParticipant)
+  groupParticipants: GroupParticipant[];
 
   @AllowNull(true)
   @Column

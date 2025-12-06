@@ -37,6 +37,7 @@ import Files from "../models/Files";
 import FilesOptions from "../models/FilesOptions";
 import Prompt from "../models/Prompt";
 import QueueIntegrations from "../models/QueueIntegrations";
+import GroupParticipant from "../models/GroupParticipant";
 
 // eslint-disable-next-line
 const dbConfig = require("../config/database");
@@ -83,6 +84,7 @@ const models = [
   FilesOptions,
   Prompt,
   QueueIntegrations,
+  GroupParticipant,
 ];
 
 sequelize.addModels(models);
