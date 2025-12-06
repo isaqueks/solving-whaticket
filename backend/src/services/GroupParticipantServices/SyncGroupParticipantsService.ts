@@ -230,8 +230,6 @@ const SyncGroupParticipantsService = async ({
 
   const syncedParticipants = (await Promise.all(participantPromises)).filter(p => p !== null) as GroupParticipant[];
 
-  const syncedParticipants = await Promise.all(participantPromises);
-
   // Atualiza cache
   await cacheLayer.set(cacheKey, Date.now().toString(), "EX", CACHE_TTL);
 
