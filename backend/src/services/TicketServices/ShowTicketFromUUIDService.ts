@@ -5,6 +5,7 @@ import User from "../../models/User";
 import Queue from "../../models/Queue";
 import Tag from "../../models/Tag";
 import Whatsapp from "../../models/Whatsapp";
+import GroupParticipant from "../../models/GroupParticipant";
 
 const ShowTicketUUIDService = async (uuid: string): Promise<Ticket> => {
   const ticket = await Ticket.findOne({
@@ -16,7 +17,20 @@ const ShowTicketUUIDService = async (uuid: string): Promise<Ticket> => {
         model: Contact,
         as: "contact",
         attributes: ["id", "name", "number", "email", "profilePicUrl", "isGroup"],
-        include: ["extraInfo", "groupParticipants"]
+        include: [
+          "extraInfo",
+          {
+            model: GroupParticipant,
+            as: "groupParticipants",
+            include: [
+              {
+                model: Contact,
+                as: "participantContact",
+                attributes: ["id", "name", "number", "email", "profilePicUrl"]
+              }
+            ]
+          }
+        ]
       },
       {
         model: User,
