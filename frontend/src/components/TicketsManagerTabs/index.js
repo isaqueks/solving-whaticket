@@ -147,7 +147,13 @@ const TicketsManagerTabs = () => {
   const [tab, setTab] = useState("open");
   const [tabOpen, setTabOpen] = useState("read");
   const [newTicketModalOpen, setNewTicketModalOpen] = useState(false);
-  const [showAllTickets, setShowAllTickets] = useState(false);
+  
+  // Carrega o valor do localStorage ou usa false como padrão
+  const [showAllTickets, setShowAllTickets] = useState(() => {
+    const saved = localStorage.getItem("showAllTickets");
+    return saved ? JSON.parse(saved) : false;
+  });
+  
   const searchInputRef = useRef();
   const { user } = useContext(AuthContext);
   const { profile } = user;
@@ -162,10 +168,17 @@ const TicketsManagerTabs = () => {
 
   useEffect(() => {
     if (user.profile.toUpperCase() === "ADMIN") {
-      setShowAllTickets(true);
+      const saved = localStorage.getItem("showAllTickets");
+      const savedValue = saved ? JSON.parse(saved) : true;
+      setShowAllTickets(savedValue);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Salva no localStorage sempre que showAllTickets mudar
+  useEffect(() => {
+    localStorage.setItem("showAllTickets", JSON.stringify(showAllTickets));
+  }, [showAllTickets]);
 
   useEffect(() => {
     if (tab === "search") {
