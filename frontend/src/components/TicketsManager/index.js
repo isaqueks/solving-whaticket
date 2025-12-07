@@ -110,7 +110,13 @@ const TicketsManager = () => {
   const [tab, setTab] = useState("open");
   const [tabOpen] = useState("open");
   const [newTicketModalOpen, setNewTicketModalOpen] = useState(false);
-  const [showAllTickets, setShowAllTickets] = useState(false);
+  
+  // Carrega o valor do localStorage ou usa false como padrão
+  const [showAllTickets, setShowAllTickets] = useState(() => {
+    const saved = localStorage.getItem("showAllTickets");
+    return saved ? JSON.parse(saved) : false;
+  });
+  
   const { user } = useContext(AuthContext);
 
   const [openCount, setOpenCount] = useState(0);
@@ -122,10 +128,17 @@ const TicketsManager = () => {
 
   useEffect(() => {
     if (user.profile.toUpperCase() === "ADMIN") {
-      setShowAllTickets(true);
+      const saved = localStorage.getItem("showAllTickets");
+      const savedValue = saved ? JSON.parse(saved) : true;
+      setShowAllTickets(savedValue);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Salva no localStorage sempre que showAllTickets mudar
+  useEffect(() => {
+    localStorage.setItem("showAllTickets", JSON.stringify(showAllTickets));
+  }, [showAllTickets]);
 
   const handleSearch = (e) => {
     const searchedTerm = e.target.value.toLowerCase();
