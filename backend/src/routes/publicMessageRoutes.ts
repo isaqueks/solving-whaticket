@@ -3,21 +3,13 @@ import * as PublicMessageController from "../controllers/PublicMessageController
 
 const publicMessageRoutes = Router();
 
-// Endpoint para enviar mensagem por taxId (CPF/CNPJ)
-// POST /public/messages/send-by-taxid/:taxId
-// Body: { "content": "Sua mensagem aqui" }
-publicMessageRoutes.post(
-  "/public/messages/send-by-taxid/:taxId",
-  PublicMessageController.sendByTaxId
-);
-
 // Endpoint para enviar mensagem por número de telefone
-// POST /public/messages/send-by-number/:number
-// Body: { "content": "Sua mensagem aqui" }
+// POST /public/messages/send-by-number
+// Header: X-API-Auth: <PUBLIC_API_KEY>
+// Body: { "to": "5511999999999", "content": "Sua mensagem aqui" }
 publicMessageRoutes.post(
-  "/public/messages/send-by-number/:number",
+  "/public/messages/send-by-number",
   PublicMessageController.sendByNumber
 );
 
 export default publicMessageRoutes;
-
