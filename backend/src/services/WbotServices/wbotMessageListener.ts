@@ -424,9 +424,12 @@ const verifyGroup = async (
 
   const wbotMeta = await wbot.groupMetadata(meta.jid);
 
+  const profilePicUrl: string = await getCachedPFP(wbot, meta.jid);
+
   const contactData = {
     name: wbotMeta.subject || `GRUPO SEM NOME`,
     number: meta.number,
+    profilePicUrl,
     isGroup: true,
     companyId,
     whatsappId: wbot.id,
