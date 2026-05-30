@@ -45,7 +45,7 @@ export function getCachedPFP(wbot: WASocket, waId: string): Promise<string> {
   return Promise.race([
     _getCachedPFP(wbot, waId),
     new Promise<string>((resolve, reject) => {
-      setTimeout(() => resolve(DEFAULT_PFP), 1500);
+      setTimeout(() => resolve(DEFAULT_PFP), 500);
     })
   ]);
 }
