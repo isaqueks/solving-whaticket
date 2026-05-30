@@ -15,11 +15,17 @@ export async function getCachedPFP(wbot: WASocket, waId: string): Promise<string
   }
 
   try {
-    console.log(`Fetching profile picture for waId: ${waId}`);
+    console.log(`Fetching profile picture for waId: ${waId} (${REDIS_KEY})`);
     pfp = await wbot.profilePictureUrl(waId);
   }
-  catch {}
+  catch (err) {
+    console.error(`Failed do fetch pfp ${waId} (${REDIS_KEY})`, err);
+  }
+  finally {
+    console.log(`Got pfp ${waId} = ${pfp}`)
+  }
 
   await cacheLayer.set(REDIS_KEY, pfp, 'EX', 24 * 60 * 60); // Cache 24 hours
+  console.log(`Cache set ${REDIS_KEY}`);
   return pfp;
 }
