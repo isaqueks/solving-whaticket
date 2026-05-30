@@ -3,9 +3,11 @@ import { cacheLayer } from "../../libs/cache";
 
 const DEFAULT_PFP = `${process.env.FRONTEND_URL}/nopicture.png`;
 
+const promiseMap = new Map<string, Promise<any>>();
 
 async function _getCachedPFP(wbot: WASocket, waId: string): Promise<string> {
   const REDIS_KEY = `pfp:${waId}`;
+
   const cached = await cacheLayer.get(REDIS_KEY);
   if (cached) {
     return cached;
@@ -18,13 +20,20 @@ async function _getCachedPFP(wbot: WASocket, waId: string): Promise<string> {
 
   try {
     console.log(`Fetching profile picture for waId: ${waId} (${REDIS_KEY})`);
-    pfp = (await wbot.profilePictureUrl(waId)) || DEFAULT_PFP;
+    let promise = promiseMap.get(REDIS_KEY);
+    if (!promise) {
+      promise = wbot.profilePictureUrl(waId);
+    }
+    promiseMap.set(REDIS_KEY, promise);
+
+    pfp = (await promise) || DEFAULT_PFP;
   }
   catch (err) {
     console.error(`Failed do fetch pfp ${waId} (${REDIS_KEY})`, err);
   }
   finally {
-    console.log(`Got pfp ${waId} = ${pfp}`)
+    console.log(`Got pfp ${waId} = ${pfp}`);
+    promiseMap.delete(REDIS_KEY);
   }
 
   await cacheLayer.set(REDIS_KEY, pfp, 'EX', 24 * 60 * 60); // Cache 24 hours
