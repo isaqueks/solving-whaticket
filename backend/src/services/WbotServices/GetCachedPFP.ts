@@ -33,10 +33,10 @@ async function _getCachedPFP(wbot: WASocket, waId: string): Promise<string> {
   }
   finally {
     console.log(`Got pfp ${waId} = ${pfp}`);
-    promiseMap.delete(REDIS_KEY);
   }
-
+  
   await cacheLayer.set(REDIS_KEY, pfp, 'EX', 24 * 60 * 60); // Cache 24 hours
+  promiseMap.delete(REDIS_KEY);
   console.log(`Cache set ${REDIS_KEY}`);
   return pfp;
 }
