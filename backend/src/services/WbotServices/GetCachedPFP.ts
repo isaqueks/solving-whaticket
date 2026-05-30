@@ -16,7 +16,7 @@ export async function getCachedPFP(wbot: WASocket, waId: string): Promise<string
 
   try {
     console.log(`Fetching profile picture for waId: ${waId} (${REDIS_KEY})`);
-    pfp = await wbot.profilePictureUrl(waId);
+    pfp = (await wbot.profilePictureUrl(waId)) || pfp;
   }
   catch (err) {
     console.error(`Failed do fetch pfp ${waId} (${REDIS_KEY})`, err);
