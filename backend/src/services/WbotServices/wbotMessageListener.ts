@@ -1714,10 +1714,13 @@ const handleMessage = async (
     const whatsapp = await ShowWhatsAppService(wbot.id!, companyId);
     const contact = await verifyContact(msg, wbot, companyId);
 
-    // Registra "último contato" no sistema de inadimplência quando o cliente
-    // (contato individual) envia uma mensagem. Fire-and-forget: a chamada trata
-    // os próprios erros e nunca bloqueia/interrompe o processamento da mensagem.
-    if (!msg.key.fromMe && !isGroup) {
+    // Registra "último contato" no sistema de inadimplência sempre que há troca
+    // de mensagem com um contato individual — tanto recebida quanto enviada por
+    // nós. Em qualquer direção, `contact` é o outro lado da conversa (o
+    // destinatário quando a mensagem é nossa), pois deriva de `msg.key.remoteJid`.
+    // Fire-and-forget: a chamada trata os próprios erros e nunca bloqueia/
+    // interrompe o processamento da mensagem.
+    if (!isGroup) {
       NotifyWppReceiveMessage(contact.number).catch(() => {
         /* erros já são logados internamente */
       });
