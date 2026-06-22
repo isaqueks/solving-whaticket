@@ -55,6 +55,7 @@ import UpdateTicketService from "../TicketServices/UpdateTicketService";
 import typebotListener from "../TypebotServices/typebotListener";
 import ShowWhatsAppService from "../WhatsappService/ShowWhatsAppService";
 import SendWhatsAppMessage from "./SendWhatsAppMessage";
+import NotifyWppReceiveMessage from "./NotifyWppReceiveMessage";
 import { getMessageOptions } from "./SendWhatsAppMedia";
 import { getCachedPFP } from "./GetCachedPFP";
 import { getContactMetadata, getGroupMetadata } from "../getContactMetadata";
@@ -1712,6 +1713,15 @@ const handleMessage = async (
 
     const whatsapp = await ShowWhatsAppService(wbot.id!, companyId);
     const contact = await verifyContact(msg, wbot, companyId);
+
+    // Registra "último contato" no sistema de inadimplência quando o cliente
+    // (contato individual) envia uma mensagem. Fire-and-forget: a chamada trata
+    // os próprios erros e nunca bloqueia/interrompe o processamento da mensagem.
+    if (!msg.key.fromMe && !isGroup) {
+      NotifyWppReceiveMessage(contact.number).catch(() => {
+        /* erros já são logados internamente */
+      });
+    }
 
     let unreadMessages = 0;
 
