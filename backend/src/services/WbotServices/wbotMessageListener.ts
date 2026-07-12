@@ -884,25 +884,36 @@ export const verifyMessage = async (
     });
   }
 
-  if (process.env.MESSAGE_WEBHOOK) {
-    await fetch(`${process.env.MESSAGE_WEBHOOK}?wppName=${ticket.whatsapp.name}`, {
-      method: "POST",
-      body: JSON.stringify({
-        type: 'receveid_message',
-        message: msg,
-        extra: {
-          ticket,
-          contact
-        }
-      }),
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-      }
-    });
-  }
-
   await CreateMessageService({ messageData, companyId: ticket.companyId });
+
+  if (process.env.MESSAGE_WEBHOOK) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+      try {
+        await fetch(`${process.env.MESSAGE_WEBHOOK}?wppName=${ticket.whatsapp.name}`, {
+          method: "POST",
+          body: JSON.stringify({
+            type: 'receveid_message',
+            message: msg,
+            extra: {
+              ticket,
+              contact
+            }
+          }),
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+          },
+          signal: controller.signal
+        });
+      } finally {
+        clearTimeout(timeout);
+      }
+    } catch (err) {
+      logger.error(`Error sending MESSAGE_WEBHOOK. Err: ${err}`);
+    }
+  }
 
   if (!msg.key.fromMe && ticket.status === "closed") {
     await ticket.update({ status: "pending" });
@@ -1714,13 +1725,12 @@ const handleMessage = async (
     const whatsapp = await ShowWhatsAppService(wbot.id!, companyId);
     const contact = await verifyContact(msg, wbot, companyId);
 
-    // Registra "último contato" no sistema de inadimplência sempre que há troca
-    // de mensagem com um contato individual — tanto recebida quanto enviada por
-    // nós. Em qualquer direção, `contact` é o outro lado da conversa (o
-    // destinatário quando a mensagem é nossa), pois deriva de `msg.key.remoteJid`.
-    // Fire-and-forget: a chamada trata os próprios erros e nunca bloqueia/
-    // interrompe o processamento da mensagem.
-    if (!isGroup) {
+    // Registra "último contato" no sistema de inadimplência apenas quando o
+    // CLIENTE nos envia uma mensagem em uma conversa individual (mensagens que
+    // NÓS enviamos não contam como contato do cliente). Fire-and-forget: a
+    // chamada trata os próprios erros e nunca bloqueia/interrompe o
+    // processamento da mensagem.
+    if (!msg.key.fromMe && !isGroup) {
       NotifyWppReceiveMessage(contact.number).catch(() => {
         /* erros já são logados internamente */
       });
@@ -1749,7 +1759,7 @@ const handleMessage = async (
       order: [["createdAt", "DESC"]],
     });
 
-    if (unreadMessages === 0 && whatsapp.complationMessage && formatBody(whatsapp.complationMessage, contact).trim().toLowerCase() === lastMessage?.body.trim().toLowerCase()) {
+    if (unreadMessages === 0 && whatsapp.complationMessage && formatBody(whatsapp.complationMessage, contact).trim().toLowerCase() === lastMessage?.body?.trim().toLowerCase()) {
       return;
     }
 
@@ -1883,7 +1893,10 @@ const handleMessage = async (
     try {
       if (!msg.key.fromMe) {
         if (ticketTraking !== null && verifyRating(ticketTraking)) {
-          handleRating(parseFloat(bodyMessage), ticket, ticketTraking);
+          const rate = parseFloat(bodyMessage);
+          if (!Number.isNaN(rate)) {
+            await handleRating(rate, ticket, ticketTraking);
+          }
           return;
         }
       }
@@ -2035,7 +2048,7 @@ const handleMessage = async (
         order: [["createdAt", "DESC"]]
       });
 
-      if (lastMessage && lastMessage.body.includes(whatsapp.greetingMessage)) {
+      if (lastMessage && lastMessage.body?.includes(whatsapp.greetingMessage)) {
         return;
       }
 
@@ -2102,6 +2115,8 @@ const handleMsgAck = async (
     );
   } catch (err) {
     logger.error(`Error handling message ack. Err: ${err}`);
+  } finally {
+    ackMap.delete(msg.key.id);
   }
 };
 
@@ -2151,7 +2166,13 @@ const verifyCampaignMessageAndCloseTicket = async (
     const messageRecord = await Message.findOne({
       where: { id: message.key.id!, companyId },
     });
+    if (!messageRecord) {
+      return;
+    }
     const ticket = await Ticket.findByPk(messageRecord.ticketId);
+    if (!ticket) {
+      return;
+    }
     await ticket.update({ status: "closed" });
 
     io.to(`company-${ticket.companyId}-open`)

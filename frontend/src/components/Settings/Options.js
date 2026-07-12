@@ -272,7 +272,7 @@ export default function Options(props) {
       value,
     });
     toast.success("Operação atualizada com sucesso.");
-    setCheckMsgIsGroupType(false);
+    setCheckMsgIsGroup(false);
     /*     if (typeof scheduleTypeChanged === "function") {
           scheduleTypeChanged(value);
         } */

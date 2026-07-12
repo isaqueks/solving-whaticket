@@ -139,6 +139,7 @@ const ListTicketsService = async ({
 
   if (date) {
     whereCondition = {
+      ...whereCondition,
       createdAt: {
         [Op.between]: [+startOfDay(parseISO(date)), +endOfDay(parseISO(date))]
       }
@@ -147,6 +148,7 @@ const ListTicketsService = async ({
 
   if (updatedAt) {
     whereCondition = {
+      ...whereCondition,
       updatedAt: {
         [Op.between]: [
           +startOfDay(parseISO(updatedAt)),
@@ -178,7 +180,8 @@ const ListTicketsService = async ({
     const ticketsTagFilter: any[] | null = [];
     for (let tag of tags) {
       const ticketTags = await TicketTag.findAll({
-        where: { tagId: tag }
+        where: { tagId: tag },
+        attributes: ["ticketId"]
       });
       if (ticketTags) {
         ticketsTagFilter.push(ticketTags.map(t => t.ticketId));
@@ -199,7 +202,8 @@ const ListTicketsService = async ({
     const ticketsUserFilter: any[] | null = [];
     for (let user of users) {
       const ticketUsers = await Ticket.findAll({
-        where: { userId: user }
+        where: { userId: user, companyId },
+        attributes: ["id"]
       });
       if (ticketUsers) {
         ticketsUserFilter.push(ticketUsers.map(t => t.id));

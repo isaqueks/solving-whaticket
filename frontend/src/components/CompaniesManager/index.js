@@ -100,15 +100,14 @@ export function CompanyForm(props) {
 
   useEffect(() => {
     setRecord((prev) => {
-      if (moment(initialValue).isValid()) {
-        initialValue.dueDate = moment(initialValue.dueDate).format(
-          "YYYY-MM-DD"
-        );
-      }
-      return {
+      const merged = {
         ...prev,
         ...initialValue,
       };
+      if (initialValue && moment(initialValue.dueDate).isValid()) {
+        merged.dueDate = moment(initialValue.dueDate).format("YYYY-MM-DD");
+      }
+      return merged;
     });
   }, [initialValue]);
 

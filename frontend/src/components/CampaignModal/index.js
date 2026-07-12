@@ -554,11 +554,12 @@ const CampaignModal = ({
                         value={values.fileListId || ""}
                       >
                         <MenuItem value={""} >{"Nenhum"}</MenuItem>
-                        {file.map(f => (
-                          <MenuItem key={f.id} value={f.id}>
-                            {f.name}
-                          </MenuItem>
-                        ))}
+                        {Array.isArray(file) &&
+                          file.map(f => (
+                            <MenuItem key={f.id} value={f.id}>
+                              {f.name}
+                            </MenuItem>
+                          ))}
                       </Field>
                     </FormControl>
                   </Grid>

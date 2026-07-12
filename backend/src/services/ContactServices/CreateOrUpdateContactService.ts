@@ -32,15 +32,35 @@ interface CacheItem<T> {
   timestamp: number;
 }
 
+const CACHE_TTL_MS = 1000 * 60 * 5; // 5 minutes cache
+const MAX_CACHE_SIZE = 5000;
+
+// Stores an entry while keeping the cache bounded. Maps preserve insertion
+// order, so when the cap is reached we evict the oldest entries first.
+function setCacheItem<T>(
+  cache: Map<string, CacheItem<T>>,
+  key: string,
+  data: T
+): void {
+  if (!cache.has(key) && cache.size >= MAX_CACHE_SIZE) {
+    const oldestKey = cache.keys().next().value;
+    if (oldestKey !== undefined) {
+      cache.delete(oldestKey);
+    }
+  }
+  cache.set(key, { data, timestamp: Date.now() });
+}
+
 const lidCache: Map<string, CacheItem<Contact>> = new Map<string, CacheItem<Contact>>();
 
 async function getCachedContactByLidNumber(lidNumber: string, companyId: number): Promise<Contact | null> {
   const cacheKey = `${companyId};${lidNumber}`;
   if (lidCache.has(cacheKey)) {
     const cached = lidCache.get(cacheKey);
-    if (cached && (Date.now() - cached.timestamp) < 1000 * 60 * 5) { // 5 minutes cache
+    if (cached && (Date.now() - cached.timestamp) < CACHE_TTL_MS) {
       return cached.data;
     }
+    lidCache.delete(cacheKey); // stale entry, drop it
   }
 
   const ctt = await Contact.findOne({
@@ -51,7 +71,7 @@ async function getCachedContactByLidNumber(lidNumber: string, companyId: number)
   });
 
   if (ctt) {
-    lidCache.set(cacheKey, { data: ctt, timestamp: Date.now() });
+    setCacheItem(lidCache, cacheKey, ctt);
   }
 
   return ctt;
@@ -64,9 +84,10 @@ async function getCachedByNumber(numbers: string[], companyId: number): Promise<
 
   if (numbersCache.has(cacheKey)) {
     const cached = numbersCache.get(cacheKey);
-    if (cached && (Date.now() - cached.timestamp) < 1000 * 60 * 5) { // 5 minutes cache
+    if (cached && (Date.now() - cached.timestamp) < CACHE_TTL_MS) {
       return cached.data;
     }
+    numbersCache.delete(cacheKey); // stale entry, drop it
   }
 
   const ctt = await Contact.findOne({
@@ -79,7 +100,7 @@ async function getCachedByNumber(numbers: string[], companyId: number): Promise<
   });
 
   if (ctt) {
-    numbersCache.set(cacheKey, { data: ctt, timestamp: Date.now() });
+    setCacheItem(numbersCache, cacheKey, ctt);
     return ctt;
   }
 
@@ -128,9 +149,6 @@ const CreateOrUpdateContactService = async (data: Request): Promise<Contact> => 
 
   let contact = await getCachedByNumber(variations, companyId);
 
-  const correctNumber = GP ? number : (await getOnWhatsappNumber(number, companyId));
-
-  console.log('Correct number found:', correctNumber, 'for input number:', number);
   console.log('Variations considered:', variations);
   console.log('Is Group:', GP);
 
@@ -145,7 +163,7 @@ const CreateOrUpdateContactService = async (data: Request): Promise<Contact> => 
       email: email || contact.email || '',
       taxId,
       attachedToEmail,
-      number: correctNumber || contact.number,
+      number: contact.number,
       whatsappId: whatsappId || contact.whatsappId,
       addressingMode: addressingMode || contact.addressingMode,
       lidNumber: lidNumber || contact.lidNumber
@@ -171,26 +189,43 @@ const CreateOrUpdateContactService = async (data: Request): Promise<Contact> => 
 
   } else {
 
+    const correctNumber = GP ? number : (await getOnWhatsappNumber(number, companyId));
+
+    console.log('Correct number found:', correctNumber, 'for input number:', number);
+
     if (!correctNumber) {
       throw new Error(`Contact with number ${number} does not exist on WhatsApp.`);
     }
 
-    contact = await Contact.create({
-      name,
-      number: correctNumber,
-      profilePicUrl,
-      email: email || '',
-      isGroup,
-      extraInfo,
-      companyId,
-      taxId,
-      whatsappId,
-      attachedToEmail,
-      addressingMode,
-      lidNumber
+    // findOrCreate guards against the duplicate-contact race: when two
+    // concurrent messages from a brand-new number both miss the lookup above,
+    // the composite unique constraint (number, companyId) would make the second
+    // Contact.create throw. findOrCreate resolves that atomically and returns
+    // whether this call actually created the row.
+    const [createdContact, created] = await Contact.findOrCreate({
+      where: {
+        number: correctNumber,
+        companyId
+      },
+      defaults: {
+        name,
+        number: correctNumber,
+        profilePicUrl,
+        email: email || '',
+        isGroup,
+        extraInfo,
+        companyId,
+        taxId,
+        whatsappId,
+        attachedToEmail,
+        addressingMode,
+        lidNumber
+      }
     });
 
-    if (!GP && attachedToEmail) {
+    contact = createdContact;
+
+    if (created && !GP && attachedToEmail) {
 
       const correspondingUser = await User.findOne({
         where: {

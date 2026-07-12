@@ -37,7 +37,19 @@ const FindOrCreateTicketService = async (
   }
   
   if (ticket?.status === "closed") {
-    await ticket.update({ queueId: null, userId: null });
+    await ticket.update({
+      status: "pending",
+      userId: null,
+      queueId: null,
+      unreadMessages,
+      companyId
+    });
+    await FindOrCreateATicketTrakingService({
+      ticketId: ticket.id,
+      companyId,
+      whatsappId: ticket.whatsappId,
+      userId: ticket.userId
+    });
   }
 
   if (!ticket && groupContact) {

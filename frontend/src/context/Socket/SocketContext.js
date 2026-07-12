@@ -61,6 +61,10 @@ class ManagedSocket {
       this.rawSocket.off(c.event, c.callback);
     }
     this.callbacks = [];
+    const i = this.socketManager.manageds.indexOf(this);
+    if (i !== -1) {
+      this.socketManager.manageds.splice(i, 1);
+    }
   }
 }
 

@@ -76,6 +76,7 @@ const typebotListener = async ({
             const config = {
                 method: 'post',
                 maxBodyLength: Infinity,
+                timeout: 60000,
                 url: `${url}/api/v1/typebots/${typebotSlug}/startChat`,
                 headers: {
                     'Content-Type': 'application/json',
@@ -146,6 +147,7 @@ const typebotListener = async ({
                 let config = {
                     method: 'post',
                     maxBodyLength: Infinity,
+                    timeout: 60000,
                     url: `${url}/api/v1/sessions/${sessionId}/continueChat`,
                     headers: {
                         'Content-Type': 'application/json',
@@ -174,6 +176,7 @@ const typebotListener = async ({
                         config = {
                             method: 'post',
                             maxBodyLength: Infinity,
+                            timeout: 60000,
                             url: `${url}/api/v1/sessions/${sessionId}/continueChat`,
                             headers: {
                                 'Content-Type': 'application/json',
@@ -183,6 +186,8 @@ const typebotListener = async ({
                         };
 
                         requestContinue = await axios.request(config);
+                    } else {
+                        throw err;
                     }
                 }
                 messages = requestContinue.data?.messages;

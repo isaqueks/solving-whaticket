@@ -44,7 +44,7 @@ const wbotMonitor = async (
           where: { key: "call", companyId },
         });
 
-        if (sendMsgCall.value === "disabled") {
+        if (sendMsgCall?.value === "disabled") {
           await wbot.sendMessage(node.attrs.from, {
             text:
               "*Mensagem Automática:*\n\nAs chamadas de voz e vídeo estão desabilitas para esse WhatsApp, favor enviar uma mensagem de texto. Obrigado",
@@ -55,6 +55,8 @@ const wbotMonitor = async (
           const contact = await Contact.findOne({
             where: { companyId, number },
           });
+          // se não existir o contato não faz nada.
+          if (!contact) return;
 
           const ticket = await Ticket.findOne({
             where: {

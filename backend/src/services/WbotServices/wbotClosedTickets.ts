@@ -49,7 +49,7 @@ export const ClosedAllOpenTickets = async (companyId: number): Promise<void> => 
       order: [["updatedAt", "DESC"]]
     });
 
-    tickets.forEach(async ticket => {
+    for (const ticket of tickets) {
       const showTicket = await ShowTicketService(ticket.id, companyId);
       const whatsapp = await Whatsapp.findByPk(showTicket?.whatsappId, {
         attributes: { exclude: ["session"] }
@@ -61,7 +61,7 @@ export const ClosedAllOpenTickets = async (companyId: number): Promise<void> => 
         }
       })
 
-      if (!whatsapp) return;
+      if (!whatsapp) continue;
 
       let {
         expiresInactiveMessage, //mensage de encerramento por inatividade      
@@ -94,12 +94,14 @@ export const ClosedAllOpenTickets = async (companyId: number): Promise<void> => 
 
             closeTicket(showTicket, showTicket.status, bodyExpiresMessageInactive);
 
-            await ticketTraking.update({
-              finishedAt: moment().toDate(),
-              closedAt: moment().toDate(),
-              whatsappId: ticket.whatsappId,
-              userId: ticket.userId,
-            })
+            if (ticketTraking) {
+              await ticketTraking.update({
+                finishedAt: moment().toDate(),
+                closedAt: moment().toDate(),
+                whatsappId: ticket.whatsappId,
+                userId: ticket.userId,
+              })
+            }
 
             io.to("open").emit(`company-${companyId}-ticket`, {
               action: "delete",
@@ -109,7 +111,7 @@ export const ClosedAllOpenTickets = async (companyId: number): Promise<void> => 
           }
         }
       }
-    });
+    }
 
   } catch (e: any) {
     console.log('e', e)

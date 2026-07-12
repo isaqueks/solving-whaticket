@@ -21,7 +21,16 @@ export const initIO = (httpServer: Server): SocketIO => {
 
   io.on("connection", async socket => {
     logger.info("Client Connected");
-    const userCookie = socket.handshake.headers.cookie.split(";").map(s=>s.trim()).find(cookie => cookie.startsWith("user=")).split("=")[1];
+    const cookieHeader = socket.handshake.headers.cookie;
+    const userCookieEntry = cookieHeader
+      ? cookieHeader.split(";").map(s => s.trim()).find(cookie => cookie.startsWith("user="))
+      : undefined;
+    if (!userCookieEntry) {
+      logger.info("onConnect: Missing user cookie");
+      socket.disconnect();
+      return io;
+    }
+    const userCookie = userCookieEntry.split("=")[1];
     const solvingUser =  await fetchUserData(userCookie);
     if (!solvingUser) {
       logger.info("onConnect: User not found in cookie");
@@ -34,6 +43,11 @@ export const initIO = (httpServer: Server): SocketIO => {
     let user: User = await User.findOne({
       where: { email: solvingUser.email },
     });
+    if (!user) {
+      logger.info(`onConnect: User with email ${solvingUser.email} not found`);
+      socket.disconnect();
+      return io;
+    }
     let userId = user.id;
 
     if (userId) {

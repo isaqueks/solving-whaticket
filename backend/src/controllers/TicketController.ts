@@ -101,10 +101,12 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   });
 
   const io = getIO();
-  io.to(ticket.status).emit(`company-${companyId}-ticket`, {
-    action: "update",
-    ticket
-  });
+  io.to(`company-${companyId}-${ticket.status}`)
+    .to(`queue-${ticket.queueId}-${ticket.status}`)
+    .emit(`company-${companyId}-ticket`, {
+      action: "update",
+      ticket
+    });
   return res.status(200).json(ticket);
 };
 

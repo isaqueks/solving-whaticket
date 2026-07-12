@@ -17,7 +17,20 @@ export function getBrazilianNumberVariations(number: string): string[] {
 
 }
 
+const MAX_CACHE_SIZE = 5000;
 const cache = new Map<string, string>();
+
+// Keeps the cache bounded. Maps preserve insertion order, so when the cap is
+// reached we evict the oldest entry before inserting a new one.
+function setCacheItem(key: string, value: string): void {
+  if (!cache.has(key) && cache.size >= MAX_CACHE_SIZE) {
+    const oldestKey = cache.keys().next().value;
+    if (oldestKey !== undefined) {
+      cache.delete(oldestKey);
+    }
+  }
+  cache.set(key, value);
+}
 
 export async function getOnWhatsappNumber(
   number: string,
@@ -38,7 +51,7 @@ export async function getOnWhatsappNumber(
         throw new Error(`Contact with number ${number} does not exist on WhatsApp.`);
       }
       const result = onWhatsapp?.jid.split("@")[0];
-      cache.set(cacheKey, result);
+      setCacheItem(cacheKey, result);
       return result;
     }
     catch {

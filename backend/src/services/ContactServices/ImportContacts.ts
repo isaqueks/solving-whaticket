@@ -59,16 +59,27 @@ export async function ImportContacts(
   }
 
   if (contactList) {
-    for (let newContact of contactList) {
-      try {
-        const response = await CheckContactNumber(newContact.number, companyId);
-        const number = response.jid.replace(/[^0-9|-]/g, "");
-        newContact.number = number;
-        await newContact.save();
-      } catch (e) {
-        logger.error(`Número de contato inválido: ${newContact.number}`);
+    // Validate numbers against WhatsApp in the background. Each CheckContactNumber
+    // performs a live Baileys network round-trip; awaiting thousands of them
+    // sequentially inside the request holds the HTTP connection open until it
+    // times out, so run the validation detached and respond immediately.
+    (async () => {
+      for (let newContact of contactList) {
+        try {
+          const response = await CheckContactNumber(
+            newContact.number,
+            companyId
+          );
+          const number = response.jid.replace(/[^0-9|-]/g, "");
+          newContact.number = number;
+          await newContact.save();
+        } catch (e) {
+          logger.error(`Número de contato inválido: ${newContact.number}`);
+        }
       }
-    }
+    })().catch(e => {
+      logger.error(`Erro ao validar contatos importados: ${e}`);
+    });
   }
 
   return contactList;

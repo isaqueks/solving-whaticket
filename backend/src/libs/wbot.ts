@@ -50,7 +50,7 @@ export const removeWbot = async (
     const sessionIndex = sessions.findIndex(s => s.id === whatsappId);
     if (sessionIndex !== -1) {
       if (isLogout) {
-        sessions[sessionIndex].logout();
+        await sessions[sessionIndex].logout();
         sessions[sessionIndex].ws.close();
       }
 
@@ -143,6 +143,7 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
                   session: whatsapp
                 });
                 removeWbot(id, false);
+                return;
               }
               if (
                 (lastDisconnect?.error as Boom)?.output?.statusCode !==
@@ -204,6 +205,12 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
                 });
                 wsocket.ev.removeAllListeners("connection.update");
                 wsocket.ws.close();
+                const sessionIndex = sessions.findIndex(
+                  s => s.id === whatsapp.id
+                );
+                if (sessionIndex !== -1) {
+                  sessions.splice(sessionIndex, 1);
+                }
                 wsocket = null;
                 retriesQrCodeMap.delete(id);
               } else {

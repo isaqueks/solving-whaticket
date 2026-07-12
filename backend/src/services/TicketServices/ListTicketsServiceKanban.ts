@@ -93,24 +93,10 @@ const ListTicketsServiceKanban = async ({
   if (searchParam) {
     const sanitizedSearchParam = searchParam.toLocaleLowerCase().trim();
 
-    includeCondition = [
-      ...includeCondition,
-      {
-        model: Message,
-        as: "messages",
-        attributes: ["id", "body"],
-        where: {
-          body: where(
-            fn("LOWER", col("body")),
-            "LIKE",
-            `%${sanitizedSearchParam}%`
-          )
-        },
-        required: false,
-        duplicating: false
-      }
-    ];
-
+    // Message body search is intentionally disabled: joining the (largest)
+    // messages table with a leading-wildcard LIKE forces a full sequential
+    // scan on every keystroke-triggered kanban search. Contact name/number
+    // filtering below is sufficient for the board.
     whereCondition = {
       ...whereCondition,
       [Op.or]: [
@@ -121,14 +107,7 @@ const ListTicketsServiceKanban = async ({
             `%${sanitizedSearchParam}%`
           )
         },
-        { "$contact.number$": { [Op.like]: `%${sanitizedSearchParam}%` } },
-        {
-          "$message.body$": where(
-            fn("LOWER", col("body")),
-            "LIKE",
-            `%${sanitizedSearchParam}%`
-          )
-        }
+        { "$contact.number$": { [Op.like]: `%${sanitizedSearchParam}%` } }
       ]
     };
   }

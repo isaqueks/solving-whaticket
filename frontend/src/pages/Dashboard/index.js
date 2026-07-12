@@ -46,7 +46,6 @@ import { AuthContext } from "../../context/Auth/AuthContext";
 import useDashboard from "../../hooks/useDashboard";
 import useTickets from "../../hooks/useTickets";
 import useUsers from "../../hooks/useUsers";
-import useContacts from "../../hooks/useContacts";
 import useMessages from "../../hooks/useMessages";
 import { ChatsUser } from "./ChartsUser"
 
@@ -344,16 +343,7 @@ const Dashboard = () => {
     count = userOnline === 0 ? 0 : userOnline;
     return count;
   };
-  
-    const GetContacts = (all) => {
-    let props = {};
-    if (all) {
-      props = {};
-    }
-    const { count } = useContacts(props);
-    return count;
-  };
-  
+
     function renderFilters() {
     if (filterType === 1) {
       return (
@@ -698,7 +688,7 @@ const Dashboard = () => {
                       component="h1"
                       variant="h4"
                     >
-                      {GetContacts(true)}
+                      {counters.leads}
                     </Typography>
                   </Grid>
                 </Grid>

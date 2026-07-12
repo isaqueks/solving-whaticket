@@ -44,7 +44,7 @@ const Routes = () => {
 
   useEffect(() => {
     const cshow = localStorage.getItem("cshow");
-    if (cshow !== undefined) {
+    if (cshow) {
       setShowCampaigns(true);
     }
   }, []);

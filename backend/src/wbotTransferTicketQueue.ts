@@ -25,7 +25,7 @@ export const TransferTicketQueue = async (): Promise<void> => {
   });
 
   // varrer os tickets e verificar se algum deles está com o tempo estourado
-  tickets.forEach(async ticket => {
+  for (const ticket of tickets) {
 
 
 
@@ -36,7 +36,7 @@ export const TransferTicketQueue = async (): Promise<void> => {
       attributes: { exclude: ["session"] }
     });
 
-    if (!wpp || !wpp.timeToTransfer || !wpp.transferQueueId || wpp.timeToTransfer == 0) return;
+    if (!wpp || !wpp.timeToTransfer || !wpp.transferQueueId || wpp.timeToTransfer == 0) continue;
 
     let dataLimite = new Date(ticket.updatedAt);
     dataLimite.setMinutes(dataLimite.getMinutes() + wpp.timeToTransfer);
@@ -56,10 +56,12 @@ export const TransferTicketQueue = async (): Promise<void> => {
         order: [["createdAt", "DESC"]]
       });
 
-      await ticketTraking.update({
-        queuedAt: moment().toDate(),
-        queueId: wpp.transferQueueId,
-      });
+      if (ticketTraking) {
+        await ticketTraking.update({
+          queuedAt: moment().toDate(),
+          queueId: wpp.transferQueueId,
+        });
+      }
 
       const currentTicket = await ShowTicketService(ticket.id, ticket.companyId);
 
@@ -77,7 +79,7 @@ export const TransferTicketQueue = async (): Promise<void> => {
     }
 
 
-  });
+  }
 
 
 }

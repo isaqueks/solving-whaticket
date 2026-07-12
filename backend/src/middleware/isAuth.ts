@@ -5,17 +5,42 @@ import AppError from "../errors/AppError";
 import authConfig from "../config/auth";
 import User from "../models/User";
 
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache
+const CACHE_MAX_SIZE = 5000;
+
 const cache: Map<string, {
   user: any,
   timestamp: number
 }> = new Map();
 
+function pruneCache() {
+  const now = Date.now();
+  for (const [key, value] of cache) {
+    if ((now - value.timestamp) >= CACHE_TTL) {
+      cache.delete(key);
+    }
+  }
+
+  // Hard cap: if still over the limit, evict oldest (insertion-ordered) entries.
+  if (cache.size > CACHE_MAX_SIZE) {
+    const excess = cache.size - CACHE_MAX_SIZE;
+    let removed = 0;
+    for (const key of cache.keys()) {
+      if (removed >= excess) break;
+      cache.delete(key);
+      removed += 1;
+    }
+  }
+}
+
 export async function fetchUserData(userId: string) {
   if (cache.has(userId)) {
     const cachedData = cache.get(userId);
-    if (cachedData && (Date.now() - cachedData.timestamp) < 5 * 60 * 1000) { // 5 minutes cache
+    if (cachedData && (Date.now() - cachedData.timestamp) < CACHE_TTL) {
       return cachedData.user;
     }
+    // Expired: remove so stale entries don't accumulate.
+    cache.delete(userId);
   }
 
   const response = await fetch(process.env.CHECK_AUTH_ENDPOINT, {
@@ -31,7 +56,8 @@ export async function fetchUserData(userId: string) {
 
   const userData = await response.json();
   cache.set(userId, { user: userData, timestamp: Date.now() });
-  
+  pruneCache();
+
   return userData;
 }
 

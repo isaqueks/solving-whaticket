@@ -97,7 +97,7 @@ const reducer = (state, action) => {
 
     const ticketIndex = state.findIndex((t) => t.id === ticketId);
     if (ticketIndex !== -1) {
-      state[ticketIndex].unreadMessages = 0;
+      state[ticketIndex] = { ...state[ticketIndex], unreadMessages: 0 };
     }
 
     return [...state];
@@ -134,7 +134,7 @@ const reducer = (state, action) => {
     const contact = action.payload;
     const ticketIndex = state.findIndex((t) => t.contactId === contact.id);
     if (ticketIndex !== -1) {
-      state[ticketIndex].contact = contact;
+      state[ticketIndex] = { ...state[ticketIndex], contact };
     }
     return [...state];
   }

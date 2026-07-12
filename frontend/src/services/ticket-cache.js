@@ -9,6 +9,13 @@ export class TicketCache {
    */
   static cache = new Map();
 
+  static ticketsCacheKey(params) {
+    const companyId = localStorage.getItem("companyId") || "";
+    const userId = localStorage.getItem("userId") || "";
+    const urlParams = new URLSearchParams(params).toString();
+    return CACHE_KEY(`tickets/${companyId}/${userId}/${urlParams}`);
+  }
+
   static async getTicketsNetwork(params) {
     const {
         searchParam,
@@ -50,8 +57,7 @@ export class TicketCache {
 
     try {
       if (String(pageNumber) === "1") {
-        const urlParams = new URLSearchParams(params).toString();
-        const key = CACHE_KEY(`tickets/${urlParams.toString()}`);
+        const key = TicketCache.ticketsCacheKey(params);
         localStorage.setItem(key, JSON.stringify(data));
       }
     }
@@ -79,8 +85,7 @@ export class TicketCache {
   }
 
   static async getTickets(params) {
-    const urlParams = new URLSearchParams(params).toString();
-    const key = CACHE_KEY(`tickets/${urlParams.toString()}`);
+    const key = TicketCache.ticketsCacheKey(params);
     try {
       const cached = JSON.parse(localStorage.getItem(key));
       for (const ticket of cached.tickets) {

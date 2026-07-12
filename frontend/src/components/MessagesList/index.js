@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useReducer, useRef, useContext } from "react";
+import React, { useState, useEffect, useReducer, useRef, useContext, useMemo } from "react";
 
 import { isSameDay, parseISO, format } from "date-fns";
 import clsx from "clsx";
@@ -447,6 +447,7 @@ const MessagesList = ({
   const [anchorEl, setAnchorEl] = useState(null);
   const messageOptionsMenuOpen = Boolean(anchorEl);
   const currentTicketId = useRef(ticketId);
+  const loadingRef = useRef(false);
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
   const socketManager = useContext(SocketContext);
   const lastMessageRef = useRef();
@@ -481,6 +482,7 @@ const MessagesList = ({
             dispatch({ type: "LOAD_MESSAGES", payload: data.messages });
             setHasMore(data.hasMore);
             setLoading(false);
+            loadingRef.current = false;
           }
 
           if (pageNumber === 1 && data.messages.length > 1) {
@@ -488,6 +490,7 @@ const MessagesList = ({
           }
         } catch (err) {
           setLoading(false);
+          loadingRef.current = false;
           toastError(err);
         }
       };
@@ -551,6 +554,31 @@ const MessagesList = ({
 
   }, [messagesList, pendingMessages]);
 
+  // Maps a message id to the most recent edited message that overwrites it.
+  // Computed once per messagesList change (O(edited)) instead of parsing every
+  // edited message's dataJson for every rendered message on every render.
+  const overwrittenMessages = useMemo(() => {
+    const map = new Map();
+    for (const msg of messagesList) {
+      if (!msg.isEdited) continue;
+      try {
+        const raw = JSON.parse(msg.dataJson);
+        const targetId = (
+          raw?.message?.editedMessage?.message?.protocolMessage?.key?.id ||
+          raw?.message?.protocolMessage?.key?.id
+        );
+        if (!targetId) continue;
+        const existing = map.get(targetId);
+        if (!existing || new Date(msg.createdAt) > new Date(existing.createdAt)) {
+          map.set(targetId, msg);
+        }
+      } catch {
+        // ignore malformed dataJson
+      }
+    }
+    return map;
+  }, [messagesList]);
+
   const loadMore = () => {
     setPageNumber((prevPageNumber) => prevPageNumber + 1);
   };
@@ -571,11 +599,12 @@ const MessagesList = ({
       document.getElementById("messagesList").scrollTop = 1;
     }
 
-    if (loading) {
+    if (loading || loadingRef.current) {
       return;
     }
 
     if (scrollTop < 50) {
+      loadingRef.current = true;
       loadMore();
     }
   };
@@ -619,7 +648,7 @@ const MessagesList = ({
             }
           }
         }
-        return <VCardPreview contact={contact} numbers={obj[0].number} />
+        return <VCardPreview contact={contact} numbers={obj.length > 0 ? obj[0].number : ""} />
       }
       else if (message.mediaType === "image") {
         return <ModalImageCors imageUrl={message.mediaUrl} />;
@@ -829,25 +858,13 @@ const MessagesList = ({
 
   const renderMessages = () => {
     if (messagesList.length > 0) {
-      const editedMessages = messagesList.filter(msg => msg.isEdited);
       const viewMessagesList = [...messagesList, ...pendingMessages].map((message, index) => {
 
         if (message.isEdited) {
           return undefined;
         }
 
-        const overwritten = editedMessages.filter(msg => {
-          try {
-            const raw = JSON.parse(msg.dataJson);
-            return (
-              raw?.message?.editedMessage?.message?.protocolMessage?.key?.id ||
-              raw?.message?.protocolMessage?.key?.id
-            ) === message.id;
-          }
-          catch {
-            return false;
-          }
-        }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+        const overwritten = overwrittenMessages.get(message.id);
 
         if (overwritten) {
           message = {

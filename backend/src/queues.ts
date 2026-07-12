@@ -102,18 +102,15 @@ async function handleSendMessage(job) {
 async function handleAttachTickets() {
   const job = new CronJob('*/10 * * * *', async () => {
     const companies = await Company.findAll();
-    companies.map(async c => {
-
+    for (const c of companies) {
       try {
         const companyId = c.id;
         await attachAllTicketsToUser(companyId);
       } catch (e: any) {
         Sentry.captureException(e);
         logger.error("attachAllTicketsToUser -> Verify: error", e.message);
-        throw e;
       }
-
-    });
+    }
   });
   job.start()
 }
@@ -122,18 +119,15 @@ async function handleAttachTickets() {
 async function handleCloseTicketsAutomatic() {
   const job = new CronJob('*/3 * * * *', async () => {
     const companies = await Company.findAll();
-    companies.map(async c => {
-
+    for (const c of companies) {
       try {
         const companyId = c.id;
         await ClosedAllOpenTickets(companyId);
       } catch (e: any) {
         Sentry.captureException(e);
         logger.error("ClosedAllOpenTickets -> Verify: error", e.message);
-        throw e;
       }
-
-    });
+    }
   });
   job.start()
 }
@@ -145,7 +139,6 @@ async function handleVerifySchedules(job) {
         status: "PENDENTE",
         sentAt: null,
         sendAt: {
-          [Op.gte]: moment().format("YYYY-MM-DD HH:mm:ss"),
           [Op.lte]: moment().add("30", "seconds").format("YYYY-MM-DD HH:mm:ss")
         }
       },
@@ -279,6 +272,21 @@ async function getCampaign(id) {
         model: CampaignShipping,
         as: "shipping",
         include: [{ model: ContactListItem, as: "contact" }]
+      }
+    ]
+  });
+}
+
+// Lightweight campaign fetch for per-contact jobs: only scalar fields +
+// whatsapp are needed. Avoids eager-loading the full contact list and every
+// CampaignShipping row on each of the thousands of jobs a campaign spawns.
+async function getCampaignLite(id) {
+  return await Campaign.findByPk(id, {
+    include: [
+      {
+        model: Whatsapp,
+        as: "whatsapp",
+        attributes: ["id", "name"]
       }
     ]
   });
@@ -441,9 +449,12 @@ export function randomValue(min, max) {
 }
 
 async function verifyAndFinalizeCampaign(campaign) {
-  const { contacts } = campaign.contactList;
-
-  const count1 = contacts.length;
+  const count1 = await ContactListItem.count({
+    where: {
+      contactListId: campaign.contactListId,
+      isWhatsappValid: true
+    }
+  });
   const count2 = await CampaignShipping.count({
     where: {
       campaignId: campaign.id,
@@ -467,9 +478,9 @@ async function verifyAndFinalizeCampaign(campaign) {
 function calculateDelay(index, baseDelay, longerIntervalAfter, greaterInterval, messageInterval) {
   const diffSeconds = differenceInSeconds(baseDelay, new Date());
   if (index > longerIntervalAfter) {
-    return diffSeconds * 1000 + greaterInterval
+    return diffSeconds * 1000 + greaterInterval * 1000
   } else {
-    return diffSeconds * 1000 + messageInterval
+    return diffSeconds * 1000 + messageInterval * 1000
   }
 }
 
@@ -479,6 +490,14 @@ async function handleProcessCampaign(job) {
     const campaign = await getCampaign(id);
     const settings = await getSettings(campaign);
     if (campaign) {
+      // Idempotency guard: the verify poller enqueues a ProcessCampaign every
+      // 20s while status stays PROGRAMADA. Flip the status before enqueuing the
+      // per-contact jobs so a second run (or a concurrent tick) is skipped and
+      // contacts are not dispatched twice.
+      if (campaign.status !== "PROGRAMADA") {
+        return;
+      }
+      await campaign.update({ status: "EM_ANDAMENTO" });
       const { contacts } = campaign.contactList;
       if (isArray(contacts)) {
         const contactData = contacts.map(contact => ({
@@ -488,8 +507,11 @@ async function handleProcessCampaign(job) {
         }));
 
         // const baseDelay = job.data.delay || 0;
-        const longerIntervalAfter = parseToMilliseconds(settings.longerIntervalAfter);
-        const greaterInterval = parseToMilliseconds(settings.greaterInterval);
+        // longerIntervalAfter is a message count (compared to the loop index);
+        // greaterInterval/messageInterval are in seconds (used by addSeconds and
+        // converted to ms inside calculateDelay). None must be pre-multiplied.
+        const longerIntervalAfter = settings.longerIntervalAfter;
+        const greaterInterval = settings.greaterInterval;
         const messageInterval = settings.messageInterval;
 
         let baseDelay = campaign.scheduledAt;
@@ -509,7 +531,6 @@ async function handleProcessCampaign(job) {
           logger.info(`Registro enviado pra fila de disparo: Campanha=${campaign.id};Contato=${contacts[i].name};delay=${delay}`);
         }
         await Promise.all(queuePromises);
-        await campaign.update({ status: "EM_ANDAMENTO" });
       }
     }
   } catch (err: any) {
@@ -522,7 +543,7 @@ async function handlePrepareContact(job) {
   try {
     const { contactId, campaignId, delay, variables }: PrepareContactData =
       job.data;
-    const campaign = await getCampaign(campaignId);
+    const campaign = await getCampaignLite(campaignId);
     const contact = await getContact(contactId);
 
     const campaignShipping: any = {};
@@ -532,8 +553,9 @@ async function handlePrepareContact(job) {
 
     const messages = getCampaignValidMessages(campaign);
     if (messages.length) {
-      const radomIndex = ultima_msg;
-      console.log('ultima_msg:', ultima_msg);
+      // ultima_msg is shared across all campaigns, so clamp against THIS
+      // campaign's message count to avoid indexing an undefined message.
+      const radomIndex = ultima_msg % messages.length;
       ultima_msg++;
       if (ultima_msg >= messages.length) {
         ultima_msg = 0;
@@ -607,7 +629,7 @@ async function handleDispatchCampaign(job) {
   try {
     const { data } = job;
     const { campaignShippingId, campaignId }: DispatchCampaignData = data;
-    const campaign = await getCampaign(campaignId);
+    const campaign = await getCampaignLite(campaignId);
     const wbot = await GetWhatsappWbot(campaign.whatsapp);
 
     if (!wbot) {

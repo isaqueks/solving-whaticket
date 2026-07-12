@@ -25,8 +25,10 @@ export const processAudio = async (audio: string): Promise<string> => {
     exec(
       `${ffmpegPath.path} -i ${audio} -vn -ab 128k -ar 44100 -f ipod ${outputAudio} -y`,
       (error, _stdout, _stderr) => {
-        if (error) reject(error);
-        fs.unlinkSync(audio);
+        if (error) {
+          reject(error);
+          return;
+        }
         resolve(outputAudio);
       }
     );
@@ -39,8 +41,10 @@ const processAudioFile = async (audio: string): Promise<string> => {
     exec(
       `${ffmpegPath.path} -i ${audio} -vn -ar 44100 -ac 2 -b:a 192k ${outputAudio}`,
       (error, _stdout, _stderr) => {
-        if (error) reject(error);
-        fs.unlinkSync(audio);
+        if (error) {
+          reject(error);
+          return;
+        }
         resolve(outputAudio);
       }
     );
@@ -86,6 +90,7 @@ export const getMessageOptions = async (
           ptt: true
         };
       }
+      await fs.promises.unlink(convert);
     } else if (typeMessage === "document") {
       options = {
         document: await fs.promises.readFile(pathMedia),
@@ -144,12 +149,14 @@ const SendWhatsAppMedia = async ({
           mimetype: typeAudio ? "audio/mp4" : media.mimetype,
           ptt: true
         };
+        await fs.promises.unlink(convert);
       } else {
         const convert = await processAudioFile(media.path);
         options = {
           audio: await fs.promises.readFile(convert),
           mimetype: typeAudio ? "audio/mp4" : media.mimetype
         };
+        await fs.promises.unlink(convert);
       }
     } else if (typeMessage === "document" || typeMessage === "text") {
       options = {

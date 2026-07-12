@@ -16,7 +16,7 @@
 
 import path from "path";
 import fs from "fs";
-import { fn, col } from "sequelize";
+import { fn, col, Op } from "sequelize";
 
 // Importar o database conecta o Sequelize, registra os models e carrega o .env
 // (via ../bootstrap, importado por ../config/database).
@@ -37,64 +37,95 @@ async function run(): Promise<void> {
   console.log("[export] Conectando ao banco...");
   await sequelize.authenticate();
 
-  // Tickets individuais (não-grupo), com o contato carregado junto.
-  const tickets = await Ticket.findAll({
-    where: { isGroup: false },
-    include: [
-      {
-        model: Contact,
-        as: "contact",
-        required: true,
-        where: { isGroup: false },
-        attributes: ["id", "number", "isGroup"]
-      }
-    ],
-    attributes: ["id", "contactId", "isGroup", "updatedAt"],
-    order: [["id", "ASC"]]
-  });
+  // Tamanho do lote para paginação por keyset (id). Evita carregar todos os
+  // tickets/mensagens de uma vez em memória e evita um GROUP BY de tabela
+  // inteira em Messages.
+  const BATCH_SIZE = 1000;
 
-  console.log(`[export] ${tickets.length} tickets individuais encontrados.`);
-
-  // Data da última mensagem por ticket: MAX(createdAt) agrupado por ticketId,
-  // em uma única consulta (evita N+1).
-  const maxRows = (await Message.findAll({
-    attributes: ["ticketId", [fn("MAX", col("createdAt")), "lastDate"]],
-    group: ["ticketId"],
-    raw: true
-  })) as unknown as { ticketId: number; lastDate: string }[];
-
-  const lastDateByTicket = new Map<number, Date>();
-  for (const row of maxRows) {
-    if (row.ticketId != null && row.lastDate) {
-      lastDateByTicket.set(Number(row.ticketId), new Date(row.lastDate));
+  // Grava em stream para não acumular todas as linhas em memória.
+  const stream = fs.createWriteStream(outputPath, { encoding: "utf8" });
+  const streamWrite = async (chunk: string): Promise<void> => {
+    if (!stream.write(chunk)) {
+      await new Promise<void>(resolve => stream.once("drain", resolve));
     }
-  }
+  };
 
-  const lines: string[] = ["Numero,Data"];
+  await streamWrite("Numero,Data\n");
+
+  let lastId = 0;
+  let total = 0;
   let written = 0;
   let skippedNoNumber = 0;
   let skippedNoMessage = 0;
 
-  for (const ticket of tickets) {
-    const numero = onlyDigits(ticket.contact?.number);
-    if (!numero) {
-      skippedNoNumber += 1;
-      continue;
+  // Paginação por keyset (id > lastId) processando um lote por vez.
+  for (;;) {
+    // Tickets individuais (não-grupo), com o contato carregado junto.
+    const tickets = await Ticket.findAll({
+      where: { isGroup: false, id: { [Op.gt]: lastId } },
+      include: [
+        {
+          model: Contact,
+          as: "contact",
+          required: true,
+          where: { isGroup: false },
+          attributes: ["id", "number", "isGroup"]
+        }
+      ],
+      attributes: ["id", "contactId", "isGroup", "updatedAt"],
+      order: [["id", "ASC"]],
+      limit: BATCH_SIZE
+    });
+
+    if (tickets.length === 0) {
+      break;
     }
 
-    const lastDate = lastDateByTicket.get(ticket.id);
-    if (!lastDate) {
-      // Ticket sem mensagens: não há "última mensagem" para registrar.
-      skippedNoMessage += 1;
-      continue;
+    lastId = tickets[tickets.length - 1].id;
+    total += tickets.length;
+
+    // Data da última mensagem por ticket: MAX(createdAt) agrupado por ticketId,
+    // limitado aos tickets deste lote (evita N+1 e evita varrer toda a tabela).
+    const ticketIds = tickets.map(ticket => ticket.id);
+    const maxRows = (await Message.findAll({
+      attributes: ["ticketId", [fn("MAX", col("createdAt")), "lastDate"]],
+      where: { ticketId: { [Op.in]: ticketIds } },
+      group: ["ticketId"],
+      raw: true
+    })) as unknown as { ticketId: number; lastDate: string }[];
+
+    const lastDateByTicket = new Map<number, Date>();
+    for (const row of maxRows) {
+      if (row.ticketId != null && row.lastDate) {
+        lastDateByTicket.set(Number(row.ticketId), new Date(row.lastDate));
+      }
     }
 
-    lines.push(`${numero},${lastDate.toISOString()}`);
-    written += 1;
+    for (const ticket of tickets) {
+      const numero = onlyDigits(ticket.contact?.number);
+      if (!numero) {
+        skippedNoNumber += 1;
+        continue;
+      }
+
+      const lastDate = lastDateByTicket.get(ticket.id);
+      if (!lastDate) {
+        // Ticket sem mensagens: não há "última mensagem" para registrar.
+        skippedNoMessage += 1;
+        continue;
+      }
+
+      await streamWrite(`${numero},${lastDate.toISOString()}\n`);
+      written += 1;
+    }
   }
 
-  fs.writeFileSync(outputPath, lines.join("\n") + "\n", "utf8");
+  await new Promise<void>((resolve, reject) => {
+    stream.on("error", reject);
+    stream.end(resolve);
+  });
 
+  console.log(`[export] ${total} tickets individuais encontrados.`);
   console.log(`[export] Linhas gravadas: ${written}`);
   console.log(`[export] Ignorados (sem número): ${skippedNoNumber}`);
   console.log(`[export] Ignorados (sem mensagem): ${skippedNoMessage}`);

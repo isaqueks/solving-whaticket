@@ -57,12 +57,12 @@ const ShowTicketService = async (
     ]
   });
 
-  if (ticket?.companyId !== companyId) {
-    throw new AppError("Não é possível consultar registros de outra empresa");
-  }
-
   if (!ticket) {
     throw new AppError("ERR_NO_TICKET_FOUND", 404);
+  }
+
+  if (ticket.companyId !== companyId) {
+    throw new AppError("Não é possível consultar registros de outra empresa");
   }
 
   return ticket;

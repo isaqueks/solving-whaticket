@@ -28,6 +28,17 @@ interface WppReceiveMessageResponse {
 
 const REQUEST_TIMEOUT_MS = 10000;
 const MAX_ATTEMPTS = 3;
+
+// Janela de deduplicação por telefone. Como o endpoint apenas atualiza a
+// `lastContactDate`, notificar uma vez por telefone dentro dessa janela é
+// suficiente. Isso evita disparar milhares de requisições HTTP concorrentes
+// (ex.: campanhas cujos envios ecoam como mensagens `fromMe`, uma por contato),
+// que esgotariam sockets/descritores e martelariam o serviço externo.
+const DEDUP_WINDOW_MS = Number(
+  process.env.WPP_RECEIVE_MESSAGE_DEDUP_MS || 5 * 60 * 1000
+);
+const lastNotifiedAt = new Map<string, number>();
+
 const onlyDigits = (value: string): string => (value || "").replace(/\D/g, "");
 const wait = (ms: number): Promise<void> =>
   new Promise(resolve => setTimeout(resolve, ms));
@@ -46,6 +57,27 @@ const NotifyWppReceiveMessage = async (phone: string): Promise<void> => {
   const normalizedPhone = onlyDigits(phone);
   if (!normalizedPhone) {
     return;
+  }
+
+  // Deduplicação/debounce por telefone: se já notificamos esse número dentro da
+  // janela, não dispara outra requisição. Marcamos o horário ANTES da chamada
+  // para também barrar o fan-out de invocações concorrentes do mesmo telefone.
+  const now = Date.now();
+  if (DEDUP_WINDOW_MS > 0) {
+    const previous = lastNotifiedAt.get(normalizedPhone);
+    if (previous !== undefined && now - previous < DEDUP_WINDOW_MS) {
+      return;
+    }
+    lastNotifiedAt.set(normalizedPhone, now);
+
+    // Poda entradas expiradas para o Map não crescer indefinidamente.
+    if (lastNotifiedAt.size > 10000) {
+      lastNotifiedAt.forEach((ts, key) => {
+        if (now - ts >= DEDUP_WINDOW_MS) {
+          lastNotifiedAt.delete(key);
+        }
+      });
+    }
   }
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {

@@ -313,6 +313,7 @@ const UpdateTicketService = async ({
   } catch (err) {
     console.error(err)
     Sentry.captureException(err);
+    throw err;
   }
 };
 
