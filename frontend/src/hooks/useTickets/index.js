@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import toastError from "../../errors/toastError";
 
-import api from "../../services/api";
 import { TicketCache } from "../../services/ticket-cache";
 
 const useTickets = ({
@@ -26,21 +25,6 @@ const useTickets = ({
     const delayDebounceFn = setTimeout(() => {
       const fetchTickets = async () => {
         try {
-          // const { data } = await api.get("/tickets", {
-          //   params: {
-          //     searchParam,
-          //     pageNumber,
-          //     tags,
-          //     users,
-          //     status,
-          //     date,
-          //     updatedAt,
-          //     showAll,
-          //     queueIds,
-          //     withUnreadMessages,
-          //     unread
-          //   },
-          // });
           const params = {
             searchParam,
             pageNumber,

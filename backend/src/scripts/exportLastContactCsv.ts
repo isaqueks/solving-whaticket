@@ -18,16 +18,25 @@ import path from "path";
 import fs from "fs";
 import { fn, col, Op } from "sequelize";
 
+import { appConfig } from "../config/AppConfig";
 // Importar o database conecta o Sequelize, registra os models e carrega o .env
 // (via ../bootstrap, importado por ../config/database).
 import sequelize from "../database";
-import Ticket from "../models/Ticket";
-import Contact from "../models/Contact";
-import Message from "../models/Message";
+// Exceção justificada (B6): script administrativo standalone, executado FORA
+// do runtime da aplicação (ts-node, somente leitura). O acesso direto aos
+// models fica aceito aqui para não puxar a cadeia de services/repositories —
+// os imports já apontam para os caminhos dos módulos donos.
+import Ticket from "../modules/tickets/models/Ticket";
+import Contact from "../modules/contacts/models/Contact";
+import Message from "../modules/messages/models/Message";
 
 const onlyDigits = (value: string): string => (value || "").replace(/\D/g, "");
 
 async function run(): Promise<void> {
+  // Escopo "database": o script só precisa das variáveis de banco — não exige
+  // REDIS_URI/CHECK_AUTH_ENDPOINT como o boot do servidor.
+  appConfig.validate("database");
+
   const outputArg = process.argv[2];
   const outputPath = path.resolve(
     process.cwd(),

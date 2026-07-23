@@ -1,15 +1,15 @@
 import BullQueue from "bull";
 
-const connection = process.env.REDIS_URI || "";
-const limiterMax = process.env.REDIS_OPT_LIMITER_MAX || 1;
-const limiterDuration = process.env.REDIS_OPT_LIMITER_DURATION || 3000;
+import { appConfig } from "../config/AppConfig";
+
+const connection = appConfig.redis.uri;
 
 export const userMonitor = new BullQueue("UserMonitor", connection);
 
 export const messageQueue = new BullQueue("MessageQueue", connection, {
   limiter: {
-    max: limiterMax as number,
-    duration: limiterDuration as number
+    max: appConfig.redis.limiterMax,
+    duration: appConfig.redis.limiterDuration
   }
 });
 

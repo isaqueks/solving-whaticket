@@ -1,39 +1,24 @@
-import api from "../../services/api";
+import { quickMessagesApi } from "../../api/QuickMessagesApi";
 
 const useQuickMessages = () => {
 
     const save = async (data) => {
-        const { data: responseData } = await api.request({
-            url: '/quick-messages',
-            method: 'POST',
-            data
-        });
+        const { data: responseData } = await quickMessagesApi.save(data);
         return responseData;
     }
 
     const update = async (data) => {
-        const { data: responseData } = await api.request({
-            url: `/quick-messages/${data.id}`,
-            method: 'PUT',
-            data
-        });
+        const { data: responseData } = await quickMessagesApi.update(data);
         return responseData;
     }
 
     const deleteRecord = async (id) => {
-        const { data } = await api.request({
-            url: `/quick-messages/${id}`,
-            method: 'DELETE'
-        });
+        const { data } = await quickMessagesApi.remove(id);
         return data;
     }
 
     const list = async (params) => {
-        const { data } = await api.request({
-            url: '/quick-messages/list',
-            method: 'GET',
-            params
-        });
+        const { data } = await quickMessagesApi.list(params);
         return data;
     }
 

@@ -1,48 +1,29 @@
-import api from "../../services/api";
+import { helpsApi } from "../../api/HelpsApi";
 
 const usePlans = () => {
 
     const findAll = async (params) => {
-        const { data } = await api.request({
-            url: `/helps`,
-            method: 'GET',
-            params
-        });
+        const { data } = await helpsApi.findAll(params);
         return data;
     }
 
     const list = async (params) => {
-        const { data } = await api.request({
-            url: '/helps/list',
-            method: 'GET',
-            params
-        });
+        const { data } = await helpsApi.list(params);
         return data;
     }
 
     const save = async (data) => {
-        const { data: responseData } = await api.request({
-            url: '/helps',
-            method: 'POST',
-            data
-        });
+        const { data: responseData } = await helpsApi.save(data);
         return responseData;
     }
 
     const update = async (data) => {
-        const { data: responseData } = await api.request({
-            url: `/helps/${data.id}`,
-            method: 'PUT',
-            data
-        });
+        const { data: responseData } = await helpsApi.update(data);
         return responseData;
     }
 
     const remove = async (id) => {
-        const { data } = await api.request({
-            url: `/helps/${id}`,
-            method: 'DELETE'
-        });
+        const { data } = await helpsApi.remove(id);
         return data;
     }
 

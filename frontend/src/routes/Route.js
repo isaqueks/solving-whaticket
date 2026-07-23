@@ -3,13 +3,14 @@ import { Route as RouterRoute, Redirect } from "react-router-dom";
 
 import { AuthContext } from "../context/Auth/AuthContext";
 import BackdropLoading from "../components/BackdropLoading";
+import { appConfig } from "../config";
 
 const Route = ({ component: Component, isPrivate = false, ...rest }) => {
 	const { isAuth, loading } = useContext(AuthContext);
 
 	if (!isAuth && isPrivate) {
 		localStorage.setItem("redirectPath", window.location.pathname);
-		window.location.href = `${process.env.REACT_APP_LOGIN_URL || "https://solving.com.br/login"}?redirect=${encodeURIComponent(window.location.href)}`;
+		window.location.href = `${appConfig.loginUrl}?redirect=${encodeURIComponent(window.location.href)}`;
 		return (
 			<>
 				{loading && <BackdropLoading />}

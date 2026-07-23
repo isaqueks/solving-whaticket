@@ -1,5 +1,4 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
-import { useHistory } from "react-router-dom";
+import React from "react";
 
 import { makeStyles } from "@material-ui/core/styles";
 import Paper from "@material-ui/core/Paper";
@@ -19,12 +18,13 @@ import TicketsList from "../TicketsListCustom";
 import TabPanel from "../TabPanel";
 
 import { i18n } from "../../translate/i18n";
-import { AuthContext } from "../../context/Auth/AuthContext";
 import { Can } from "../Can";
 import TicketsQueueSelect from "../TicketsQueueSelect";
 import { Button } from "@material-ui/core";
 import { TagsFilter } from "../TagsFilter";
 import { UsersFilter } from "../UsersFilter";
+
+import { useTicketsTabs } from "./useTicketsTabs";
 
 const useStyles = makeStyles(theme => ({
 	ticketsWrapper: {
@@ -141,106 +141,42 @@ const useStyles = makeStyles(theme => ({
 
 const TicketsManagerTabs = () => {
   const classes = useStyles();
-  const history = useHistory();
 
-  const [searchParam, setSearchParam] = useState("");
-  const [tab, setTab] = useState("open");
-  const [tabOpen, setTabOpen] = useState("read");
-  const [newTicketModalOpen, setNewTicketModalOpen] = useState(false);
-  
-  // Carrega o valor do localStorage ou usa false como padrão
-  const [showAllTickets, setShowAllTickets] = useState(() => {
-    const saved = localStorage.getItem("showAllTickets");
-    return saved ? JSON.parse(saved) : false;
-  });
-  
-  const searchInputRef = useRef();
-  const { user } = useContext(AuthContext);
+  const {
+    user,
+    searchParam,
+    tab,
+    tabOpen,
+    newTicketModalOpen,
+    setNewTicketModalOpen,
+    showAllTickets,
+    setShowAllTickets,
+    searchInputRef,
+    openCount,
+    setOpenCount,
+    pendingCount,
+    setPendingCount,
+    selectedQueueIds,
+    setSelectedQueueIds,
+    selectedTags,
+    selectedUsers,
+    handleSearch,
+    handleChangeTab,
+    handleChangeTabOpen,
+    applyPanelStyle,
+    handleCloseOrOpenTicket,
+    handleSelectedTags,
+    handleSelectedUsers,
+  } = useTicketsTabs();
+
   const { profile } = user;
-
-  const [openCount, setOpenCount] = useState(0);
-  const [pendingCount, setPendingCount] = useState(0);
-
-  const userQueueIds = user.queues.map((q) => q.id);
-  const [selectedQueueIds, setSelectedQueueIds] = useState(userQueueIds || []);
-  const [selectedTags, setSelectedTags] = useState([]);
-  const [selectedUsers, setSelectedUsers] = useState([]);
-
-  useEffect(() => {
-    if (user.profile.toUpperCase() === "ADMIN") {
-      const saved = localStorage.getItem("showAllTickets");
-      const savedValue = saved ? JSON.parse(saved) : true;
-      setShowAllTickets(savedValue);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Salva no localStorage sempre que showAllTickets mudar
-  useEffect(() => {
-    localStorage.setItem("showAllTickets", JSON.stringify(showAllTickets));
-  }, [showAllTickets]);
-
-  useEffect(() => {
-    if (tab === "search") {
-      searchInputRef.current.focus();
-    }
-  }, [tab]);
-
-  let searchTimeout;
-
-  const handleSearch = (e) => {
-    const searchedTerm = e.target.value.toLowerCase();
-
-    clearTimeout(searchTimeout);
-
-    if (searchedTerm === "") {
-      setSearchParam(searchedTerm);
-      setTab("open");
-      return;
-    }
-
-    searchTimeout = setTimeout(() => {
-      setSearchParam(searchedTerm);
-    }, 500);
-  };
-
-  const handleChangeTab = (e, newValue) => {
-    setTab(newValue);
-  };
-
-  const handleChangeTabOpen = (e, newValue) => {
-    setTabOpen(newValue);
-  };
-
-  const applyPanelStyle = (status) => {
-    if (tabOpen !== status) {
-      return { width: 0, height: 0 };
-    }
-  };
-
-  const handleCloseOrOpenTicket = (ticket) => {
-    setNewTicketModalOpen(false);
-    if (ticket !== undefined && ticket.uuid !== undefined) {
-      history.push(`/tickets/${ticket.uuid}`);
-    }
-  };
-
-  const handleSelectedTags = (selecteds) => {
-    const tags = selecteds.map((t) => t.id);
-    setSelectedTags(tags);
-  };
-
-  const handleSelectedUsers = (selecteds) => {
-    const users = selecteds.map((t) => t.id);
-    setSelectedUsers(users);
-  };
 
   return (
     <Paper elevation={0} variant="outlined" className={classes.ticketsWrapper}>
       <NewTicketModal
         modalOpen={newTicketModalOpen}
         onClose={(ticket) => {
-          
+
           handleCloseOrOpenTicket(ticket);
         }}
       />

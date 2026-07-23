@@ -1,22 +1,14 @@
-import api from "../../services/api";
+import { settingsApi } from "../../api/SettingsApi";
 
 const useSettings = () => {
 
     const getAll = async (params) => {
-        const { data } = await api.request({
-            url: '/settings',
-            method: 'GET',
-            params
-        });
+        const { data } = await settingsApi.getAll(params);
         return data;
     }
 
     const update = async (data) => {
-        const { data: responseData } = await api.request({
-            url: `/settings/${data.key}`,
-            method: 'PUT',
-            data
-        });
+        const { data: responseData } = await settingsApi.update(data);
         return responseData;
     }
 

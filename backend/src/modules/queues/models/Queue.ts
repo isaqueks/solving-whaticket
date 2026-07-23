@@ -1,0 +1,104 @@
+import {
+  Table,
+  Column,
+  CreatedAt,
+  UpdatedAt,
+  Model,
+  PrimaryKey,
+  AutoIncrement,
+  AllowNull,
+  Unique,
+  BelongsToMany,
+  BelongsTo,
+  ForeignKey,
+  HasMany,
+  DataType,
+  Default
+} from "sequelize-typescript";
+import User from "../../users/models/User";
+import UserQueue from "./UserQueue";
+import Company from "../../companies/models/Company";
+
+import Whatsapp from "../../whatsapp/models/Whatsapp";
+import WhatsappQueue from "./WhatsappQueue";
+import QueueOption from "./QueueOption";
+import QueueIntegrations from "../../queue-integrations/models/QueueIntegrations";
+
+@Table
+class Queue extends Model<Queue> {
+  @PrimaryKey
+  @AutoIncrement
+  @Column
+  id: number;
+
+  @AllowNull(false)
+  @Unique
+  @Column
+  name: string;
+
+  @AllowNull(false)
+  @Unique
+  @Column
+  color: string;
+
+  @Default("")
+  @Column
+  greetingMessage: string;
+
+  @Default("")
+  @Column
+  outOfHoursMessage: string;
+
+  @Column({
+    type: DataType.JSONB
+  })
+  schedules: [];
+
+  @CreatedAt
+  createdAt: Date;
+
+  @UpdatedAt
+  updatedAt: Date;
+
+  @ForeignKey(() => Company)
+  @Column
+  companyId: number;
+
+  @BelongsTo(() => Company)
+  company: Company;
+
+  @BelongsToMany(() => Whatsapp, () => WhatsappQueue)
+  whatsapps: Array<Whatsapp & { WhatsappQueue: WhatsappQueue }>;
+
+  @BelongsToMany(() => User, () => UserQueue)
+  users: Array<User & { UserQueue: UserQueue }>;
+
+  @HasMany(() => QueueOption, {
+    onDelete: "DELETE",
+    onUpdate: "DELETE",
+    hooks: true
+  })
+  options: QueueOption[];
+
+  @Column
+  orderQueue: number;
+
+
+  @ForeignKey(() => QueueIntegrations)
+  @Column
+  integrationId: number;
+
+  @BelongsTo(() => QueueIntegrations)
+  queueIntegrations: QueueIntegrations;
+
+  @Column
+  promptId: number;
+
+  @Column
+  mediaPath: string;
+
+  @Column
+  mediaName: string;
+}
+
+export default Queue;

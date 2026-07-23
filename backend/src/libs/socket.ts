@@ -1,21 +1,24 @@
 import { Server as SocketIO } from "socket.io";
 import { Server } from "http";
-import AppError from "../errors/AppError";
+import { appConfig } from "../config/AppConfig";
+import AppError from "../shared/errors/AppError";
 import { logger } from "../utils/logger";
-import User from "../models/User";
-import Queue from "../models/Queue";
-import Ticket from "../models/Ticket";
-import { verify } from "jsonwebtoken";
-import authConfig from "../config/auth";
+import User from "../modules/users/models/User";
+import Queue from "../modules/queues/models/Queue";
+// B4: o socket não consulta mais o model Ticket direto — a checagem de acesso
+// à sala passa pelo repository do domínio (remove a dependência invertida).
+import { TicketsRepository } from "../modules/tickets/TicketsRepository";
 import { CounterManager } from "./counter";
-import { fetchUserData } from "../middleware/isAuth";
+import { fetchUserData } from "../shared/http/middleware/isAuth";
 
 let io: SocketIO;
+
+const ticketsRepository = new TicketsRepository();
 
 export const initIO = (httpServer: Server): SocketIO => {
   io = new SocketIO(httpServer, {
     cors: {
-      origin: process.env.FRONTEND_URL
+      origin: appConfig.server.frontendUrl
     }
   });
 
@@ -28,14 +31,14 @@ export const initIO = (httpServer: Server): SocketIO => {
     if (!userCookieEntry) {
       logger.info("onConnect: Missing user cookie");
       socket.disconnect();
-      return io;
+      return;
     }
     const userCookie = userCookieEntry.split("=")[1];
     const solvingUser =  await fetchUserData(userCookie);
     if (!solvingUser) {
       logger.info("onConnect: User not found in cookie");
       socket.disconnect();
-      return io;
+      return;
     }
 
     const counters = new CounterManager();
@@ -46,7 +49,7 @@ export const initIO = (httpServer: Server): SocketIO => {
     if (!user) {
       logger.info(`onConnect: User with email ${solvingUser.email} not found`);
       socket.disconnect();
-      return io;
+      return;
     }
     let userId = user.id;
 
@@ -58,12 +61,12 @@ export const initIO = (httpServer: Server): SocketIO => {
       } else {
         logger.info(`onConnect: User ${userId} not found`);
         socket.disconnect();
-        return io;
+        return;
       }
     } else {
       logger.info("onConnect: Missing userId");
       socket.disconnect();
-      return io;
+      return;
     }
 
     console.log(user.id)
@@ -75,7 +78,7 @@ export const initIO = (httpServer: Server): SocketIO => {
       if (!ticketId || ticketId === "undefined") {
         return;
       }
-      Ticket.findByPk(ticketId).then(
+      ticketsRepository.findById(ticketId).then(
         (ticket) => {
           if (ticket && ticket.companyId === user.companyId
             && (ticket.userId === user.id || user.profile === "admin")) {

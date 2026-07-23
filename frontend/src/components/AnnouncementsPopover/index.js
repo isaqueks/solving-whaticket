@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer, useState, useContext } from "react";
+import React, { useEffect, useReducer, useState } from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import toastError from "../../errors/toastError";
 import Popover from "@material-ui/core/Popover";
@@ -22,10 +22,13 @@ import {
   Button,
   DialogContentText,
 } from "@material-ui/core";
-import api from "../../services/api";
+import { announcementsApi } from "../../api/AnnouncementsApi";
+import { createEntityReducer } from "../../store/createEntityReducer";
+import { SocketEvents } from "../../services/socketEvents";
+import useSocketEvent from "../../hooks/useSocketEvent";
+import { appConfig } from "../../config";
 import { isArray } from "lodash";
 import moment from "moment";
-import { SocketContext } from "../../context/Socket/SocketContext";
 
 const useStyles = makeStyles((theme) => ({
   mainPaper: {
@@ -40,7 +43,7 @@ const useStyles = makeStyles((theme) => ({
 
 function AnnouncementDialog({ announcement, open, handleClose }) {
   const getMediaPath = (filename) => {
-    return `${process.env.REACT_APP_BACKEND_URL}/public/${filename}`;
+    return `${appConfig.backendUrl}/public/${filename}`;
   };
   return (
     <Dialog
@@ -79,53 +82,11 @@ function AnnouncementDialog({ announcement, open, handleClose }) {
   );
 }
 
-const reducer = (state, action) => {
-  if (action.type === "LOAD_ANNOUNCEMENTS") {
-    const announcements = action.payload;
-    const newAnnouncements = [];
-
-    if (isArray(announcements)) {
-      announcements.forEach((announcement) => {
-        const announcementIndex = state.findIndex(
-          (u) => u.id === announcement.id
-        );
-        if (announcementIndex !== -1) {
-          state[announcementIndex] = announcement;
-        } else {
-          newAnnouncements.push(announcement);
-        }
-      });
-    }
-
-    return [...state, ...newAnnouncements];
-  }
-
-  if (action.type === "UPDATE_ANNOUNCEMENTS") {
-    const announcement = action.payload;
-    const announcementIndex = state.findIndex((u) => u.id === announcement.id);
-
-    if (announcementIndex !== -1) {
-      state[announcementIndex] = announcement;
-      return [...state];
-    } else {
-      return [announcement, ...state];
-    }
-  }
-
-  if (action.type === "DELETE_ANNOUNCEMENT") {
-    const announcementId = action.payload;
-
-    const announcementIndex = state.findIndex((u) => u.id === announcementId);
-    if (announcementIndex !== -1) {
-      state.splice(announcementIndex, 1);
-    }
-    return [...state];
-  }
-
-  if (action.type === "RESET") {
-    return [];
-  }
-};
+const reducer = createEntityReducer({
+  load: "LOAD_ANNOUNCEMENTS",
+  update: "UPDATE_ANNOUNCEMENTS",
+  remove: "DELETE_ANNOUNCEMENT",
+});
 
 export default function AnnouncementsPopover() {
   const classes = useStyles();
@@ -140,7 +101,7 @@ export default function AnnouncementsPopover() {
   const [announcement, setAnnouncement] = useState({});
   const [showAnnouncementDialog, setShowAnnouncementDialog] = useState(false);
 
-  const socketManager = useContext(SocketContext);
+  const companyId = localStorage.getItem("companyId");
 
   useEffect(() => {
     dispatch({ type: "RESET" });
@@ -156,33 +117,19 @@ export default function AnnouncementsPopover() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParam, pageNumber]);
 
-  useEffect(() => {
-    const companyId = localStorage.getItem("companyId");
-    const socket = socketManager.getSocket(companyId);
-    
-    if (!socket) {
-      return () => {}; 
+  useSocketEvent(SocketEvents.companyAnnouncement(companyId), (data) => {
+    if (data.action === "update" || data.action === "create") {
+      dispatch({ type: "UPDATE_ANNOUNCEMENTS", payload: data.record });
+      setInvisible(false);
     }
-
-    socket.on(`company-${companyId}-announcement`, (data) => {
-      if (data.action === "update" || data.action === "create") {
-        dispatch({ type: "UPDATE_ANNOUNCEMENTS", payload: data.record });
-        setInvisible(false);
-      }
-      if (data.action === "delete") {
-        dispatch({ type: "DELETE_ANNOUNCEMENT", payload: +data.id });
-      }
-    });
-    return () => {
-      socket.disconnect();
-    };
-  }, [socketManager]);
+    if (data.action === "delete") {
+      dispatch({ type: "DELETE_ANNOUNCEMENT", payload: +data.id });
+    }
+  });
 
   const fetchAnnouncements = async () => {
     try {
-      const { data } = await api.get("/announcements/", {
-        params: { searchParam, pageNumber },
-      });
+      const { data } = await announcementsApi.list({ searchParam, pageNumber });
       dispatch({ type: "LOAD_ANNOUNCEMENTS", payload: data.records });
       setHasMore(data.hasMore);
       setLoading(false);
@@ -225,7 +172,7 @@ export default function AnnouncementsPopover() {
   };
 
   const getMediaPath = (filename) => {
-    return `${process.env.REACT_APP_BACKEND_URL}/public/${filename}`;
+    return `${appConfig.backendUrl}/public/${filename}`;
   };
 
   const handleShowAnnouncementDialog = (record) => {

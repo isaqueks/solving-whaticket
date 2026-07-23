@@ -33,10 +33,11 @@ import { WhatsAppsContext } from "../context/WhatsApp/WhatsAppsContext";
 import { AuthContext } from "../context/Auth/AuthContext";
 import LoyaltyRoundedIcon from '@material-ui/icons/LoyaltyRounded';
 import { Can } from "../components/Can";
-import { SocketContext } from "../context/Socket/SocketContext";
-import { isArray } from "lodash";
+import { chatsApi } from "../api/ChatsApi";
+import { createEntityReducer } from "../store/createEntityReducer";
+import { SocketEvents } from "../services/socketEvents";
+import useSocketEvent from "../hooks/useSocketEvent";
 import TableChartIcon from '@material-ui/icons/TableChart';
-import api from "../services/api";
 import BorderColorIcon from '@material-ui/icons/BorderColor';
 import ToDoList from "../pages/ToDoList/";
 import toastError from "../errors/toastError";
@@ -76,61 +77,17 @@ function ListItemLink(props) {
   );
 }
 
-const reducer = (state, action) => {
-  if (action.type === "LOAD_CHATS") {
-    const chats = action.payload;
-    const newChats = [];
-
-    if (isArray(chats)) {
-      chats.forEach((chat) => {
-        const chatIndex = state.findIndex((u) => u.id === chat.id);
-        if (chatIndex !== -1) {
-          state[chatIndex] = chat;
-        } else {
-          newChats.push(chat);
-        }
-      });
-    }
-
-    return [...state, ...newChats];
-  }
-
-  if (action.type === "UPDATE_CHATS") {
-    const chat = action.payload;
-    const chatIndex = state.findIndex((u) => u.id === chat.id);
-
-    if (chatIndex !== -1) {
-      state[chatIndex] = chat;
-      return [...state];
-    } else {
-      return [chat, ...state];
-    }
-  }
-
-  if (action.type === "DELETE_CHAT") {
-    const chatId = action.payload;
-
-    const chatIndex = state.findIndex((u) => u.id === chatId);
-    if (chatIndex !== -1) {
-      state.splice(chatIndex, 1);
-    }
-    return [...state];
-  }
-
-  if (action.type === "RESET") {
-    return [];
-  }
-
-  if (action.type === "CHANGE_CHAT") {
-    const changedChats = state.map((chat) => {
-      if (chat.id === action.payload.chat.id) {
-        return action.payload.chat;
-      }
-      return chat;
-    });
-    return changedChats;
-  }
-};
+const reducer = createEntityReducer({
+  load: "LOAD_CHATS",
+  update: "UPDATE_CHATS",
+  remove: "DELETE_CHAT",
+  extra: {
+    CHANGE_CHAT: (state, action) =>
+      state.map((chat) =>
+        chat.id === action.payload.chat.id ? action.payload.chat : chat
+      ),
+  },
+});
 
 const MainListItems = (props) => {
   const classes = useStyles();
@@ -158,7 +115,7 @@ const MainListItems = (props) => {
   
   const { getVersion } = useVersion();
 
-  const socketManager = useContext(SocketContext);
+  const companyId = localStorage.getItem("companyId");
 
   useEffect(() => {
     async function fetchVersion() {
@@ -201,22 +158,14 @@ const MainListItems = (props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParam, pageNumber]);
 
-  useEffect(() => {
-    const companyId = localStorage.getItem("companyId");
-    const socket = socketManager.getSocket(companyId);
-
-    socket.on(`company-${companyId}-chat`, (data) => {
-      if (data.action === "new-message") {
-        dispatch({ type: "CHANGE_CHAT", payload: data });
-      }
-      if (data.action === "update") {
-        dispatch({ type: "CHANGE_CHAT", payload: data });
-      }
-    });
-    return () => {
-      socket.disconnect();
-    };
-  }, [socketManager]);
+  useSocketEvent(SocketEvents.companyChat(companyId), (data) => {
+    if (data.action === "new-message") {
+      dispatch({ type: "CHANGE_CHAT", payload: data });
+    }
+    if (data.action === "update") {
+      dispatch({ type: "CHANGE_CHAT", payload: data });
+    }
+  });
 
   useEffect(() => {
     let unreadsCount = 0;
@@ -266,9 +215,7 @@ const MainListItems = (props) => {
 
   const fetchChats = async () => {
     try {
-      const { data } = await api.get("/chats/", {
-        params: { searchParam, pageNumber },
-      });
+      const { data } = await chatsApi.list({ searchParam, pageNumber });
       dispatch({ type: "LOAD_CHATS", payload: data.records });
     } catch (err) {
       toastError(err);

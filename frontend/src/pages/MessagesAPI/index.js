@@ -11,6 +11,7 @@ import { toast } from "react-toastify";
 // import api from "../../services/api";
 import axios from "axios";
 import usePlans from "../../hooks/usePlans";
+import { appConfig } from "../../config";
 
 const useStyles = makeStyles((theme) => ({
   mainPaper: {
@@ -58,7 +59,7 @@ const MessagesAPI = () => {
   }, []);
 
   const getEndpoint = () => {
-    return process.env.REACT_APP_BACKEND_URL + '/api/messages/send'
+    return appConfig.backendUrl + '/api/messages/send'
   }
 
   const handleSendTextMessage = async (values) => {

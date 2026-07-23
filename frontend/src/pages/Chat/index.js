@@ -19,6 +19,7 @@ import ChatList from "./ChatList";
 import ChatMessages from "./ChatMessages";
 import { UsersFilter } from "../../components/UsersFilter";
 import api from "../../services/api";
+import toastError from "../../errors/toastError";
 import { SocketContext } from "../../context/Socket/SocketContext";
 
 import { has, isObject } from "lodash";
@@ -326,7 +327,7 @@ function Chat(props) {
       const { data } = await api.get("/chats");
       return data;
     } catch (err) {
-      console.log(err);
+      toastError(err);
     }
   };
 

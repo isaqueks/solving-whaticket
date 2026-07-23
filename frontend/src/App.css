@@ -1,3 +1,3 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Global app styles. Tailwind was removed (F0a): it was wired but no utility
+   classes were ever used. Add plain CSS rules here if needed; component styling
+   otherwise lives in MUI makeStyles/theme. */

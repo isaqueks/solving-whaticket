@@ -1,12 +1,9 @@
-import api from "../../services/api";
+import { versionApi } from "../../api/VersionApi";
 
 const useVersion = () => {
 
     const getVersion = async () => {
-        const { data } = await api.request({
-            url: '/version',
-            method: 'GET',
-        });
+        const { data } = await versionApi.getVersion();
         return data;
     }
 
@@ -16,6 +13,3 @@ const useVersion = () => {
 }
 
 export default useVersion;
-
-
-

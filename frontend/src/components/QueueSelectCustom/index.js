@@ -6,7 +6,7 @@ import FormControl from "@material-ui/core/FormControl";
 import Select from "@material-ui/core/Select";
 import Chip from "@material-ui/core/Chip";
 import toastError from "../../errors/toastError";
-import api from "../../services/api";
+import { queuesApi } from "../../api/QueuesApi";
 import { i18n } from "../../translate/i18n";
 
 const useStyles = makeStyles(theme => ({
@@ -26,9 +26,7 @@ const QueueSelectCustom = ({ selectedQueueIds, companyId, onChange }) => {
 	useEffect(() => {
 		(async () => {
 			try {
-				const { data } = await api.get("/queue", {
-					params: { companyId }
-				});
+				const { data } = await queuesApi.findAll({ companyId });
 				setQueues(data);
 			} catch (err) {
 				toastError(err);

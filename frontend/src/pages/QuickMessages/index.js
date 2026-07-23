@@ -22,69 +22,24 @@ import MainContainer from "../../components/MainContainer";
 import MainHeader from "../../components/MainHeader";
 import Title from "../../components/Title";
 
-import api from "../../services/api";
+import { quickMessagesApi } from "../../api/QuickMessagesApi";
+import { createEntityReducer } from "../../store/createEntityReducer";
 import { i18n } from "../../translate/i18n";
 import TableRowSkeleton from "../../components/TableRowSkeleton";
 import QuickMessageDialog from "../../components/QuickMessageDialog";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import toastError from "../../errors/toastError";
 import { Grid } from "@material-ui/core";
-import { isArray } from "lodash";
 import { SocketContext } from "../../context/Socket/SocketContext";
 import { AuthContext } from "../../context/Auth/AuthContext";
+import { SocketEvents } from "../../services/socketEvents";
 
 
-const reducer = (state, action) => {
-  if (action.type === "LOAD_QUICKMESSAGES") {
-    //console.log("aqui");
-    //console.log(action);
-    //console.log(action.payload);
-    const quickmessages = action.payload;
-    const newQuickmessages = [];
-    //console.log(newQuickmessages);
-
-    if (isArray(quickmessages)) {
-      quickmessages.forEach((quickemessage) => {
-        const quickemessageIndex = state.findIndex(
-          (u) => u.id === quickemessage.id
-        );
-        if (quickemessageIndex !== -1) {
-          state[quickemessageIndex] = quickemessage;
-        } else {
-          newQuickmessages.push(quickemessage);
-        }
-      });
-    }
-
-    return [...state, ...newQuickmessages];
-  }
-
-  if (action.type === "UPDATE_QUICKMESSAGES") {
-    const quickemessage = action.payload;
-    const quickemessageIndex = state.findIndex((u) => u.id === quickemessage.id);
-
-    if (quickemessageIndex !== -1) {
-      state[quickemessageIndex] = quickemessage;
-      return [...state];
-    } else {
-      return [quickemessage, ...state];
-    }
-  }
-
-  if (action.type === "DELETE_QUICKMESSAGE") {
-    const quickemessageId = action.payload;
-
-    const quickemessageIndex = state.findIndex((u) => u.id === quickemessageId);
-    if (quickemessageIndex !== -1) {
-      state.splice(quickemessageIndex, 1);
-    }
-    return [...state];
-  }
-
-  if (action.type === "RESET") {
-    return [];
-  }
-};
+const reducer = createEntityReducer({
+  load: "LOAD_QUICKMESSAGES",
+  update: "UPDATE_QUICKMESSAGES",
+  remove: "DELETE_QUICKMESSAGE",
+});
 
 const useStyles = makeStyles((theme) => ({
   mainPaper: {
@@ -130,7 +85,7 @@ const Quickemessages = () => {
     const companyId = user.companyId;
     const socket = socketManager.getSocket(companyId);
 
-    socket.on(`company${companyId}-quickemessage`, (data) => {
+    socket.on(SocketEvents.companyQuickMessage(companyId), (data) => {
       if (data.action === "update" || data.action === "create") {
         dispatch({ type: "UPDATE_QUICKMESSAGES", payload: data.record });
       }
@@ -145,10 +100,10 @@ const Quickemessages = () => {
 
   const fetchQuickemessages = async () => {
     try {
-      const companyId = user.companyId;
-      //const searchParam = ({ companyId, userId: user.id });
-      const { data } = await api.get("/quick-messages", {
-        params: { searchParam, pageNumber, userId: user.id },
+      const { data } = await quickMessagesApi.index({
+        searchParam,
+        pageNumber,
+        userId: user.id,
       });
 
       dispatch({ type: "LOAD_QUICKMESSAGES", payload: data.records });
@@ -176,14 +131,13 @@ const Quickemessages = () => {
   };
 
   const handleEditQuickemessage = (quickemessage) => {
-    //console.log(quickemessage);
     setSelectedQuickemessage(quickemessage);
     setQuickMessageDialogOpen(true);
   };
 
   const handleDeleteQuickemessage = async (quickemessageId) => {
     try {
-      await api.delete(`/quick-messages/${quickemessageId}`);
+      await quickMessagesApi.remove(quickemessageId);
       toast.success(i18n.t("quickemessages.toasts.deleted"));
     } catch (err) {
       toastError(err);

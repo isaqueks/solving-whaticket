@@ -856,6 +856,52 @@ const messages = {
             },
           },
         },
+        options: {
+          updating: "Atualizando...",
+          integrations: "INTEGRAÇÕES",
+          enabled: "Habilitado",
+          disabled: "Desabilitado",
+          userRating: {
+            label: "Avaliações",
+            enabled: "Habilitadas",
+            disabled: "Desabilitadas",
+          },
+          scheduleType: {
+            label: "Gerenciamento de Expediente",
+            disabled: "Desabilitado",
+            queue: "Fila",
+            company: "Empresa",
+          },
+          checkMsgIsGroup: {
+            label: "Ignorar Mensagens de Grupos",
+            enabled: "Ativado",
+            disabled: "Desativado",
+          },
+          call: {
+            label: "Aceitar Chamada",
+            accept: "Aceitar",
+            refuse: "Não Aceitar",
+          },
+          chatBotType: {
+            label: "Tipo Chatbot",
+            text: "Texto",
+          },
+          sendGreetingAccepted: {
+            label: "Enviar saudação ao aceitar o ticket",
+          },
+          sendMsgTransfTicket: {
+            label: "Enviar mensagem de transferencia de Fila/agente",
+          },
+          sendGreetingMessageOneQueues: {
+            label: "Enviar saudação quando houver somente 1 fila",
+          },
+          ipixc: { label: "IP do IXC" },
+          tokenixc: { label: "Token do IXC" },
+          ipmkauth: { label: "Ip Mk-Auth" },
+          clientidmkauth: { label: "Client Id" },
+          clientsecretmkauth: { label: "Client Secret" },
+          asaas: { label: "Token Asaas" },
+        },
       },
       messagesList: {
         header: {

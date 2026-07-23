@@ -7,16 +7,19 @@ import "reflect-metadata";
 import "./bootstrap";
 
 import bodyParser from 'body-parser';
+import { appConfig } from "./config/AppConfig";
 import uploadConfig from "./config/upload";
 import "./database";
-import AppError from "./errors/AppError";
+import AppError from "./shared/errors/AppError";
 import { messageQueue, sendScheduledMessages } from "./queues";
 import routes from "./routes";
 import { logger } from "./utils/logger";
-import Contact from "./models/Contact";
-import CheckContactNumber from "./services/WbotServices/CheckNumber";
 
-Sentry.init({ dsn: process.env.SENTRY_DSN });
+// Sem SENTRY_DSN o Sentry fica desligado por completo (init e handlers).
+const sentryEnabled = Boolean(appConfig.server.sentryDsn);
+if (sentryEnabled) {
+  Sentry.init({ dsn: appConfig.server.sentryDsn });
+}
 
 const app = express();
 
@@ -30,15 +33,19 @@ app.use(bodyParser.json({ limit: '10mb' }));
 app.use(
   cors({
     credentials: true,
-    origin: process.env.FRONTEND_URL
+    origin: appConfig.server.frontendUrl
   })
 );
 app.use(cookieParser());
-// app.use(Sentry.Handlers.requestHandler());
+if (sentryEnabled) {
+  app.use(Sentry.Handlers.requestHandler());
+}
 app.use("/public", express.static(uploadConfig.directory));
 app.use(routes);
 
-// app.use(Sentry.Handlers.errorHandler());
+if (sentryEnabled) {
+  app.use(Sentry.Handlers.errorHandler());
+}
 
 app.use(async (err: Error, req: Request, res: Response, _: NextFunction) => {
   if (err instanceof AppError) {

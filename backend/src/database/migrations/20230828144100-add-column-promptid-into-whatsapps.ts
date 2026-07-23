@@ -1,5 +1,6 @@
 import { QueryInterface, DataTypes } from "sequelize";
 interface ExistingColumns {
+  [column: string]: unknown;
   };
 
 module.exports = {
@@ -7,7 +8,7 @@ module.exports = {
     const table = "Whatsapps";
     const column = "promptId";
 
-    const tableInfo: ExistingColumns = await queryInterface.describeTable(table);
+    const tableInfo = (await queryInterface.describeTable(table)) as ExistingColumns;
     if (tableInfo[column]) {
       return Promise.resolve();
     }

@@ -209,8 +209,6 @@ const ScheduleModal = ({ open, onClose, scheduleId, contactId, cleanContact, rel
 			}));
 			toast.success(i18n.t("scheduleModal.toasts.deleted"));
 			if (typeof reload == "function") {
-				console.log(reload);
-				console.log("1");
 				reload();
 			}
 		}

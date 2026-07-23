@@ -1,0 +1,1 @@
+.MuiButtonBase-root.buttonHover:hover{background:#242424}.MuiButtonBase-root.buttonHover{background:#474747}.event-container{position:relative;cursor:pointer;display:flex;align-items:center;justify-content:center}.delete-icon,.edit-icon{opacity:0;transition:opacity .3s;margin-left:5px;z-index:1}.event-container:hover .delete-icon,.event-container:hover .edit-icon{opacity:1}

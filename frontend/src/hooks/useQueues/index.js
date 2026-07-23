@@ -1,8 +1,8 @@
-import api from "../../services/api";
+import { queuesApi } from "../../api/QueuesApi";
 
 const useQueues = () => {
 	const findAll = async () => {
-        const { data } = await api.get("/queue");
+        const { data } = await queuesApi.findAll();
         return data;
     }
 

@@ -1,79 +1,9 @@
-import Redis from "ioredis";
-import { REDIS_URI_CONNECTION } from "../config/redis";
-import util from "util";
-import * as crypto from "crypto";
+import { cacheService } from "../shared/cache/CacheService";
 
-const redis = new Redis(REDIS_URI_CONNECTION);
-
-function encryptParams(params: any) {
-  const str = JSON.stringify(params);
-  return crypto.createHash("sha256").update(str).digest("base64");
-}
-
-export function setFromParams(
-  key: string,
-  params: any,
-  value: string,
-  option?: string,
-  optionValue?: string | number
-) {
-  const finalKey = `${key}:${encryptParams(params)}`;
-  if (option !== undefined && optionValue !== undefined) {
-    return set(finalKey, value, option, optionValue);
-  }
-  return set(finalKey, value);
-}
-
-export function getFromParams(key: string, params: any) {
-  const finalKey = `${key}:${encryptParams(params)}`;
-  return get(finalKey);
-}
-
-export function delFromParams(key: string, params: any) {
-  const finalKey = `${key}:${encryptParams(params)}`;
-  return del(finalKey);
-}
-
-export function set(
-  key: string,
-  value: string,
-  option?: string,
-  optionValue?: string | number
-) {
-  if (option !== undefined && optionValue !== undefined) {
-    return redis.set(key, value, option as any, optionValue as any);
-  }
-
-  return redis.set(key, value);
-}
-
-export function get(key: string) {
-  return redis.get(key);
-}
-
-export function getKeys(pattern: string) {
-  return redis.keys(pattern);
-}
-
-export function del(key: string) {
-  return redis.del(key);
-}
-
-export async function delFromPattern(pattern: string) {
-  const all = await getKeys(pattern);
-
-  for (const item of all) {
-    await del(item);
-  }
-}
-
-export const cacheLayer = {
-  set,
-  setFromParams,
-  get,
-  getFromParams,
-  getKeys,
-  del,
-  delFromParams,
-  delFromPattern
-};
+/**
+ * Re-export de compatibilidade (fase B0.4): a implementação vive em
+ * `shared/cache/CacheService`. Os importadores de `cacheLayer` migram para
+ * `cacheService` junto com seus módulos (fases B1–B6); depois este arquivo
+ * será removido.
+ */
+export const cacheLayer = cacheService;

@@ -1,7 +1,7 @@
 import { QueryInterface, DataTypes } from "sequelize";
 //
 module.exports = {
-  async up(queryInterface, Sequelize) {
+  async up(queryInterface: QueryInterface, Sequelize: typeof import("sequelize").Sequelize) {
     // CREATE INDEX CONCURRENTLY só funciona via "sequelize.query" (não pelo addIndex)
     // porque o addIndex não expõe a flag "CONCURRENTLY"
     await queryInterface.sequelize.query(/*sql*/`
@@ -10,7 +10,7 @@ module.exports = {
     `);
   },
 
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface: QueryInterface, Sequelize: typeof import("sequelize").Sequelize) {
     await queryInterface.sequelize.query(`
       DROP INDEX CONCURRENTLY IF EXISTS idx_company_ticket_created_id_desc
     `);

@@ -9,7 +9,9 @@ import InputAdornment from "@material-ui/core/InputAdornment";
 import MainContainer from "../../components/MainContainer";
 import MainHeader from "../../components/MainHeader";
 import Title from "../../components/Title";
-import api from "../../services/api";
+import { schedulesApi } from "../../api/SchedulesApi";
+import { createEntityReducer } from "../../store/createEntityReducer";
+import { SocketEvents } from "../../services/socketEvents";
 import { i18n } from "../../translate/i18n";
 import MainHeaderButtonsWrapper from "../../components/MainHeaderButtonsWrapper";
 import ScheduleModal from "../../components/ScheduleModal";
@@ -63,34 +65,12 @@ var defaultMessages = {
   }
 };
 
-const reducer = (state, action) => {
-  if (action.type === "LOAD_SCHEDULES") {
-    return [...state, ...action.payload];
-  }
-
-  if (action.type === "UPDATE_SCHEDULES") {
-    const schedule = action.payload;
-    const scheduleIndex = state.findIndex((s) => s.id === schedule.id);
-
-    if (scheduleIndex !== -1) {
-      state[scheduleIndex] = schedule;
-      return [...state];
-    } else {
-      return [schedule, ...state];
-    }
-  }
-
-  if (action.type === "DELETE_SCHEDULE") {
-    const scheduleId = action.payload;
-    return state.filter((s) => s.id !== scheduleId);
-  }
-
-  if (action.type === "RESET") {
-    return [];
-  }
-
-  return state;
-};
+const reducer = createEntityReducer({
+  load: "LOAD_SCHEDULES",
+  update: "UPDATE_SCHEDULES",
+  remove: "DELETE_SCHEDULE",
+  loadStrategy: "append",
+});
 
 const useStyles = makeStyles((theme) => ({
   mainPaper: {
@@ -121,9 +101,7 @@ const Schedules = () => {
 
   const fetchSchedules = useCallback(async () => {
     try {
-      const { data } = await api.get("/schedules/", {
-        params: { searchParam, pageNumber },
-      });
+      const { data } = await schedulesApi.list({ searchParam, pageNumber });
 
       dispatch({ type: "LOAD_SCHEDULES", payload: data.schedules });
       setHasMore(data.hasMore);
@@ -164,7 +142,7 @@ const Schedules = () => {
     handleOpenScheduleModalFromContactId();
     const socket = socketManager.getSocket(user.companyId);
 
-    socket.on(`company${user.companyId}-schedule`, (data) => {
+    socket.on(SocketEvents.companySchedule(user.companyId), (data) => {
       if (data.action === "update" || data.action === "create") {
         dispatch({ type: "UPDATE_SCHEDULES", payload: data.schedule });
       }
@@ -204,7 +182,7 @@ const Schedules = () => {
 
   const handleDeleteSchedule = async (scheduleId) => {
     try {
-      await api.delete(`/schedules/${scheduleId}`);
+      await schedulesApi.remove(scheduleId);
       toast.success(i18n.t("schedules.toasts.deleted"));
     } catch (err) {
       toastError(err);

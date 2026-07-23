@@ -848,6 +848,52 @@ transferTicketModal: {
         },
       },
     },
+    options: {
+      updating: "Actualizando...",
+      integrations: "INTEGRACIONES",
+      enabled: "Habilitado",
+      disabled: "Deshabilitado",
+      userRating: {
+        label: "Evaluaciones",
+        enabled: "Habilitadas",
+        disabled: "Deshabilitadas",
+      },
+      scheduleType: {
+        label: "Gestión de Horario",
+        disabled: "Deshabilitado",
+        queue: "Cola",
+        company: "Empresa",
+      },
+      checkMsgIsGroup: {
+        label: "Ignorar Mensajes de Grupos",
+        enabled: "Activado",
+        disabled: "Desactivado",
+      },
+      call: {
+        label: "Aceptar Llamada",
+        accept: "Aceptar",
+        refuse: "No Aceptar",
+      },
+      chatBotType: {
+        label: "Tipo Chatbot",
+        text: "Texto",
+      },
+      sendGreetingAccepted: {
+        label: "Enviar saludo al aceptar el ticket",
+      },
+      sendMsgTransfTicket: {
+        label: "Enviar mensaje de transferencia de Cola/agente",
+      },
+      sendGreetingMessageOneQueues: {
+        label: "Enviar saludo cuando haya solo 1 cola",
+      },
+      ipixc: { label: "IP del IXC" },
+      tokenixc: { label: "Token del IXC" },
+      ipmkauth: { label: "Ip Mk-Auth" },
+      clientidmkauth: { label: "Client Id" },
+      clientsecretmkauth: { label: "Client Secret" },
+      asaas: { label: "Token Asaas" },
+    },
   },
   messagesList: {
     header: {

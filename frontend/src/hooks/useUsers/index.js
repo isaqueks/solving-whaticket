@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import toastError from "../../errors/toastError";
 
-import api from "../../services/api";
+import { usersApi } from "../../api/UsersApi";
 
 const useUsers = () => {
     const [loading, setLoading] = useState(true);
@@ -14,9 +14,7 @@ const useUsers = () => {
         const delayDebounceFn = setTimeout(() => {
             const fetchUsers = async () => {
                 try {
-                    const { data } = await api.get("/users", {
-                        params: {},
-                    });
+                    const { data } = await usersApi.list({});
                     setUsers(data.users);
                     setHasMore(data.hasMore);
                     setCount(data.count);

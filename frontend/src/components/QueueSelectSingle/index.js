@@ -5,7 +5,7 @@ import MenuItem from "@material-ui/core/MenuItem";
 import FormControl from "@material-ui/core/FormControl";
 import Select from "@material-ui/core/Select";
 import toastError from "../../errors/toastError";
-import api from "../../services/api";
+import { queuesApi } from "../../api/QueuesApi";
 import { i18n } from "../../translate/i18n";
 import Typography from "@material-ui/core/Typography";
 
@@ -23,7 +23,7 @@ const QueueSelectSingle = () => {
     useEffect(() => {
         (async () => {
             try {
-                const { data } = await api.get("/queue");
+                const { data } = await queuesApi.findAll();
                 setQueues(data);
             } catch (err) {
                 toastError(`QUEUESELETSINGLE >>> ${err}`);

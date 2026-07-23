@@ -288,15 +288,6 @@ const TicketsListCustom = (props) => {
       }
     });
 
-    // socket.on(`company-${companyId}-contact`, (data) => {
-    //   if (data.action === "update") {
-    //     dispatch({
-    //       type: "UPDATE_TICKET_CONTACT",
-    //       payload: data.contact,
-    //     });
-    //   }
-    // });
-
     return () => {
       socket.disconnect();
     };

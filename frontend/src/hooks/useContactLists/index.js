@@ -1,46 +1,28 @@
-import api from "../../services/api";
+import { contactListsApi } from "../../api/ContactListsApi";
 
 const useContactLists = () => {
   const save = async (data) => {
-    const { data: responseData } = await api.request({
-      url: "/contact-lists",
-      method: "POST",
-      data,
-    });
+    const { data: responseData } = await contactListsApi.save(data);
     return responseData;
   };
 
   const update = async (data) => {
-    const { data: responseData } = await api.request({
-      url: `/contact-lists/${data.id}`,
-      method: "PUT",
-      data,
-    });
+    const { data: responseData } = await contactListsApi.update(data);
     return responseData;
   };
 
   const deleteRecord = async (id) => {
-    const { data } = await api.request({
-      url: `/contact-lists/${id}`,
-      method: "DELETE",
-    });
+    const { data } = await contactListsApi.remove(id);
     return data;
   };
 
   const findById = async (id) => {
-    const { data } = await api.request({
-      url: `/contact-lists/${id}`,
-      method: "GET",
-    });
+    const { data } = await contactListsApi.findById(id);
     return data;
   };
 
   const list = async (params) => {
-    const { data } = await api.request({
-      url: "/contact-lists/list",
-      method: "GET",
-      params,
-    });
+    const { data } = await contactListsApi.list(params);
     return data;
   };
 

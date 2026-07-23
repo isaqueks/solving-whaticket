@@ -13,7 +13,9 @@ import Autocomplete, {
 import CircularProgress from "@material-ui/core/CircularProgress";
 
 import { i18n } from "../../translate/i18n";
-import api from "../../services/api";
+import { contactsApi } from "../../api/ContactsApi";
+import { messagesApi } from "../../api/MessagesApi";
+import { whatsAppsApi } from "../../api/WhatsAppsApi";
 import ButtonWithSpinner from "../ButtonWithSpinner";
 import ContactModal from "../ContactModal";
 import toastError from "../../errors/toastError";
@@ -68,8 +70,8 @@ const ForwardModal = ({ modalOpen, onClose, initialContact, messages }) => {
     setLoading(true);
     const delayDebounceFn = setTimeout(() => {
       const fetchContacts = async () => {
-        api
-          .get(`/whatsapp`, { params: { companyId, session: 0 } })
+        whatsAppsApi
+          .listByCompany(companyId)
           .then(({ data }) => setWhatsapps(data));
       };
 
@@ -92,9 +94,7 @@ const ForwardModal = ({ modalOpen, onClose, initialContact, messages }) => {
     const delayDebounceFn = setTimeout(() => {
       const fetchContacts = async () => {
         try {
-          const { data } = await api.get("contacts", {
-            params: { searchParam },
-          });
+          const { data } = await contactsApi.list({ searchParam });
           setOptions(data.contacts);
           setLoading(false);
         } catch (err) {
@@ -141,14 +141,8 @@ const ForwardModal = ({ modalOpen, onClose, initialContact, messages }) => {
     setLoading(true);
     try {
       const whatsappId = selectedWhatsapp !== "" ? selectedWhatsapp : null;
-      
-      console.log({
-        contactId,
-        whatsappId,
-        messages
-      });
 
-      await api.post("/messages/forward", {
+      await messagesApi.forward({
         contactId,
         whatsappId,
         messagesId: messages.map(m => m.id)

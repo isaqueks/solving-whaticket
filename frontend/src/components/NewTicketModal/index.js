@@ -1,28 +1,25 @@
 import React, { useState, useEffect, useContext } from "react";
 
 import Button from "@material-ui/core/Button";
-import TextField from "@material-ui/core/TextField";
 import Dialog from "@material-ui/core/Dialog";
 
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
-import Autocomplete, {
-	createFilterOptions,
-} from "@material-ui/lab/Autocomplete";
-import CircularProgress from "@material-ui/core/CircularProgress";
 
 import { i18n } from "../../translate/i18n";
-import api from "../../services/api";
+import { ticketsApi } from "../../api/TicketsApi";
+import { whatsAppsApi } from "../../api/WhatsAppsApi";
 import ButtonWithSpinner from "../ButtonWithSpinner";
 import ContactModal from "../ContactModal";
-import toastError from "../../errors/toastError";
 import { makeStyles } from "@material-ui/core/styles";
 import { AuthContext } from "../../context/Auth/AuthContext";
-import {  WhatsApp } from "@material-ui/icons";
 import { Grid, ListItemText, MenuItem, Select } from "@material-ui/core";
 import Typography from "@material-ui/core/Typography";
 import { toast } from "react-toastify";
+
+import { useContactSearch } from "./useContactSearch";
+import ContactSearchAutocomplete from "./ContactSearchAutocomplete";
 //import ShowTicketOpen from "../ShowTicketOpenModal";
 
 const useStyles = makeStyles((theme) => ({
@@ -36,16 +33,9 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
-const filter = createFilterOptions({
-  trim: true,
-});
-
 const NewTicketModal = ({ modalOpen, onClose, initialContact }) => {
   const classes = useStyles();
-  const [options, setOptions] = useState([]);
 
-  const [loading, setLoading] = useState(false);
-  const [searchParam, setSearchParam] = useState("");
   const [selectedContact, setSelectedContact] = useState(null);
   const [selectedQueue, setSelectedQueue] = useState("");
   const [selectedWhatsapp, setSelectedWhatsapp] = useState("");
@@ -59,19 +49,24 @@ const NewTicketModal = ({ modalOpen, onClose, initialContact }) => {
 	const [ userTicketOpen, setUserTicketOpen] = useState("");
 	const [ queueTicketOpen, setQueueTicketOpen] = useState("");
 
-  useEffect(() => {
-    if (initialContact?.id !== undefined) {
-      setOptions([initialContact]);
-      setSelectedContact(initialContact);
-    }
-  }, [initialContact]);
+  const {
+    options,
+    loading,
+    setLoading,
+    searchParam,
+    setSearchParam,
+  } = useContactSearch({
+    modalOpen,
+    initialContact,
+    onSelectInitial: setSelectedContact,
+  });
 
   useEffect(() => {
     setLoading(true);
     const delayDebounceFn = setTimeout(() => {
       const fetchContacts = async () => {
-        api
-          .get(`/whatsapp`, { params: { companyId, session: 0 } })
+        whatsAppsApi
+          .listByCompany(companyId)
           .then(({ data }) => setWhatsapps(data));
       };
 
@@ -86,31 +81,8 @@ const NewTicketModal = ({ modalOpen, onClose, initialContact }) => {
       setLoading(false);
     }, 500);
     return () => clearTimeout(delayDebounceFn);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  useEffect(() => {
-    if (!modalOpen || searchParam.length < 3) {
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    const delayDebounceFn = setTimeout(() => {
-      const fetchContacts = async () => {
-        try {
-          const { data } = await api.get("contacts", {
-            params: { searchParam },
-          });
-          setOptions(data.contacts);
-          setLoading(false);
-        } catch (err) {
-          setLoading(false);
-          toastError(err);
-        }
-      };
-      fetchContacts();
-    }, 500);
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchParam, modalOpen]);
 
   // const IconChannel = (channel) => {
   //   switch (channel) {
@@ -148,22 +120,22 @@ const NewTicketModal = ({ modalOpen, onClose, initialContact }) => {
       toast.error("Selecione uma fila");
       return;
     }
-    
+
     setLoading(true);
     try {
       const queueId = selectedQueue !== "" ? selectedQueue : null;
       const whatsappId = selectedWhatsapp !== "" ? selectedWhatsapp : null;
-      const { data: ticket } = await api.post("/tickets", {
+      const { data: ticket } = await ticketsApi.create({
         contactId: contactId,
         queueId,
         whatsappId,
         userId: user.id,
         status: "open",
-      });      
+      });
 
       onClose(ticket);
     } catch (err) {
-      
+
       const ticket  = JSON.parse(err.response.data.error);
 
       if (ticket.userId !== user?.id) {
@@ -177,7 +149,7 @@ const NewTicketModal = ({ modalOpen, onClose, initialContact }) => {
         setLoading(false);
         onClose(ticket);
       }
-    }  
+    }
     setLoading(false);
   };
 
@@ -191,92 +163,12 @@ const NewTicketModal = ({ modalOpen, onClose, initialContact }) => {
   };
 
   const handleCloseContactModal = () => {
-    setContactModalOpen(false);    
+    setContactModalOpen(false);
   };
 
   const handleAddNewContactTicket = contact => {
     handleSaveTicket(contact.id);
   };
-
-  const createAddContactOption = (filterOptions, params) => {
-    const filtered = filter(filterOptions, params);
-    if (params.inputValue !== "" && !loading && searchParam.length >= 3) {
-      filtered.push({
-        name: `${params.inputValue}`,
-      });
-    }
-    return filtered;
-  };
-
-  const renderOption = option => {
-    if (option.number) {
-      return <>
-        {/* {IconChannel(option.channel)} */}
-        <Typography component="span" style={{ fontSize: 14, marginLeft: "10px", display: "inline-flex", alignItems: "center", lineHeight: "2" }}>
-          {option.name} - {option.number}
-        </Typography>
-      </>
-    } else {
-      return `${i18n.t("newTicketModal.add")} ${option.name}`;
-    }
-  };
-
-  const renderOptionLabel = option => {
-    if (option.number) {
-      return `${option.name} - ${option.number}`;
-    } else {
-      return `${option.name}`;
-    }
-  };
-
-  const renderContactAutocomplete = () => {
-    if (initialContact === undefined || initialContact.id === undefined) {
-      return (
-        <Grid xs={12} item>
-          <Autocomplete
-            fullWidth
-            options={options}
-            loading={loading}
-            clearOnBlur
-            autoHighlight
-            freeSolo
-            clearOnEscape
-            getOptionLabel={renderOptionLabel}
-            renderOption={renderOption}
-            filterOptions={createAddContactOption}
-            onChange={(e, newValue) => handleSelectOption(e, newValue)}
-            renderInput={params => (
-              <TextField
-                {...params}
-                label={i18n.t("newTicketModal.fieldLabel")}
-                variant="outlined"
-                autoFocus
-                onChange={e => setSearchParam(e.target.value)}
-                onKeyPress={e => {
-                  if (loading || !selectedContact) return;
-                  else if (e.key === "Enter") {
-                    handleSaveTicket(selectedContact.id);
-                  }
-                }}
-                InputProps={{
-                  ...params.InputProps,
-                  endAdornment: (
-                    <React.Fragment>
-                      {loading ? (
-                        <CircularProgress color="inherit" size={20} />
-                      ) : null}
-                      {params.InputProps.endAdornment}
-                    </React.Fragment>
-                  ),
-                }}
-              />
-            )}
-          />
-        </Grid>
-      )
-    }
-    return null;
-  }
 
   return (
     <>
@@ -293,7 +185,16 @@ const NewTicketModal = ({ modalOpen, onClose, initialContact }) => {
         <DialogContent dividers>
           <Grid style={{ width: 300 }} container spacing={2}>
             {/* CONTATO */}
-            {renderContactAutocomplete()}
+            <ContactSearchAutocomplete
+              initialContact={initialContact}
+              options={options}
+              loading={loading}
+              searchParam={searchParam}
+              selectedContact={selectedContact}
+              onSearchChange={setSearchParam}
+              onSelectOption={handleSelectOption}
+              onSubmit={handleSaveTicket}
+            />
             {/* FILA */}
             <Grid xs={12} item>
               <Select

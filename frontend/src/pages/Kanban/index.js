@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useReducer, useContext, useCallback } from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import api from "../../services/api";
+import toastError from "../../errors/toastError";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import Board from 'react-trello';
 import { toast } from "react-toastify";
@@ -36,14 +37,15 @@ const Kanban = () => {
   const fetchTags = async () => {
     try {
       const response = await api.get("/tags/kanban");
-      const fetchedTags = response.data.lista || []; 
+      // Par backend (B1): payload padronizado de { lista } para { tags }.
+      const fetchedTags = response.data.tags || [];
 
       setTags(fetchedTags);
 
       // Fetch tickets after fetching tags
       await fetchTickets(jsonString);
     } catch (error) {
-      console.log(error);
+      toastError(error);
     }
   };
 
@@ -72,7 +74,7 @@ const Kanban = () => {
       });
       setTickets(data.tickets);
     } catch (err) {
-      console.log(err);
+      toastError(err);
       setTickets([]);
     }
   };
@@ -152,8 +154,7 @@ const Kanban = () => {
     setFile({ lanes });
   };
 
-  const handleCardClick = (uuid) => {  
-    //console.log("Clicked on card with UUID:", uuid);
+  const handleCardClick = (uuid) => {
     history.push('/tickets/' + uuid);
   };
 
@@ -170,7 +171,7 @@ const Kanban = () => {
         toast.success('Ticket Tag Adicionado com Sucesso!');
 
     } catch (err) {
-      console.log(err);
+      toastError(err);
     }
   };
 

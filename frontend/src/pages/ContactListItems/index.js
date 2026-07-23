@@ -27,7 +27,11 @@ import EditIcon from "@material-ui/icons/Edit";
 import CheckCircleIcon from "@material-ui/icons/CheckCircle";
 import BlockIcon from "@material-ui/icons/Block";
 
-import api from "../../services/api";
+import { contactListItemsApi } from "../../api/ContactListItemsApi";
+import { contactListsApi } from "../../api/ContactListsApi";
+import { createEntityReducer } from "../../store/createEntityReducer";
+import { SocketEvents } from "../../services/socketEvents";
+import useSocketEvent from "../../hooks/useSocketEvent";
 import TableRowSkeleton from "../../components/TableRowSkeleton";
 import ContactListItemModal from "../../components/ContactListItemModal";
 import ConfirmationModal from "../../components/ConfirmationModal/";
@@ -43,51 +47,12 @@ import useContactLists from "../../hooks/useContactLists";
 import { Grid } from "@material-ui/core";
 
 import planilhaExemplo from "../../assets/planilha.xlsx";
-import { SocketContext } from "../../context/Socket/SocketContext";
 
-const reducer = (state, action) => {
-  if (action.type === "LOAD_CONTACTS") {
-    const contacts = action.payload;
-    const newContacts = [];
-
-    contacts.forEach((contact) => {
-      const contactIndex = state.findIndex((c) => c.id === contact.id);
-      if (contactIndex !== -1) {
-        state[contactIndex] = contact;
-      } else {
-        newContacts.push(contact);
-      }
-    });
-
-    return [...state, ...newContacts];
-  }
-
-  if (action.type === "UPDATE_CONTACTS") {
-    const contact = action.payload;
-    const contactIndex = state.findIndex((c) => c.id === contact.id);
-
-    if (contactIndex !== -1) {
-      state[contactIndex] = contact;
-      return [...state];
-    } else {
-      return [contact, ...state];
-    }
-  }
-
-  if (action.type === "DELETE_CONTACT") {
-    const contactId = action.payload;
-
-    const contactIndex = state.findIndex((c) => c.id === contactId);
-    if (contactIndex !== -1) {
-      state.splice(contactIndex, 1);
-    }
-    return [...state];
-  }
-
-  if (action.type === "RESET") {
-    return [];
-  }
-};
+const reducer = createEntityReducer({
+  load: "LOAD_CONTACTS",
+  update: "UPDATE_CONTACTS",
+  remove: "DELETE_CONTACT",
+});
 
 const useStyles = makeStyles((theme) => ({
   mainPaper: {
@@ -120,7 +85,7 @@ const ContactListItems = () => {
 
   const { findById: findContactList } = useContactLists();
 
-  const socketManager = useContext(SocketContext);
+  const companyId = localStorage.getItem("companyId");
 
   useEffect(() => {
     findContactList(contactListId).then((data) => {
@@ -139,8 +104,10 @@ const ContactListItems = () => {
     const delayDebounceFn = setTimeout(() => {
       const fetchContacts = async () => {
         try {
-          const { data } = await api.get(`contact-list-items`, {
-            params: { searchParam, pageNumber, contactListId },
+          const { data } = await contactListItemsApi.list({
+            searchParam,
+            pageNumber,
+            contactListId,
           });
           dispatch({ type: "LOAD_CONTACTS", payload: data.contacts });
           setHasMore(data.hasMore);
@@ -154,37 +121,28 @@ const ContactListItems = () => {
     return () => clearTimeout(delayDebounceFn);
   }, [searchParam, pageNumber, contactListId]);
 
-  useEffect(() => {
-    const companyId = localStorage.getItem("companyId");
-    const socket = socketManager.getSocket(companyId);
+  useSocketEvent(SocketEvents.companyContactListItem(companyId), (data) => {
+    if (data.action === "update" || data.action === "create") {
+      dispatch({ type: "UPDATE_CONTACTS", payload: data.record });
+    }
 
-    socket.on(`company-${companyId}-ContactListItem`, (data) => {
-      if (data.action === "update" || data.action === "create") {
-        dispatch({ type: "UPDATE_CONTACTS", payload: data.record });
-      }
+    if (data.action === "delete") {
+      dispatch({ type: "DELETE_CONTACT", payload: +data.id });
+    }
 
-      if (data.action === "delete") {
-        dispatch({ type: "DELETE_CONTACT", payload: +data.id });
-      }
+    if (data.action === "reload") {
+      dispatch({ type: "LOAD_CONTACTS", payload: data.records });
+    }
+  });
 
+  useSocketEvent(
+    SocketEvents.companyContactListItemScoped(companyId, contactListId),
+    (data) => {
       if (data.action === "reload") {
         dispatch({ type: "LOAD_CONTACTS", payload: data.records });
       }
-    });
-
-    socket.on(
-      `company-${companyId}-ContactListItem-${contactListId}`,
-      (data) => {
-        if (data.action === "reload") {
-          dispatch({ type: "LOAD_CONTACTS", payload: data.records });
-        }
-      }
-    );
-
-    return () => {
-      socket.disconnect();
-    };
-  }, [contactListId, socketManager]);
+    }
+  );
 
   const handleSearch = (event) => {
     setSearchParam(event.target.value.toLowerCase());
@@ -207,7 +165,7 @@ const ContactListItems = () => {
 
   const handleDeleteContact = async (contactId) => {
     try {
-      await api.delete(`/contact-list-items/${contactId}`);
+      await contactListItemsApi.remove(contactId);
       toast.success(i18n.t("contacts.toasts.deleted"));
     } catch (err) {
       toastError(err);
@@ -221,11 +179,7 @@ const ContactListItems = () => {
     try {
       const formData = new FormData();
       formData.append("file", fileUploadRef.current.files[0]);
-      await api.request({
-        url: `contact-lists/${contactListId}/upload`,
-        method: "POST",
-        data: formData,
-      });
+      await contactListsApi.upload(contactListId, formData);
     } catch (err) {
       toastError(err);
     }

@@ -92,7 +92,6 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
 			try {
 				const { data } = await api.get(`/contacts/${contactId}`);
 				if (isMounted.current) {
-					console.log(data)
 					setContact(data);
 				}
 			} catch (err) {

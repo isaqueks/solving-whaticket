@@ -1,7 +1,6 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import clsx from "clsx";
-import { format, isSameDay, parseISO } from "date-fns";
-import { useHistory, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 import {
   Avatar,
@@ -25,12 +24,14 @@ import AndroidIcon from "@material-ui/icons/Android";
 
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { TicketsContext } from "../../context/Tickets/TicketsContext";
-import toastError from "../../errors/toastError";
-import api from "../../services/api";
 import MarkdownWrapper from "../MarkdownWrapper";
-import ContactTag from "../ContactTag";
 import TicketMessagesDialog from "../TicketMessagesDialog";
 import { MoreVert } from "@material-ui/icons";
+
+import { useTicketActions } from "./useTicketActions";
+import { formatTicketTime } from "./ticketListItemUtils";
+import TicketBadges from "./TicketBadges";
+import TicketTagChips from "./TicketTagChips";
 
 const useStyles = makeStyles((theme) => ({
   ticket: {
@@ -97,15 +98,6 @@ const useStyles = makeStyles((theme) => ({
     // Adiciona um "gap" para separar os badges
     gap: 4,
   },
-  connectionTag: {
-    background: "green",
-    color: "#FFF",
-    padding: "3px 7px",
-    // fontWeight: "bold",
-    borderRadius: 5,
-    fontSize: "0.75rem",
-    whiteSpace: "nowrap",
-  },
   lastMessageTime: {
     color: "#333",
   },
@@ -130,8 +122,6 @@ const useStyles = makeStyles((theme) => ({
 
 const TicketListItemCustom = ({ ticket }) => {
   const classes = useStyles();
-  const history = useHistory();
-  const [loading, setLoading] = useState(false);
   const [ticketUser, setTicketUser] = useState(null);
   const [ticketQueueName, setTicketQueueName] = useState(null);
   const [ticketQueueColor, setTicketQueueColor] = useState(null);
@@ -139,11 +129,16 @@ const TicketListItemCustom = ({ ticket }) => {
   const [whatsAppName, setWhatsAppName] = useState(null);
   const [openTicketMessageDialog, setOpenTicketMessageDialog] = useState(false);
   const { ticketId } = useParams();
-  const isMounted = useRef(true);
   const { setCurrentTicket } = useContext(TicketsContext);
   const { user } = useContext(AuthContext);
   const [verpreview] = useState(false);
   const { profile } = user;
+
+  const {
+    handleCloseTicket,
+    handleReopenTicket,
+    handleAcepptTicket,
+  } = useTicketActions({ ticket, user, setTag });
 
   // Carrega dados do ticket
   useEffect(() => {
@@ -158,101 +153,8 @@ const TicketListItemCustom = ({ ticket }) => {
     }
 
     setTag(ticket?.tags);
-
-    return () => {
-      isMounted.current = false;
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // Função para fechar ticket
-  const handleCloseTicket = async (id) => {
-    setTag(ticket?.tags);
-    setLoading(true);
-    try {
-      await api.put(`/tickets/${id}`, {
-        status: "closed",
-        userId: user?.id,
-        queueId: ticket?.queue?.id,
-        useIntegration: false,
-        promptId: null,
-        integrationId: null,
-      });
-    } catch (err) {
-      setLoading(false);
-      toastError(err);
-    }
-    if (isMounted.current) {
-      setLoading(false);
-    }
-    history.push(`/tickets/`);
-  };
-
-  // Função para reabrir ticket
-  const handleReopenTicket = async (id) => {
-    setLoading(true);
-    try {
-      await api.put(`/tickets/${id}`, {
-        status: "open",
-        userId: user?.id,
-        queueId: ticket?.queue?.id,
-      });
-    } catch (err) {
-      setLoading(false);
-      toastError(err);
-    }
-    if (isMounted.current) {
-      setLoading(false);
-    }
-    history.push(`/tickets/${ticket.uuid}`);
-  };
-
-  // Função para aceitar ticket
-  const handleAcepptTicket = async (id) => {
-    setLoading(true);
-    try {
-      await api.put(`/tickets/${id}`, {
-        status: "open",
-        userId: user?.id,
-      });
-
-      // Verifica setting para envio de saudação (opcional)
-      let settingIndex;
-      try {
-        const { data } = await api.get("/settings/");
-        settingIndex = data.filter((s) => s.key === "sendGreetingAccepted");
-      } catch (err) {
-        toastError(err);
-      }
-
-      if (settingIndex?.[0]?.value === "enabled" && !ticket.isGroup) {
-        handleSendMessage(ticket.id);
-      }
-    } catch (err) {
-      setLoading(false);
-      toastError(err);
-    }
-    if (isMounted.current) {
-      setLoading(false);
-    }
-    history.push(`/tickets/${ticket.uuid}`);
-  };
-
-  // Mensagem de saudação automática
-  const handleSendMessage = async (id) => {
-    const msg = `{{ms}} *{{name}}*, meu nome é *${user?.name}* e agora vou prosseguir com seu atendimento!`;
-    const message = {
-      read: 1,
-      fromMe: true,
-      mediaUrl: "",
-      body: `*Mensagem Automática:*\n${msg.trim()}`,
-    };
-    try {
-      await api.post(`/messages/${id}`, message);
-    } catch (err) {
-      toastError(err);
-    }
-  };
 
   // Seleciona o ticket
   const handleSelectTicket = (ticket) => {
@@ -377,9 +279,7 @@ const TicketListItemCustom = ({ ticket }) => {
                       variant="body2"
                       color="textSecondary"
                     >
-                      {isSameDay(parseISO(ticket.updatedAt), new Date())
-                        ? format(parseISO(ticket.updatedAt), "HH:mm")
-                        : format(parseISO(ticket.updatedAt), "dd/MM/yyyy")}
+                      {formatTicketTime(ticket.updatedAt)}
                     </Typography>
                   )}
                 </Typography>
@@ -461,7 +361,7 @@ const TicketListItemCustom = ({ ticket }) => {
                 )}
               </Menu>
             </div>
-            
+
           </ListItemSecondaryAction>
 
 
@@ -471,37 +371,8 @@ const TicketListItemCustom = ({ ticket }) => {
 
           {/* Badges (ex: conexão, usuário, fila, tags) */}
           <div className={classes.secondaryContentSecond}>
-            {/* {ticket?.whatsapp?.name && (
-              <Badge className={classes.connectionTag}>
-                {ticket?.whatsapp?.name?.toUpperCase()}
-              </Badge>
-            )} */}
-            {ticketUser && (
-              <Badge
-                style={{ backgroundColor: "#000" }}
-                className={classes.connectionTag}
-              >
-                {ticketUser}
-              </Badge>
-            )}
-            <Badge
-              style={{
-                backgroundColor: ticket.queue?.color || "#7c7c7c",
-              }}
-              className={classes.connectionTag}
-            >
-              {ticket.queue?.name?.toUpperCase() || "SEM FILA"}
-            </Badge>
-
-            {/* Se tiver tags personalizadas */}
-            {tag?.map((tg) => {
-              return (
-                <ContactTag
-                  tag={tg}
-                  key={`ticket-contact-tag-${ticket.id}-${tg.id}`}
-                />
-              );
-            })}
+            <TicketBadges ticketUser={ticketUser} ticket={ticket} />
+            <TicketTagChips tags={tag} ticketId={ticket.id} />
           </div>
 
         </div>

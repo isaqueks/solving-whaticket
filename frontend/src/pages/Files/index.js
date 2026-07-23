@@ -28,58 +28,25 @@ import MainHeader from "../../components/MainHeader";
 import MainHeaderButtonsWrapper from "../../components/MainHeaderButtonsWrapper";
 import Title from "../../components/Title";
 
-import api from "../../services/api";
+import { filesApi } from "../../api/FilesApi";
+import { createEntityReducer } from "../../store/createEntityReducer";
+import { SocketEvents } from "../../services/socketEvents";
+import useSocketEvent from "../../hooks/useSocketEvent";
 import { i18n } from "../../translate/i18n";
 import TableRowSkeleton from "../../components/TableRowSkeleton";
 import FileModal from "../../components/FileModal";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import toastError from "../../errors/toastError";
-import { SocketContext } from "../../context/Socket/SocketContext";
 import { AuthContext } from "../../context/Auth/AuthContext";
 
-const reducer = (state, action) => {
-    if (action.type === "LOAD_FILES") {
-        const files = action.payload;
-        const newFiles = [];
-
-        files.forEach((fileList) => {
-            const fileListIndex = state.findIndex((s) => s.id === fileList.id);
-            if (fileListIndex !== -1) {
-                state[fileListIndex] = fileList;
-            } else {
-                newFiles.push(fileList);
-            }
-        });
-
-        return [...state, ...newFiles];
-    }
-
-    if (action.type === "UPDATE_FILES") {
-        const fileList = action.payload;
-        const fileListIndex = state.findIndex((s) => s.id === fileList.id);
-
-        if (fileListIndex !== -1) {
-            state[fileListIndex] = fileList;
-            return [...state];
-        } else {
-            return [fileList, ...state];
-        }
-    }
-
-    if (action.type === "DELETE_TAG") {
-        const fileListId = action.payload;
-
-        const fileListIndex = state.findIndex((s) => s.id === fileListId);
-        if (fileListIndex !== -1) {
-            state.splice(fileListIndex, 1);
-        }
-        return [...state];
-    }
-
-    if (action.type === "RESET") {
-        return [];
-    }
-};
+// O listener de socket despacha DELETE_USER (o reducer copiado tinha um case
+// morto "DELETE_TAG" que nunca casava). Mapeando o DELETE para o type realmente
+// despachado, a remoção por socket passa a funcionar via o filtro-por-id padrão.
+const reducer = createEntityReducer({
+  load: "LOAD_FILES",
+  update: "UPDATE_FILES",
+  remove: "DELETE_USER",
+});
 
 const useStyles = makeStyles((theme) => ({
     mainPaper: {
@@ -107,9 +74,7 @@ const FileLists = () => {
 
     const fetchFileLists = useCallback(async () => {
         try {
-            const { data } = await api.get("/files/", {
-                params: { searchParam, pageNumber },
-            });
+            const { data } = await filesApi.list({ searchParam, pageNumber });
             dispatch({ type: "LOAD_FILES", payload: data.files });
             setHasMore(data.hasMore);
             setLoading(false);
@@ -117,8 +82,6 @@ const FileLists = () => {
             toastError(err);
         }
     }, [searchParam, pageNumber]);
-
-    const socketManager = useContext(SocketContext);
 
     useEffect(() => {
         dispatch({ type: "RESET" });
@@ -133,23 +96,15 @@ const FileLists = () => {
         return () => clearTimeout(delayDebounceFn);
     }, [searchParam, pageNumber, fetchFileLists]);
 
-    useEffect(() => {
-        const socket = socketManager.getSocket(user.companyId);
+    useSocketEvent(SocketEvents.companyFile(user.companyId), (data) => {
+        if (data.action === "update" || data.action === "create") {
+            dispatch({ type: "UPDATE_FILES", payload: data.files });
+        }
 
-        socket.on(`company-${user.companyId}-file`, (data) => {
-            if (data.action === "update" || data.action === "create") {
-                dispatch({ type: "UPDATE_FILES", payload: data.files });
-            }
-
-            if (data.action === "delete") {
-                dispatch({ type: "DELETE_USER", payload: +data.fileId });
-            }
-        });
-
-        return () => {
-            socket.disconnect();
-        };
-    }, [socketManager, user]);
+        if (data.action === "delete") {
+            dispatch({ type: "DELETE_USER", payload: +data.fileId });
+        }
+    });
 
     const handleOpenFileListModal = () => {
         setSelectedFileList(null);
@@ -172,7 +127,7 @@ const FileLists = () => {
 
     const handleDeleteFileList = async (fileListId) => {
         try {
-            await api.delete(`/files/${fileListId}`);
+            await filesApi.remove(fileListId);
             toast.success(i18n.t("files.toasts.deleted"));
         } catch (err) {
             toastError(err);

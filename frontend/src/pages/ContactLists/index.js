@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useReducer, useContext } from "react";
+import React, { useState, useEffect, useReducer } from "react";
 import { toast } from "react-toastify";
 
 import { useHistory } from "react-router-dom";
@@ -25,7 +25,10 @@ import MainContainer from "../../components/MainContainer";
 import MainHeader from "../../components/MainHeader";
 import Title from "../../components/Title";
 
-import api from "../../services/api";
+import { contactListsApi } from "../../api/ContactListsApi";
+import { createEntityReducer } from "../../store/createEntityReducer";
+import { SocketEvents } from "../../services/socketEvents";
+import useSocketEvent from "../../hooks/useSocketEvent";
 import { i18n } from "../../translate/i18n";
 import TableRowSkeleton from "../../components/TableRowSkeleton";
 import ContactListDialog from "../../components/ContactListDialog";
@@ -34,51 +37,12 @@ import toastError from "../../errors/toastError";
 import { Grid } from "@material-ui/core";
 
 import planilhaExemplo from "../../assets/planilha.xlsx";
-import { SocketContext } from "../../context/Socket/SocketContext";
 
-const reducer = (state, action) => {
-  if (action.type === "LOAD_CONTACTLISTS") {
-    const contactLists = action.payload;
-    const newContactLists = [];
-
-    contactLists.forEach((contactList) => {
-      const contactListIndex = state.findIndex((u) => u.id === contactList.id);
-      if (contactListIndex !== -1) {
-        state[contactListIndex] = contactList;
-      } else {
-        newContactLists.push(contactList);
-      }
-    });
-
-    return [...state, ...newContactLists];
-  }
-
-  if (action.type === "UPDATE_CONTACTLIST") {
-    const contactList = action.payload;
-    const contactListIndex = state.findIndex((u) => u.id === contactList.id);
-
-    if (contactListIndex !== -1) {
-      state[contactListIndex] = contactList;
-      return [...state];
-    } else {
-      return [contactList, ...state];
-    }
-  }
-
-  if (action.type === "DELETE_CONTACTLIST") {
-    const contactListId = action.payload;
-
-    const contactListIndex = state.findIndex((u) => u.id === contactListId);
-    if (contactListIndex !== -1) {
-      state.splice(contactListIndex, 1);
-    }
-    return [...state];
-  }
-
-  if (action.type === "RESET") {
-    return [];
-  }
-};
+const reducer = createEntityReducer({
+  load: "LOAD_CONTACTLISTS",
+  update: "UPDATE_CONTACTLIST",
+  remove: "DELETE_CONTACTLIST",
+});
 
 const useStyles = makeStyles((theme) => ({
   mainPaper: {
@@ -103,7 +67,7 @@ const ContactLists = () => {
   const [searchParam, setSearchParam] = useState("");
   const [contactLists, dispatch] = useReducer(reducer, []);
 
-  const socketManager = useContext(SocketContext);
+  const companyId = localStorage.getItem("companyId");
 
   useEffect(() => {
     dispatch({ type: "RESET" });
@@ -115,8 +79,9 @@ const ContactLists = () => {
     const delayDebounceFn = setTimeout(() => {
       const fetchContactLists = async () => {
         try {
-          const { data } = await api.get("/contact-lists/", {
-            params: { searchParam, pageNumber },
+          const { data } = await contactListsApi.findAll({
+            searchParam,
+            pageNumber,
           });
           dispatch({ type: "LOAD_CONTACTLISTS", payload: data.records });
           setHasMore(data.hasMore);
@@ -130,24 +95,15 @@ const ContactLists = () => {
     return () => clearTimeout(delayDebounceFn);
   }, [searchParam, pageNumber]);
 
-  useEffect(() => {
-    const companyId = localStorage.getItem("companyId");
-    const socket = socketManager.getSocket(companyId);
+  useSocketEvent(SocketEvents.companyContactList(companyId), (data) => {
+    if (data.action === "update" || data.action === "create") {
+      dispatch({ type: "UPDATE_CONTACTLIST", payload: data.record });
+    }
 
-    socket.on(`company-${companyId}-ContactList`, (data) => {
-      if (data.action === "update" || data.action === "create") {
-        dispatch({ type: "UPDATE_CONTACTLIST", payload: data.record });
-      }
-
-      if (data.action === "delete") {
-        dispatch({ type: "DELETE_CONTACTLIST", payload: +data.id });
-      }
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, [socketManager]);
+    if (data.action === "delete") {
+      dispatch({ type: "DELETE_CONTACTLIST", payload: +data.id });
+    }
+  });
 
   const handleOpenContactListModal = () => {
     setSelectedContactList(null);
@@ -170,7 +126,7 @@ const ContactLists = () => {
 
   const handleDeleteContactList = async (contactListId) => {
     try {
-      await api.delete(`/contact-lists/${contactListId}`);
+      await contactListsApi.remove(contactListId);
       toast.success(i18n.t("contactLists.toasts.deleted"));
     } catch (err) {
       toastError(err);

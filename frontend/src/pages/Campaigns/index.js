@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 
-import React, { useContext, useEffect, useReducer, useState } from "react";
+import React, { useEffect, useReducer, useState } from "react";
 import { toast } from "react-toastify";
 
 import { useHistory } from "react-router-dom";
@@ -29,61 +29,22 @@ import MainHeader from "../../components/MainHeader";
 import Title from "../../components/Title";
 
 import { Grid } from "@material-ui/core";
-import { isArray } from "lodash";
 import CampaignModal from "../../components/CampaignModal";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import TableRowSkeleton from "../../components/TableRowSkeleton";
-import { SocketContext } from "../../context/Socket/SocketContext";
+import { campaignsApi } from "../../api/CampaignsApi";
+import { createEntityReducer } from "../../store/createEntityReducer";
+import { SocketEvents } from "../../services/socketEvents";
+import useSocketEvent from "../../hooks/useSocketEvent";
 import toastError from "../../errors/toastError";
 import { useDate } from "../../hooks/useDate";
-import api from "../../services/api";
 import { i18n } from "../../translate/i18n";
 
-const reducer = (state, action) => {
-  if (action.type === "LOAD_CAMPAIGNS") {
-    const campaigns = action.payload;
-    const newCampaigns = [];
-
-    if (isArray(campaigns)) {
-      campaigns.forEach((campaign) => {
-        const campaignIndex = state.findIndex((u) => u.id === campaign.id);
-        if (campaignIndex !== -1) {
-          state[campaignIndex] = campaign;
-        } else {
-          newCampaigns.push(campaign);
-        }
-      });
-    }
-
-    return [...state, ...newCampaigns];
-  }
-
-  if (action.type === "UPDATE_CAMPAIGNS") {
-    const campaign = action.payload;
-    const campaignIndex = state.findIndex((u) => u.id === campaign.id);
-
-    if (campaignIndex !== -1) {
-      state[campaignIndex] = campaign;
-      return [...state];
-    } else {
-      return [campaign, ...state];
-    }
-  }
-
-  if (action.type === "DELETE_CAMPAIGN") {
-    const campaignId = action.payload;
-
-    const campaignIndex = state.findIndex((u) => u.id === campaignId);
-    if (campaignIndex !== -1) {
-      state.splice(campaignIndex, 1);
-    }
-    return [...state];
-  }
-
-  if (action.type === "RESET") {
-    return [];
-  }
-};
+const reducer = createEntityReducer({
+  load: "LOAD_CAMPAIGNS",
+  update: "UPDATE_CAMPAIGNS",
+  remove: "DELETE_CAMPAIGN",
+});
 
 const useStyles = makeStyles((theme) => ({
   mainPaper: {
@@ -111,7 +72,7 @@ const Campaigns = () => {
 
   const { datetimeToClient } = useDate();
 
-  const socketManager = useContext(SocketContext);
+  const companyId = localStorage.getItem("companyId");
 
   useEffect(() => {
     dispatch({ type: "RESET" });
@@ -127,28 +88,18 @@ const Campaigns = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParam, pageNumber]);
 
-  useEffect(() => {
-    const companyId = localStorage.getItem("companyId");
-    const socket = socketManager.getSocket(companyId);
-
-    socket.on(`company-${companyId}-campaign`, (data) => {
-      if (data.action === "update" || data.action === "create") {
-        dispatch({ type: "UPDATE_CAMPAIGNS", payload: data.record });
-      }
-      if (data.action === "delete") {
-        dispatch({ type: "DELETE_CAMPAIGN", payload: +data.id });
-      }
-    });
-    return () => {
-      socket.disconnect();
-    };
-  }, [socketManager]);
+  useSocketEvent(SocketEvents.companyCampaign(companyId), (data) => {
+    if (data.action === "update" || data.action === "create") {
+      dispatch({ type: "UPDATE_CAMPAIGNS", payload: data.record });
+    }
+    if (data.action === "delete") {
+      dispatch({ type: "DELETE_CAMPAIGN", payload: +data.id });
+    }
+  });
 
   const fetchCampaigns = async () => {
     try {
-      const { data } = await api.get("/campaigns/", {
-        params: { searchParam, pageNumber },
-      });
+      const { data } = await campaignsApi.list({ searchParam, pageNumber });
       dispatch({ type: "LOAD_CAMPAIGNS", payload: data.records });
       setHasMore(data.hasMore);
       setLoading(false);
@@ -178,7 +129,7 @@ const Campaigns = () => {
 
   const handleDeleteCampaign = async (campaignId) => {
     try {
-      await api.delete(`/campaigns/${campaignId}`);
+      await campaignsApi.remove(campaignId);
       toast.success(i18n.t("campaigns.toasts.deleted"));
     } catch (err) {
       toastError(err);
@@ -219,7 +170,7 @@ const Campaigns = () => {
 
   const cancelCampaign = async (campaign) => {
     try {
-      await api.post(`/campaigns/${campaign.id}/cancel`);
+      await campaignsApi.cancel(campaign.id);
       toast.success(i18n.t("campaigns.toasts.cancel"));
       setPageNumber(1);
       fetchCampaigns();
@@ -230,7 +181,7 @@ const Campaigns = () => {
 
   const restartCampaign = async (campaign) => {
     try {
-      await api.post(`/campaigns/${campaign.id}/restart`);
+      await campaignsApi.restart(campaign.id);
       toast.success(i18n.t("campaigns.toasts.restart"));
       setPageNumber(1);
       fetchCampaigns();

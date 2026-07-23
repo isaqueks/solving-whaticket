@@ -16,7 +16,7 @@ import { i18n } from "../../translate/i18n.js";
 import { toast } from "react-toastify";
 
 import useCompanies from "../../hooks/useCompanies";
-import useAuth from "../../hooks/useAuth.js";
+import useAuth from "../../hooks/useAuth";
 import useSettings from "../../hooks/useSettings";
 
 import OnlyForSuperUser from "../../components/OnlyForSuperUser";

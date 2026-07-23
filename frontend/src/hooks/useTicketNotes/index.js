@@ -1,30 +1,19 @@
-import api from "../../services/api";
+import { ticketNotesApi } from "../../api/TicketNotesApi";
 
 const useTicketNotes = () => {
 
     const saveNote = async (data) => {
-        const { data: responseData } = await api.request({
-            url: '/ticket-notes',
-            method: 'POST',
-            data
-        });
+        const { data: responseData } = await ticketNotesApi.save(data);
         return responseData;
     }
 
     const deleteNote = async (id) => {
-        const { data } = await api.request({
-            url: `/ticket-notes/${id}`,
-            method: 'DELETE'
-        });
+        const { data } = await ticketNotesApi.remove(id);
         return data;
     }
 
     const listNotes = async (params) => {
-        const { data } = await api.request({
-            url: '/ticket-notes/list',
-            method: 'GET',
-            params
-        });
+        const { data } = await ticketNotesApi.list(params);
         return data;
     }
 

@@ -152,7 +152,6 @@ const CustomLink = ({ children, ...props }) => (
 
 const MarkdownWrapper = ({ children, message }) => {
 	let type = message?.mediaType;
-	console.log('type', type)
 	const boldRegex = /\*(.*?)\*/g;
 	const tildaRegex = /~(.*?)~/g;
 

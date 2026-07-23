@@ -1,6 +1,7 @@
 import { createContext } from "react";
 import openSocket from "socket.io-client";
 import { isExpired, decodeToken } from "react-jwt";
+import { appConfig } from "../../config";
 
 class ManagedSocket {
   constructor(socketManager) {
@@ -122,7 +123,7 @@ const SocketManager = {
       this.currentCompanyId = companyId;
       this.currentUserId = userId;
       
-      this.currentSocket = openSocket(process.env.REACT_APP_BACKEND_URL, {
+      this.currentSocket = openSocket(appConfig.backendUrl, {
         transports: ["websocket"],
         pingTimeout: 18000,
         pingInterval: 18000,

@@ -6,9 +6,7 @@ export {
   userMonitor
 } from "./queues/connection";
 export { parseToMilliseconds, randomValue } from "./queues/lib";
-export { startQueueProcess } from "./queues/startQueueProcess";
+export { startQueueProcess } from "./jobs/startQueueProcess";
 
-// Side-effect import: starts the CronJob-based ticket sweeps (auto-close,
-// attach-to-user, auto-create) on the main instance at module load, exactly
-// as the old monolithic queues.ts did.
-import "./queues/ticketJobs";
+// Os crons de varredura de tickets (antes iniciados por side-effect no import
+// de queues/ticketJobs.ts) agora sobem via jobScheduler.start() no server.ts.

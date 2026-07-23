@@ -22,64 +22,23 @@ import MainContainer from "../../components/MainContainer";
 import MainHeader from "../../components/MainHeader";
 import Title from "../../components/Title";
 
-import api from "../../services/api";
+import { announcementsApi } from "../../api/AnnouncementsApi";
+import { createEntityReducer } from "../../store/createEntityReducer";
+import { SocketEvents } from "../../services/socketEvents";
+import useSocketEvent from "../../hooks/useSocketEvent";
 import { i18n } from "../../translate/i18n";
 import TableRowSkeleton from "../../components/TableRowSkeleton";
 import AnnouncementModal from "../../components/AnnouncementModal";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import toastError from "../../errors/toastError";
 import { Grid } from "@material-ui/core";
-import { isArray } from "lodash";
-import { SocketContext } from "../../context/Socket/SocketContext";
 import { AuthContext } from "../../context/Auth/AuthContext";
 
-const reducer = (state, action) => {
-  if (action.type === "LOAD_ANNOUNCEMENTS") {
-    const announcements = action.payload;
-    const newAnnouncements = [];
-
-    if (isArray(announcements)) {
-      announcements.forEach((announcement) => {
-        const announcementIndex = state.findIndex(
-          (u) => u.id === announcement.id
-        );
-        if (announcementIndex !== -1) {
-          state[announcementIndex] = announcement;
-        } else {
-          newAnnouncements.push(announcement);
-        }
-      });
-    }
-
-    return [...state, ...newAnnouncements];
-  }
-
-  if (action.type === "UPDATE_ANNOUNCEMENTS") {
-    const announcement = action.payload;
-    const announcementIndex = state.findIndex((u) => u.id === announcement.id);
-
-    if (announcementIndex !== -1) {
-      state[announcementIndex] = announcement;
-      return [...state];
-    } else {
-      return [announcement, ...state];
-    }
-  }
-
-  if (action.type === "DELETE_ANNOUNCEMENT") {
-    const announcementId = action.payload;
-
-    const announcementIndex = state.findIndex((u) => u.id === announcementId);
-    if (announcementIndex !== -1) {
-      state.splice(announcementIndex, 1);
-    }
-    return [...state];
-  }
-
-  if (action.type === "RESET") {
-    return [];
-  }
-};
+const reducer = createEntityReducer({
+  load: "LOAD_ANNOUNCEMENTS",
+  update: "UPDATE_ANNOUNCEMENTS",
+  remove: "DELETE_ANNOUNCEMENT",
+});
 
 const useStyles = makeStyles((theme) => ({
   mainPaper: {
@@ -107,9 +66,9 @@ const Announcements = () => {
   const [searchParam, setSearchParam] = useState("");
   const [announcements, dispatch] = useReducer(reducer, []);
 
-  const socketManager = useContext(SocketContext);
+  const companyId = user.companyId;
 
-  // trava para nao acessar pagina que não pode  
+  // trava para nao acessar pagina que não pode
   useEffect(() => {
     async function fetchData() {
       if (!user.super) {
@@ -137,28 +96,18 @@ const Announcements = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParam, pageNumber]);
 
-  useEffect(() => {
-    const companyId = user.companyId;
-    const socket = socketManager.getSocket(companyId);
-
-    socket.on(`company-${companyId}-announcement`, (data) => {
-      if (data.action === "update" || data.action === "create") {
-        dispatch({ type: "UPDATE_ANNOUNCEMENTS", payload: data.record });
-      }
-      if (data.action === "delete") {
-        dispatch({ type: "DELETE_ANNOUNCEMENT", payload: +data.id });
-      }
-    });
-    return () => {
-      socket.disconnect();
-    };
-  }, [socketManager, user.companyId]);
+  useSocketEvent(SocketEvents.companyAnnouncement(companyId), (data) => {
+    if (data.action === "update" || data.action === "create") {
+      dispatch({ type: "UPDATE_ANNOUNCEMENTS", payload: data.record });
+    }
+    if (data.action === "delete") {
+      dispatch({ type: "DELETE_ANNOUNCEMENT", payload: +data.id });
+    }
+  });
 
   const fetchAnnouncements = async () => {
     try {
-      const { data } = await api.get("/announcements/", {
-        params: { searchParam, pageNumber },
-      });
+      const { data } = await announcementsApi.list({ searchParam, pageNumber });
       dispatch({ type: "LOAD_ANNOUNCEMENTS", payload: data.records });
       setHasMore(data.hasMore);
       setLoading(false);
@@ -189,10 +138,10 @@ const Announcements = () => {
   const handleDeleteAnnouncement = async (announcement) => {
     try {
       if (announcement.mediaName)
-      await api.delete(`/announcements/${announcement.id}/media-upload`);
+      await announcementsApi.deleteMedia(announcement.id);
 
-      await api.delete(`/announcements/${announcement.id}`);
-      
+      await announcementsApi.remove(announcement.id);
+
       toast.success(i18n.t("announcements.toasts.deleted"));
     } catch (err) {
       toastError(err);

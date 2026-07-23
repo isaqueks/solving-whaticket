@@ -20,7 +20,10 @@ import InputAdornment from "@material-ui/core/InputAdornment";
 import IconButton from "@material-ui/core/IconButton";
 import DeleteOutlineIcon from "@material-ui/icons/DeleteOutline";
 import EditIcon from "@material-ui/icons/Edit";
-import api from "../../services/api";
+import { contactsApi } from "../../api/ContactsApi";
+import { createEntityReducer } from "../../store/createEntityReducer";
+import { SocketEvents } from "../../services/socketEvents";
+import useSocketEvent from "../../hooks/useSocketEvent";
 import TableRowSkeleton from "../../components/TableRowSkeleton";
 import ContactModal from "../../components/ContactModal";
 import ConfirmationModal from "../../components/ConfirmationModal/";
@@ -34,53 +37,14 @@ import toastError from "../../errors/toastError";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { Can } from "../../components/Can";
 import NewTicketModal from "../../components/NewTicketModal";
-import { SocketContext } from "../../context/Socket/SocketContext";
 
 import {CSVLink} from "react-csv";
 
-const reducer = (state, action) => {
-  if (action.type === "LOAD_CONTACTS") {
-    const contacts = action.payload;
-    const newContacts = [];
-
-    contacts.forEach((contact) => {
-      const contactIndex = state.findIndex((c) => c.id === contact.id);
-      if (contactIndex !== -1) {
-        state[contactIndex] = contact;
-      } else {
-        newContacts.push(contact);
-      }
-    });
-
-    return [...state, ...newContacts];
-  }
-
-  if (action.type === "UPDATE_CONTACTS") {
-    const contact = action.payload;
-    const contactIndex = state.findIndex((c) => c.id === contact.id);
-
-    if (contactIndex !== -1) {
-      state[contactIndex] = contact;
-      return [...state];
-    } else {
-      return [contact, ...state];
-    }
-  }
-
-  if (action.type === "DELETE_CONTACT") {
-    const contactId = action.payload;
-
-    const contactIndex = state.findIndex((c) => c.id === contactId);
-    if (contactIndex !== -1) {
-      state.splice(contactIndex, 1);
-    }
-    return [...state];
-  }
-
-  if (action.type === "RESET") {
-    return [];
-  }
-};
+const reducer = createEntityReducer({
+  load: "LOAD_CONTACTS",
+  update: "UPDATE_CONTACTS",
+  remove: "DELETE_CONTACT",
+});
 
 const useStyles = makeStyles((theme) => ({
   mainPaper: {
@@ -110,7 +74,7 @@ const Contacts = () => {
   const [hasMore, setHasMore] = useState(false);
   const fileUploadRef = useRef(null);
 
-  const socketManager = useContext(SocketContext);
+  const companyId = localStorage.getItem("companyId");
 
   useEffect(() => {
     dispatch({ type: "RESET" });
@@ -122,9 +86,7 @@ const Contacts = () => {
     const delayDebounceFn = setTimeout(() => {
       const fetchContacts = async () => {
         try {
-          const { data } = await api.get("/contacts/", {
-            params: { searchParam, pageNumber },
-          });
+          const { data } = await contactsApi.list({ searchParam, pageNumber });
           dispatch({ type: "LOAD_CONTACTS", payload: data.contacts });
           setHasMore(data.hasMore);
           setLoading(false);
@@ -137,24 +99,15 @@ const Contacts = () => {
     return () => clearTimeout(delayDebounceFn);
   }, [searchParam, pageNumber]);
 
-  useEffect(() => {
-    const companyId = localStorage.getItem("companyId");
-    const socket = socketManager.getSocket(companyId);
+  useSocketEvent(SocketEvents.companyContact(companyId), (data) => {
+    if (data.action === "update" || data.action === "create") {
+      dispatch({ type: "UPDATE_CONTACTS", payload: data.contact });
+    }
 
-    socket.on(`company-${companyId}-contact`, (data) => {
-      if (data.action === "update" || data.action === "create") {
-        dispatch({ type: "UPDATE_CONTACTS", payload: data.contact });
-      }
-
-      if (data.action === "delete") {
-        dispatch({ type: "DELETE_CONTACT", payload: +data.contactId });
-      }
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, [ socketManager]);
+    if (data.action === "delete") {
+      dispatch({ type: "DELETE_CONTACT", payload: +data.contactId });
+    }
+  });
 
   const handleSearch = (event) => {
     setSearchParam(event.target.value.toLowerCase());
@@ -170,22 +123,6 @@ const Contacts = () => {
     setContactModalOpen(false);
   };
 
-  // const handleSaveTicket = async contactId => {
-  // 	if (!contactId) return;
-  // 	setLoading(true);
-  // 	try {
-  // 		const { data: ticket } = await api.post("/tickets", {
-  // 			contactId: contactId,
-  // 			userId: user?.id,
-  // 			status: "open",
-  // 		});
-  // 		history.push(`/tickets/${ticket.id}`);
-  // 	} catch (err) {
-  // 		toastError(err);
-  // 	}
-  // 	setLoading(false);
-  // };
-
   const handleCloseOrOpenTicket = (ticket) => {
     setNewTicketModalOpen(false);
     if (ticket !== undefined && ticket.uuid !== undefined) {
@@ -200,7 +137,7 @@ const Contacts = () => {
 
   const handleDeleteContact = async (contactId) => {
     try {
-      await api.delete(`/contacts/${contactId}`);
+      await contactsApi.remove(contactId);
       toast.success(i18n.t("contacts.toasts.deleted"));
     } catch (err) {
       toastError(err);
@@ -215,13 +152,9 @@ const Contacts = () => {
       if (!!fileUploadRef.current.files[0]) {
         const formData = new FormData();
         formData.append("file", fileUploadRef.current.files[0]);
-        await api.request({
-          url: `/contacts/upload`,
-          method: "POST",
-          data: formData,
-        });
+        await contactsApi.upload(formData);
       } else {
-        await api.post("/contacts/import");
+        await contactsApi.importContacts();
       }
       history.go(0);
     } catch (err) {

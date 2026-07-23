@@ -10,7 +10,7 @@ import Chip from "@material-ui/core/Chip";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import Paper from "@material-ui/core/Paper";
 import { toast } from "react-toastify";
-import api from "../../services/api";
+import { contactsApi } from "../../api/ContactsApi";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -79,10 +79,9 @@ const GroupParticipantsList = ({ contactId }) => {
   const loadParticipants = async () => {
     setLoading(true);
     try {
-      const { data } = await api.get(`/contacts/${contactId}/participants`);
+      const { data } = await contactsApi.participants(contactId);
       setParticipants(data);
     } catch (err) {
-      console.error("Erro ao carregar participantes:", err);
       toast.error("Erro ao carregar participantes do grupo");
     } finally {
       setLoading(false);

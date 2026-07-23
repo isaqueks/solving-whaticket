@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useReducer, useContext } from "react";
+import React, { useState, useEffect, useReducer } from "react";
 import { toast } from "react-toastify";
 
 import { makeStyles } from "@material-ui/core/styles";
@@ -22,57 +22,21 @@ import MainHeader from "../../components/MainHeader";
 import MainHeaderButtonsWrapper from "../../components/MainHeaderButtonsWrapper";
 import Title from "../../components/Title";
 
-import api from "../../services/api";
 import { i18n } from "../../translate/i18n";
 import TableRowSkeleton from "../../components/TableRowSkeleton";
 import UserModal from "../../components/UserModal";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import toastError from "../../errors/toastError";
-import { SocketContext } from "../../context/Socket/SocketContext";
+import { usersApi } from "../../api/UsersApi";
+import { createEntityReducer } from "../../store/createEntityReducer";
+import { SocketEvents } from "../../services/socketEvents";
+import useSocketEvent from "../../hooks/useSocketEvent";
 
-const reducer = (state, action) => {
-  if (action.type === "LOAD_USERS") {
-    const users = action.payload;
-    const newUsers = [];
-
-    users.forEach((user) => {
-      const userIndex = state.findIndex((u) => u.id === user.id);
-      if (userIndex !== -1) {
-        state[userIndex] = user;
-      } else {
-        newUsers.push(user);
-      }
-    });
-
-    return [...state, ...newUsers];
-  }
-
-  if (action.type === "UPDATE_USERS") {
-    const user = action.payload;
-    const userIndex = state.findIndex((u) => u.id === user.id);
-
-    if (userIndex !== -1) {
-      state[userIndex] = user;
-      return [...state];
-    } else {
-      return [user, ...state];
-    }
-  }
-
-  if (action.type === "DELETE_USER") {
-    const userId = action.payload;
-
-    const userIndex = state.findIndex((u) => u.id === userId);
-    if (userIndex !== -1) {
-      state.splice(userIndex, 1);
-    }
-    return [...state];
-  }
-
-  if (action.type === "RESET") {
-    return [];
-  }
-};
+const reducer = createEntityReducer({
+  load: "LOAD_USERS",
+  update: "UPDATE_USERS",
+  remove: "DELETE_USER",
+});
 
 const useStyles = makeStyles((theme) => ({
   mainPaper: {
@@ -96,7 +60,7 @@ const Users = () => {
   const [searchParam, setSearchParam] = useState("");
   const [users, dispatch] = useReducer(reducer, []);
 
-  const socketManager = useContext(SocketContext);
+  const companyId = localStorage.getItem("companyId");
 
   useEffect(() => {
     dispatch({ type: "RESET" });
@@ -108,9 +72,7 @@ const Users = () => {
     const delayDebounceFn = setTimeout(() => {
       const fetchUsers = async () => {
         try {
-          const { data } = await api.get("/users/", {
-            params: { searchParam, pageNumber },
-          });
+          const { data } = await usersApi.list({ searchParam, pageNumber });
           dispatch({ type: "LOAD_USERS", payload: data.users });
           setHasMore(data.hasMore);
           setLoading(false);
@@ -123,24 +85,15 @@ const Users = () => {
     return () => clearTimeout(delayDebounceFn);
   }, [searchParam, pageNumber]);
 
-  useEffect(() => {
-    const companyId = localStorage.getItem("companyId");
-    const socket = socketManager.getSocket(companyId);
+  useSocketEvent(SocketEvents.companyUser(companyId), (data) => {
+    if (data.action === "update" || data.action === "create") {
+      dispatch({ type: "UPDATE_USERS", payload: data.user });
+    }
 
-    socket.on(`company-${companyId}-user`, (data) => {
-      if (data.action === "update" || data.action === "create") {
-        dispatch({ type: "UPDATE_USERS", payload: data.user });
-      }
-
-      if (data.action === "delete") {
-        dispatch({ type: "DELETE_USER", payload: +data.userId });
-      }
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, [socketManager]);
+    if (data.action === "delete") {
+      dispatch({ type: "DELETE_USER", payload: +data.userId });
+    }
+  });
 
   const handleOpenUserModal = () => {
     setSelectedUser(null);
@@ -163,7 +116,7 @@ const Users = () => {
 
   const handleDeleteUser = async (userId) => {
     try {
-      await api.delete(`/users/${userId}`);
+      await usersApi.remove(userId);
       toast.success(i18n.t("users.toasts.deleted"));
     } catch (err) {
       toastError(err);

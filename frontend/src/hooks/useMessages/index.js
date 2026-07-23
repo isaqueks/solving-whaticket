@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import toastError from "../../errors/toastError";
 
-import api from "../../services/api";
+import { messagesApi } from "../../api/MessagesApi";
 
 const useMessages = ({ fromMe, dateStart, dateEnd }) => {
     const [loading, setLoading] = useState(true);
@@ -12,12 +12,10 @@ const useMessages = ({ fromMe, dateStart, dateEnd }) => {
         const delayDebounceFn = setTimeout(() => {
             const fetchMessages = async () => {
                 try {
-                    const { data } = await api.get("/messages-allMe", {
-                        params: {
-                            fromMe,
-                            dateStart,
-                            dateEnd,
-                        },
+                    const { data } = await messagesApi.listAllMe({
+                        fromMe,
+                        dateStart,
+                        dateEnd,
                     });
                     setCount(data.count[0].count);
                     setLoading(false);

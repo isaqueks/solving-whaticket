@@ -27,7 +27,8 @@ import MainHeader from "../../components/MainHeader";
 import MainHeaderButtonsWrapper from "../../components/MainHeaderButtonsWrapper";
 import Title from "../../components/Title";
 
-import api from "../../services/api";
+import { tagsApi } from "../../api/TagsApi";
+import { createEntityReducer } from "../../store/createEntityReducer";
 import { i18n } from "../../translate/i18n";
 import TableRowSkeleton from "../../components/TableRowSkeleton";
 import TagModal from "../../components/TagModal";
@@ -38,49 +39,11 @@ import { Tooltip } from "@material-ui/core";
 import { SocketContext } from "../../context/Socket/SocketContext";
 import { AuthContext } from "../../context/Auth/AuthContext";
 
-const reducer = (state, action) => {
-  if (action.type === "LOAD_TAGS") {
-    const tags = action.payload;
-    const newTags = [];
-
-    tags.forEach((tag) => {
-      const tagIndex = state.findIndex((s) => s.id === tag.id);
-      if (tagIndex !== -1) {
-        state[tagIndex] = tag;
-      } else {
-        newTags.push(tag);
-      }
-    });
-
-    return [...state, ...newTags];
-  }
-
-  if (action.type === "UPDATE_TAGS") {
-    const tag = action.payload;
-    const tagIndex = state.findIndex((s) => s.id === tag.id);
-
-    if (tagIndex !== -1) {
-      state[tagIndex] = tag;
-      return [...state];
-    } else {
-      return [tag, ...state];
-    }
-  }
-
-  if (action.type === "DELETE_TAG") {
-    const tagId = action.payload;
-
-    const tagIndex = state.findIndex((s) => s.id === tagId);
-    if (tagIndex !== -1) {
-      state.splice(tagIndex, 1);
-    }
-    return [...state];
-  }
-
-  if (action.type === "RESET") {
-    return [];
-  }
-};
+const reducer = createEntityReducer({
+  load: "LOAD_TAGS",
+  update: "UPDATE_TAGS",
+  remove: "DELETE_TAG",
+});
 
 const useStyles = makeStyles((theme) => ({
   mainPaper: {
@@ -108,9 +71,7 @@ const Tags = () => {
 
   const fetchTags = useCallback(async () => {
     try {
-      const { data } = await api.get("/tags/", {
-        params: { searchParam, pageNumber },
-      });
+      const { data } = await tagsApi.list({ searchParam, pageNumber });
       dispatch({ type: "LOAD_TAGS", payload: data.tags });
       setHasMore(data.hasMore);
       setLoading(false);
@@ -137,13 +98,17 @@ const Tags = () => {
   useEffect(() => {
     const socket = socketManager.getSocket(user.companyId);
 
-    socket.on("user", (data) => {
+    // Par backend (B1): evento "tag" normalizado para o templated por empresa.
+    // O listener antigo assinava "user" (nunca emitido) com payload/action
+    // errados — a tela não recebia atualizações em tempo real.
+    // TODO(F1): usar socketEvents
+    socket.on(`company-${user.companyId}-tag`, (data) => {
       if (data.action === "update" || data.action === "create") {
-        dispatch({ type: "UPDATE_TAGS", payload: data.tags });
+        dispatch({ type: "UPDATE_TAGS", payload: data.tag });
       }
 
       if (data.action === "delete") {
-        dispatch({ type: "DELETE_USER", payload: +data.tagId });
+        dispatch({ type: "DELETE_TAG", payload: +data.tagId });
       }
     });
 
@@ -173,7 +138,7 @@ const Tags = () => {
 
   const handleDeleteTag = async (tagId) => {
     try {
-      await api.delete(`/tags/${tagId}`);
+      await tagsApi.remove(tagId);
       toast.success(i18n.t("tags.toasts.deleted"));
     } catch (err) {
       toastError(err);

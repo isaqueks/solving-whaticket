@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer, useState, useContext } from "react";
+import React, { useEffect, useReducer, useState } from "react";
 
 import {
   Button,
@@ -20,12 +20,14 @@ import TableRowSkeleton from "../../components/TableRowSkeleton";
 import Title from "../../components/Title";
 import { i18n } from "../../translate/i18n";
 import toastError from "../../errors/toastError";
-import api from "../../services/api";
+import { queuesApi } from "../../api/QueuesApi";
+import { createEntityReducer } from "../../store/createEntityReducer";
+import { SocketEvents } from "../../services/socketEvents";
+import useSocketEvent from "../../hooks/useSocketEvent";
 import { DeleteOutline, Edit } from "@material-ui/icons";
 import QueueModal from "../../components/QueueModal";
 import { toast } from "react-toastify";
 import ConfirmationModal from "../../components/ConfirmationModal";
-import { SocketContext } from "../../context/Socket/SocketContext";
 
 const useStyles = makeStyles((theme) => ({
   mainPaper: {
@@ -41,48 +43,11 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const reducer = (state, action) => {
-  if (action.type === "LOAD_QUEUES") {
-    const queues = action.payload;
-    const newQueues = [];
-
-    queues.forEach((queue) => {
-      const queueIndex = state.findIndex((q) => q.id === queue.id);
-      if (queueIndex !== -1) {
-        state[queueIndex] = queue;
-      } else {
-        newQueues.push(queue);
-      }
-    });
-
-    return [...state, ...newQueues];
-  }
-
-  if (action.type === "UPDATE_QUEUES") {
-    const queue = action.payload;
-    const queueIndex = state.findIndex((u) => u.id === queue.id);
-
-    if (queueIndex !== -1) {
-      state[queueIndex] = queue;
-      return [...state];
-    } else {
-      return [queue, ...state];
-    }
-  }
-
-  if (action.type === "DELETE_QUEUE") {
-    const queueId = action.payload;
-    const queueIndex = state.findIndex((q) => q.id === queueId);
-    if (queueIndex !== -1) {
-      state.splice(queueIndex, 1);
-    }
-    return [...state];
-  }
-
-  if (action.type === "RESET") {
-    return [];
-  }
-};
+const reducer = createEntityReducer({
+  load: "LOAD_QUEUES",
+  update: "UPDATE_QUEUES",
+  remove: "DELETE_QUEUE",
+});
 
 const Queues = () => {
   const classes = useStyles();
@@ -94,13 +59,13 @@ const Queues = () => {
   const [selectedQueue, setSelectedQueue] = useState(null);
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
 
-  const socketManager = useContext(SocketContext);
+  const companyId = localStorage.getItem("companyId");
 
   useEffect(() => {
     (async () => {
       setLoading(true);
       try {
-        const { data } = await api.get("/queue");
+        const { data } = await queuesApi.findAll();
         dispatch({ type: "LOAD_QUEUES", payload: data });
 
         setLoading(false);
@@ -111,24 +76,15 @@ const Queues = () => {
     })();
   }, []);
 
-  useEffect(() => {
-    const companyId = localStorage.getItem("companyId");
-    const socket = socketManager.getSocket(companyId);
+  useSocketEvent(SocketEvents.companyQueue(companyId), (data) => {
+    if (data.action === "update" || data.action === "create") {
+      dispatch({ type: "UPDATE_QUEUES", payload: data.queue });
+    }
 
-    socket.on(`company-${companyId}-queue`, (data) => {
-      if (data.action === "update" || data.action === "create") {
-        dispatch({ type: "UPDATE_QUEUES", payload: data.queue });
-      }
-
-      if (data.action === "delete") {
-        dispatch({ type: "DELETE_QUEUE", payload: data.queueId });
-      }
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, [socketManager]);
+    if (data.action === "delete") {
+      dispatch({ type: "DELETE_QUEUE", payload: data.queueId });
+    }
+  });
 
   const handleOpenQueueModal = () => {
     setQueueModalOpen(true);
@@ -152,7 +108,7 @@ const Queues = () => {
 
   const handleDeleteQueue = async (queueId) => {
     try {
-      await api.delete(`/queue/${queueId}`);
+      await queuesApi.remove(queueId);
       toast.success(i18n.t("Queue deleted successfully!"));
     } catch (err) {
       toastError(err);

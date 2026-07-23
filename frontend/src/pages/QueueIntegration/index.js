@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useReducer, useContext } from "react";
 import { toast } from "react-toastify";
-import { SocketContext } from "../../context/Socket/SocketContext";
 import n8n from "../../assets/n8n.png";
 import dialogflow from "../../assets/dialogflow.png";
 import webhooks from "../../assets/webhook.png";
@@ -38,56 +37,21 @@ import TableRowSkeleton from "../../components/TableRowSkeleton";
 import IntegrationModal from "../../components/QueueIntegrationModal";
 import ConfirmationModal from "../../components/ConfirmationModal";
 
-import api from "../../services/api";
+import { queueIntegrationsApi } from "../../api/QueueIntegrationsApi";
+import { createEntityReducer } from "../../store/createEntityReducer";
+import { SocketEvents } from "../../services/socketEvents";
+import useSocketEvent from "../../hooks/useSocketEvent";
 import { i18n } from "../../translate/i18n";
 import toastError from "../../errors/toastError";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import usePlans from "../../hooks/usePlans";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 
-const reducer = (state, action) => {
-  if (action.type === "LOAD_INTEGRATIONS") {
-    const queueIntegration = action.payload;
-    const newIntegrations = [];
-
-    queueIntegration.forEach((integration) => {
-      const integrationIndex = state.findIndex((u) => u.id === integration.id);
-      if (integrationIndex !== -1) {
-        state[integrationIndex] = integration;
-      } else {
-        newIntegrations.push(integration);
-      }
-    });
-
-    return [...state, ...newIntegrations];
-  }
-
-  if (action.type === "UPDATE_INTEGRATIONS") {
-    const queueIntegration = action.payload;
-    const integrationIndex = state.findIndex((u) => u.id === queueIntegration.id);
-
-    if (integrationIndex !== -1) {
-      state[integrationIndex] = queueIntegration;
-      return [...state];
-    } else {
-      return [queueIntegration, ...state];
-    }
-  }
-
-  if (action.type === "DELETE_INTEGRATION") {
-    const integrationId = action.payload;
-
-    const integrationIndex = state.findIndex((u) => u.id === integrationId);
-    if (integrationIndex !== -1) {
-      state.splice(integrationIndex, 1);
-    }
-    return [...state];
-  }
-
-  if (action.type === "RESET") {
-    return [];
-  }
-};
+const reducer = createEntityReducer({
+  load: "LOAD_INTEGRATIONS",
+  update: "UPDATE_INTEGRATIONS",
+  remove: "DELETE_INTEGRATION",
+});
 
 const useStyles = makeStyles((theme) => ({
   mainPaper: {
@@ -121,8 +85,6 @@ const QueueIntegration = () => {
   const companyId = user.companyId;
   const history = useHistory();
 
-  const socketManager = useContext(SocketContext);
-
   useEffect(() => {
     async function fetchData() {
       const planConfigs = await getPlanCompany(undefined, companyId);
@@ -147,8 +109,9 @@ const QueueIntegration = () => {
     const delayDebounceFn = setTimeout(() => {
       const fetchIntegrations = async () => {
         try {
-          const { data } = await api.get("/queueIntegration/", {
-            params: { searchParam, pageNumber },
+          const { data } = await queueIntegrationsApi.list({
+            searchParam,
+            pageNumber,
           });
           dispatch({ type: "LOAD_INTEGRATIONS", payload: data.queueIntegrations });
           setHasMore(data.hasMore);
@@ -162,24 +125,15 @@ const QueueIntegration = () => {
     return () => clearTimeout(delayDebounceFn);
   }, [searchParam, pageNumber]);
 
-  useEffect(() => {
-    const companyId = localStorage.getItem("companyId");
-    const socket = socketManager.getSocket(companyId);
+  useSocketEvent(SocketEvents.companyQueueIntegration(companyId), (data) => {
+    if (data.action === "update" || data.action === "create") {
+      dispatch({ type: "UPDATE_INTEGRATIONS", payload: data.queueIntegration });
+    }
 
-    socket.on(`company-${companyId}-queueIntegration`, (data) => {
-      if (data.action === "update" || data.action === "create") {
-        dispatch({ type: "UPDATE_INTEGRATIONS", payload: data.queueIntegration });
-      }
-
-      if (data.action === "delete") {
-        dispatch({ type: "DELETE_INTEGRATION", payload: +data.integrationId });
-      }
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, [socketManager]);
+    if (data.action === "delete") {
+      dispatch({ type: "DELETE_INTEGRATION", payload: +data.integrationId });
+    }
+  });
 
   const handleOpenUserModal = () => {
     setSelectedIntegration(null);
@@ -202,7 +156,7 @@ const QueueIntegration = () => {
 
   const handleDeleteIntegration = async (integrationId) => {
     try {
-      await api.delete(`/queueIntegration/${integrationId}`);
+      await queueIntegrationsApi.remove(integrationId);
       toast.success(i18n.t("queueIntegration.toasts.deleted"));
     } catch (err) {
       toastError(err);

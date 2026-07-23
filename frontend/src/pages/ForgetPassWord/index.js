@@ -18,6 +18,7 @@ import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core/styles";
 import Container from "@material-ui/core/Container";
 import api from "../../services/api";
+import { appConfig } from "../../config";
 import { i18n } from "../../translate/i18n";
 import moment from "moment";
 import logo from "../../assets/logo.png";
@@ -107,9 +108,8 @@ const handleSendEmail = async (values) => {
   const email = values.email;
   try {
     const response = await api.post(
-      `${process.env.REACT_APP_BACKEND_URL}/forgetpassword/${email}`
+      `${appConfig.backendUrl}/forgetpassword/${email}`
     );
-    console.log("API Response:", response.data);
 
     if (response.data.status === 404) {
       toast.error("Email não encontrado");
@@ -117,7 +117,6 @@ const handleSendEmail = async (values) => {
       toast.success(i18n.t("Email enviado com sucesso!"));
     }
   } catch (err) {
-    console.log("API Error:", err);
     toastError(err);
   }
 };
@@ -131,13 +130,13 @@ const handleSendEmail = async (values) => {
     if (newPassword === confirmPassword) {
       try {
         await api.post(
-          `${process.env.REACT_APP_BACKEND_URL}/resetpasswords/${email}/${token}/${newPassword}`
+          `${appConfig.backendUrl}/resetpasswords/${email}/${token}/${newPassword}`
         );
         setError(""); // Limpe o erro se não houver erro
         toast.success(i18n.t("Senha redefinida com sucesso."));
         history.push("/login");
       } catch (err) {
-        console.log(err);
+        toastError(err);
       }
     }
   };

@@ -2,7 +2,7 @@ import { Box, Chip, TextField } from "@material-ui/core";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import React, { useEffect, useState } from "react";
 import toastError from "../../errors/toastError";
-import api from "../../services/api";
+import { tagsApi } from "../../api/TagsApi";
 
 export function TagsFilter({ onFiltered }) {
   const [tags, setTags] = useState([]);
@@ -17,7 +17,7 @@ export function TagsFilter({ onFiltered }) {
 
   const loadTags = async () => {
     try {
-      const { data } = await api.get(`/tags/list`);
+      const { data } = await tagsApi.listAll();
       setTags(data);
     } catch (err) {
       toastError(err);

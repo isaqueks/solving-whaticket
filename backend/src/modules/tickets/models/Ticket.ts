@@ -1,0 +1,152 @@
+import {
+  Table,
+  Column,
+  CreatedAt,
+  UpdatedAt,
+  Model,
+  PrimaryKey,
+  ForeignKey,
+  BelongsTo,
+  HasMany,
+  AutoIncrement,
+  Default,
+  BeforeCreate,
+  BelongsToMany,
+  AllowNull
+} from "sequelize-typescript";
+import { v4 as uuidv4 } from "uuid";
+
+import Contact from "../../contacts/models/Contact";
+import Message from "../../messages/models/Message";
+import Queue from "../../queues/models/Queue";
+import User from "../../users/models/User";
+import Whatsapp from "../../whatsapp/models/Whatsapp";
+import Company from "../../companies/models/Company";
+import QueueOption from "../../queues/models/QueueOption";
+import Tag from "../../tags/models/Tag";
+import TicketTag from "../../tags/models/TicketTag";
+import QueueIntegrations from "../../queue-integrations/models/QueueIntegrations";
+
+@Table({
+  timestamps: true,
+  updatedAt: false
+})
+class Ticket extends Model<Ticket> {
+  @PrimaryKey
+  @AutoIncrement
+  @Column
+  id: number;
+
+  @Column({ defaultValue: "pending" })
+  status: string;
+
+  @Column
+  unreadMessages: number;
+
+  @Column
+  lastMessage: string;
+
+  @Default(false)
+  @Column
+  isGroup: boolean;
+
+  @CreatedAt
+  createdAt: Date;
+
+  @Column
+  updatedAt: Date;
+
+  @ForeignKey(() => User)
+  @Column
+  userId: number;
+
+  @BelongsTo(() => User)
+  user: User;
+
+  @ForeignKey(() => Contact)
+  @Column
+  contactId: number;
+
+  @BelongsTo(() => Contact)
+  contact: Contact;
+
+  @ForeignKey(() => Whatsapp)
+  @Column
+  whatsappId: number;
+
+  @BelongsTo(() => Whatsapp)
+  whatsapp: Whatsapp;
+
+  @ForeignKey(() => Queue)
+  @Column
+  queueId: number;
+
+  @BelongsTo(() => Queue)
+  queue: Queue;
+
+  @Column
+  chatbot: boolean;
+
+  @ForeignKey(() => QueueOption)
+  @Column
+  queueOptionId: number;
+
+  @BelongsTo(() => QueueOption)
+  queueOption: QueueOption;
+
+  @HasMany(() => Message)
+  messages: Message[];
+
+  @HasMany(() => TicketTag)
+  ticketTags: TicketTag[];
+
+  @BelongsToMany(() => Tag, () => TicketTag)
+  tags: Tag[];
+
+  @ForeignKey(() => Company)
+  @Column
+  companyId: number;
+
+  @BelongsTo(() => Company)
+  company: Company;
+
+  @Default(uuidv4())
+  @Column
+  uuid: string;
+
+  @BeforeCreate
+  static setUUID(ticket: Ticket) {
+    ticket.uuid = uuidv4();
+  }
+
+  @Default(false)
+  @Column
+  useIntegration: boolean;
+
+  @ForeignKey(() => QueueIntegrations)
+  @Column
+  integrationId: number;
+
+  @BelongsTo(() => QueueIntegrations)
+  queueIntegration: QueueIntegrations;
+
+  @Column
+  typebotSessionId: string;
+
+  @Default(false)
+  @Column
+  typebotStatus: boolean
+
+  @Column
+  promptId: number;
+
+  @Column
+  fromMe: boolean;
+
+  @AllowNull(false)
+  @Default(0)
+  @Column
+  amountUsedBotQueues: number;
+}
+
+export default Ticket;

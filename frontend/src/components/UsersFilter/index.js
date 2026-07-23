@@ -2,7 +2,7 @@ import { Box, Chip, TextField } from "@material-ui/core";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import React, { useEffect, useState } from "react";
 import toastError from "../../errors/toastError";
-import api from "../../services/api";
+import { usersApi } from "../../api/UsersApi";
 
 export function UsersFilter({ onFiltered, initialUsers }) {
   const [users, setUsers] = useState([]);
@@ -29,7 +29,7 @@ export function UsersFilter({ onFiltered, initialUsers }) {
 
   const loadUsers = async () => {
     try {
-      const { data } = await api.get(`/users/list`);
+      const { data } = await usersApi.listAll();
       const userList = data.map((u) => ({ id: u.id, name: u.name }));
       setUsers(userList);
     } catch (err) {

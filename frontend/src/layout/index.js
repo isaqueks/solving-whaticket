@@ -200,54 +200,6 @@ const LoggedInLayout = ({ children, themeToggle }) => {
 
   const [volume, setVolume] = useState(localStorage.getItem("volume") || 1);
 
-
-  //################### CODIGOS DE TESTE #########################################
-  // useEffect(() => {
-  //   navigator.getBattery().then((battery) => {
-  //     console.log(`Battery Charging: ${battery.charging}`);
-  //     console.log(`Battery Level: ${battery.level * 100}%`);
-  //     console.log(`Charging Time: ${battery.chargingTime}`);
-  //     console.log(`Discharging Time: ${battery.dischargingTime}`);
-  //   })
-  // }, []);
-
-  // useEffect(() => {
-  //   const geoLocation = navigator.geolocation
-
-  //   geoLocation.getCurrentPosition((position) => {
-  //     let lat = position.coords.latitude;
-  //     let long = position.coords.longitude;
-
-  //     console.log('latitude: ', lat)
-  //     console.log('longitude: ', long)
-  //   })
-  // }, []);
-
-  // useEffect(() => {
-  //   const nucleos = window.navigator.hardwareConcurrency;
-
-  //   console.log('Nucleos: ', nucleos)
-  // }, []);
-
-  // useEffect(() => {
-  //   console.log('userAgent', navigator.userAgent)
-  //   if (
-  //     navigator.userAgent.match(/Android/i)
-  //     || navigator.userAgent.match(/webOS/i)
-  //     || navigator.userAgent.match(/iPhone/i)
-  //     || navigator.userAgent.match(/iPad/i)
-  //     || navigator.userAgent.match(/iPod/i)
-  //     || navigator.userAgent.match(/BlackBerry/i)
-  //     || navigator.userAgent.match(/Windows Phone/i)
-  //   ) {
-  //     console.log('é mobile ', true) //celular
-  //   }
-  //   else {
-  //     console.log('não é mobile: ', false) //nao é celular
-  //   }
-  // }, []);
-  //##############################################################################
-
   const socketManager = useContext(SocketContext);
 
   useEffect(() => {

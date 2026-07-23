@@ -1,72 +1,45 @@
-import api from "../../services/api";
+import { companiesApi } from "../../api/CompaniesApi";
 
 const useCompanies = () => {
 
     const save = async (data) => {
-        const { data: responseData } = await api.request({
-            url: '/companies',
-            method: 'POST',
-            data
-        });
+        const { data: responseData } = await companiesApi.save(data);
         return responseData;
     }
 
     const findAll = async (id) => {
-        const { data } = await api.request({
-            url: `/companies`,
-            method: 'GET'
-        });
+        const { data } = await companiesApi.findAll();
         return data;
     }
 
     const list = async (id) => {
-        const { data } = await api.request({
-            url: `/companies/list`,
-            method: 'GET'
-        });
+        const { data } = await companiesApi.list();
         return data;
     }
 
     const find = async (id) => {
-        const { data } = await api.request({
-            url: `/companies/${id}`,
-            method: 'GET'
-        });
+        const { data } = await companiesApi.find(id);
         return data;
     }
 
     const finding = async (id) => {
-        const { data } = await api.request({
-            url: `/companies/${id}`,
-            method: 'GET'
-        });
+        const { data } = await companiesApi.find(id);
         return data;
     }
 
 
     const update = async (data) => {
-        const { data: responseData } = await api.request({
-            url: `/companies/${data.id}`,
-            method: 'PUT',
-            data
-        });
+        const { data: responseData } = await companiesApi.update(data);
         return responseData;
     }
 
     const remove = async (id) => {
-        const { data } = await api.request({
-            url: `/companies/${id}`,
-            method: 'DELETE'
-        });
+        const { data } = await companiesApi.remove(id);
         return data;
     }
 
     const updateSchedules = async (data) => {
-        const { data: responseData } = await api.request({
-            url: `/companies/${data.id}/schedules`,
-            method: 'PUT',
-            data
-        });
+        const { data: responseData } = await companiesApi.updateSchedules(data);
         return responseData;
     }
 

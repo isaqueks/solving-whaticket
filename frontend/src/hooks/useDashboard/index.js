@@ -1,13 +1,9 @@
-import api from "../../services/api";
+import { dashboardApi } from "../../api/DashboardApi";
 
 const useDashboard = () => {
 
     const find = async (params) => {
-        const { data } = await api.request({
-            url: `/dashboard`,
-            method: 'GET',
-            params
-        });
+        const { data } = await dashboardApi.find(params);
         return data;
     }
 

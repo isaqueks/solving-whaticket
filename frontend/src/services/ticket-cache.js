@@ -1,4 +1,4 @@
-import api from "./api";
+import { ticketsApi } from "../api/TicketsApi";
 import { CACHE_KEY } from "./cache-key";
 
 
@@ -31,20 +31,18 @@ export class TicketCache {
         unread
     } = params;
 
-    const { data } = await api.get("/tickets", {
-      params: {
-        searchParam,
-        pageNumber,
-        tags,
-        users,
-        status,
-        date,
-        updatedAt,
-        showAll,
-        queueIds,
-        withUnreadMessages,
-        unread
-      },
+    const { data } = await ticketsApi.list({
+      searchParam,
+      pageNumber,
+      tags,
+      users,
+      status,
+      date,
+      updatedAt,
+      showAll,
+      queueIds,
+      withUnreadMessages,
+      unread
     });
 
     if (!data.tickets) {
@@ -62,7 +60,9 @@ export class TicketCache {
       }
     }
     catch (err) {
-      console.error("Error updating local ticket cache:", err);
+      if (process.env.NODE_ENV !== "production") {
+        console.error("Error updating local ticket cache:", err);
+      }
     }
 
     return {
@@ -72,7 +72,7 @@ export class TicketCache {
   }
 
   static async getTicketByUUIDNetwork(uuid) {
-    const { data } = await api.get("/tickets/u/" + uuid);
+    const { data } = await ticketsApi.showByUuid(uuid);
     if (!data.ticket) {
       return data;
     }
@@ -97,7 +97,9 @@ export class TicketCache {
       }
     }
     catch (err) {
-      console.error("Error accessing local ticket cache:", err);
+      if (process.env.NODE_ENV !== "production") {
+        console.error("Error accessing local ticket cache:", err);
+      }
     }
     return await this.getTicketsNetwork(params);
   }

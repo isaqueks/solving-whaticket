@@ -80,21 +80,12 @@ const VCardPreview = ({ contact, numbers }) => {
                 }
             
             	if(data.invalido){
-                
-                	//console.log("CONTATO INVALIDOOOOO");
-                	//console.log(data.error);
                 	// SHOULD RETURN ANOTHER VIEW
                 	// Update the button text and disable the button
         			setContactValid(false);
-                
                 }
 
-                //console.log("XXXXXXXXXXXXXXXX");
-                //console.log(data);
-                //console.log(contactObj);
-
             } catch (err) {
-                //console.log(err);
                 toastError(err);
             }
         };
@@ -126,8 +117,6 @@ const createTicket = async (queueId) => {
             const { data } = await api.post("/contacts", contactObj);
             contactId = data.existingContact.id;
         }
-    
-    	//console.log(contactId);
 
         const { data: ticket } = await api.post("/tickets", {
             contactId,
@@ -135,10 +124,7 @@ const createTicket = async (queueId) => {
             userId: user.id,
             status: "open",
         });
-        
-        //console.log(user);
-        // console.log(selectedContact.id);
-        // console.log(ticket.id);
+
         history.push(`/tickets/${ticket.uuid}`);
     } catch (err) {
         toastError(err);
