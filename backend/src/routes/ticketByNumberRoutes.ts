@@ -1,10 +1,10 @@
 import express from "express";
 import isAuth from "../middleware/isAuth";
-import { GetTickerByNumberController } from "../controllers/GetTicketByNumberController";
+import { GetTicketByNumberController } from "../controllers/GetTicketByNumberController";
 
 const getTicketByNumberRoutes = express.Router();
 
-const controller = new GetTickerByNumberController();
+const controller = new GetTicketByNumberController();
 
 getTicketByNumberRoutes.get("/ticket-by-number", isAuth, controller.get);
 

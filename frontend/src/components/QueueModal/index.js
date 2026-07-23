@@ -87,8 +87,7 @@ const QueueModal = ({ open, onClose, queueId }) => {
     greetingMessage: "",
     outOfHoursMessage: "",
     orderQueue: "",
-    integrationId: "",
-    promptId: ""
+    integrationId: ""
   };
 
   const [colorPickerModalOpen, setColorPickerModalOpen] = useState(false);
@@ -111,19 +110,6 @@ const QueueModal = ({ open, onClose, queueId }) => {
     { weekday: "Sábado", weekdayEn: "saturday", startTime: "08:00", endTime: "12:00", },
     { weekday: "Domingo", weekdayEn: "sunday", startTime: "00:00", endTime: "00:00", },
   ]);
-  const [selectedPrompt, setSelectedPrompt] = useState(null);
-  const [prompts, setPrompts] = useState([]);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const { data } = await api.get("/prompt");
-        setPrompts(data.prompts);
-      } catch (err) {
-        toastError(err);
-      }
-    })();
-  }, []);
 
   useEffect(() => {
     api.get(`/settings`).then(({ data }) => {
@@ -156,7 +142,6 @@ const QueueModal = ({ open, onClose, queueId }) => {
         setQueue((prevState) => {
           return { ...prevState, ...data };
         });
-        data.promptId ? setSelectedPrompt(data.promptId) : setSelectedPrompt(null);
 
         setSchedules(data.schedules);
       } catch (err) {
@@ -206,7 +191,7 @@ const QueueModal = ({ open, onClose, queueId }) => {
     try {
       if (queueId) {
         await api.put(`/queue/${queueId}`, {
-          ...values, schedules, promptId: selectedPrompt ? selectedPrompt : null
+          ...values, schedules
         });
 		if (attachment != null) {
           const formData = new FormData();
@@ -215,7 +200,7 @@ const QueueModal = ({ open, onClose, queueId }) => {
         }
       } else {
         await api.post("/queue", {
-          ...values, schedules, promptId: selectedPrompt ? selectedPrompt : null
+          ...values, schedules
         });
 		if (attachment != null) {
           const formData = new FormData();
@@ -234,10 +219,6 @@ const QueueModal = ({ open, onClose, queueId }) => {
     toast.success("Clique em salvar para registar as alterações");
     setSchedules(values);
     setTab(0);
-  };
-
-  const handleChangePrompt = (e) => {
-    setSelectedPrompt(e.target.value);
   };
 
   return (
@@ -386,44 +367,6 @@ const QueueModal = ({ open, onClose, queueId }) => {
                           ))}
                         </Field>
 
-                      </FormControl>
-                      <FormControl
-                        margin="dense"
-                        variant="outlined"
-                        fullWidth
-                      >
-                        <InputLabel>
-                          {i18n.t("whatsappModal.form.prompt")}
-                        </InputLabel>
-                        <Select
-                          labelId="dialog-select-prompt-label"
-                          id="dialog-select-prompt"
-                          name="promptId"
-                          value={selectedPrompt || ""}
-                          onChange={handleChangePrompt}
-                          label={i18n.t("whatsappModal.form.prompt")}
-                          fullWidth
-                          MenuProps={{
-                            anchorOrigin: {
-                              vertical: "bottom",
-                              horizontal: "left",
-                            },
-                            transformOrigin: {
-                              vertical: "top",
-                              horizontal: "left",
-                            },
-                            getContentAnchorEl: null,
-                          }}
-                        >
-                          {prompts.map((prompt) => (
-                            <MenuItem
-                              key={prompt.id}
-                              value={prompt.id}
-                            >
-                              {prompt.name}
-                            </MenuItem>
-                          ))}
-                        </Select>
                       </FormControl>
                     </div>
                     <div style={{ marginTop: 5 }}>

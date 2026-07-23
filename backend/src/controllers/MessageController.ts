@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import AppError from "../errors/AppError";
 
+import { logger } from "../utils/logger";
 import formatBody from "../helpers/Mustache";
 import SetTicketMessagesAsRead from "../helpers/SetTicketMessagesAsRead";
 import { getIO } from "../libs/socket";
@@ -126,8 +127,6 @@ export const send = async (req: Request, res: Response): Promise<Response> => {
   const messageData: MessageData = req.body;
   const medias = req.files as Express.Multer.File[];
 
-  console.log('messageData;', messageData)
-
   try {
     const whatsapp = await Whatsapp.findByPk(whatsappId, {
       attributes: { exclude: ["session"] }
@@ -205,13 +204,11 @@ export const send = async (req: Request, res: Response): Promise<Response> => {
 
     return res.send({ mensagem: "Mensagem enviada" });
   } catch (err: any) {
-    if (Object.keys(err).length === 0) {
-      throw new AppError(
-        "Não foi possível enviar a mensagem, tente novamente em alguns instantes"
-      );
-    } else {
-      throw new AppError(err.message);
+    if (err instanceof AppError) {
+      throw err;
     }
+    logger.error(err);
+    throw new AppError("ERR_SENDING_WAPP_MSG", 500);
   }
 };
 

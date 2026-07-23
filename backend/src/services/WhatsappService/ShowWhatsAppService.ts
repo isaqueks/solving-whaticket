@@ -3,7 +3,6 @@ import AppError from "../../errors/AppError";
 import Queue from "../../models/Queue";
 import QueueOption from "../../models/QueueOption";
 import { FindOptions } from "sequelize/types";
-import Prompt from "../../models/Prompt";
 
 const ShowWhatsAppService = async (
   id: string | number,
@@ -17,10 +16,6 @@ const ShowWhatsAppService = async (
         as: "queues",
         attributes: ["id", "name", "color", "greetingMessage", "integrationId", "promptId", "mediaPath", "mediaName"],
         include: [{ model: QueueOption, as: "options" }]
-      },
-      {
-        model: Prompt,
-        as: "prompt",
       }
     ],
     order: [["queues", "orderQueue", "ASC"]]

@@ -1,6 +1,5 @@
 import { Op } from "sequelize";
 import TicketTraking from "./models/TicketTraking";
-import { format } from "date-fns";
 import moment from "moment";
 import Ticket from "./models/Ticket";
 import Whatsapp from "./models/Whatsapp";
@@ -65,13 +64,16 @@ export const TransferTicketQueue = async (): Promise<void> => {
 
       const currentTicket = await ShowTicketService(ticket.id, ticket.companyId);
 
-      io.to(ticket.status)
-        .to("notification")
+      // Salas com escopo por empresa/fila — o frontend não escuta as salas
+      // genéricas ("pending"/"notification") que eram usadas antes
+      io.to(`company-${ticket.companyId}-${ticket.status}`)
+        .to(`company-${ticket.companyId}-notification`)
+        .to(`queue-${wpp.transferQueueId}-${ticket.status}`)
+        .to(`queue-${wpp.transferQueueId}-notification`)
         .to(ticket.id.toString())
         .emit(`company-${ticket.companyId}-ticket`, {
           action: "update",
-          ticket: currentTicket,
-          traking: "created ticket 33"
+          ticket: currentTicket
         });
 
       logger.info(`Transferencia de ticket automatica ticket id ${ticket.id} para a fila ${wpp.transferQueueId}`);

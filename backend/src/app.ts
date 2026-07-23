@@ -25,7 +25,6 @@ app.set("queues", {
   sendScheduledMessages
 });
 
-const bodyparser = require('body-parser');
 app.use(bodyParser.json({ limit: '10mb' }));
 
 app.use(
@@ -35,7 +34,6 @@ app.use(
   })
 );
 app.use(cookieParser());
-app.use(express.json());
 // app.use(Sentry.Handlers.requestHandler());
 app.use("/public", express.static(uploadConfig.directory));
 app.use(routes);

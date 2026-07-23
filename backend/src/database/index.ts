@@ -30,12 +30,9 @@ import Announcement from "../models/Announcement";
 import Chat from "../models/Chat";
 import ChatUser from "../models/ChatUser";
 import ChatMessage from "../models/ChatMessage";
-import Invoices from "../models/Invoices";
-import Subscriptions from "../models/Subscriptions";
 import BaileysChats from "../models/BaileysChats";
 import Files from "../models/Files";
 import FilesOptions from "../models/FilesOptions";
-import Prompt from "../models/Prompt";
 import QueueIntegrations from "../models/QueueIntegrations";
 import GroupParticipant from "../models/GroupParticipant";
 
@@ -77,12 +74,9 @@ const models = [
   Chat,
   ChatUser,
   ChatMessage,
-  Invoices,
-  Subscriptions,
   BaileysChats,
   Files,
   FilesOptions,
-  Prompt,
   QueueIntegrations,
   GroupParticipant,
 ];

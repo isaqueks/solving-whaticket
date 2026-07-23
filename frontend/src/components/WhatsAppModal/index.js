@@ -17,10 +17,6 @@ import {
   Switch,
   FormControlLabel,
   Grid,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
 } from "@material-ui/core";
 
 import api from "../../services/api";
@@ -84,9 +80,7 @@ const WhatsAppModal = ({ open, onClose, whatsAppId }) => {
   const [selectedQueueIds, setSelectedQueueIds] = useState([]);
   const [queues, setQueues] = useState([]);
   const [selectedQueueId, setSelectedQueueId] = useState(null)
-  const [selectedPrompt, setSelectedPrompt] = useState(null);
-  const [prompts, setPrompts] = useState([]);
-  
+
     useEffect(() => {
     const fetchSession = async () => {
       if (!whatsAppId) return;
@@ -108,17 +102,6 @@ const WhatsAppModal = ({ open, onClose, whatsAppId }) => {
   useEffect(() => {
     (async () => {
       try {
-        const { data } = await api.get("/prompt");
-        setPrompts(data.prompts);
-      } catch (err) {
-        toastError(err);
-      }
-    })();
-  }, [whatsAppId]);
-
-  useEffect(() => {
-    (async () => {
-      try {
         const { data } = await api.get("/queue");
         setQueues(data);
       } catch (err) {
@@ -129,8 +112,7 @@ const WhatsAppModal = ({ open, onClose, whatsAppId }) => {
 
   const handleSaveWhatsApp = async (values) => {
 const whatsappData = {
-      ...values, queueIds: selectedQueueIds, transferQueueId: selectedQueueId,
-      promptId: selectedPrompt ? selectedPrompt : null
+      ...values, queueIds: selectedQueueIds, transferQueueId: selectedQueueId
     };
     delete whatsappData["queues"];
     delete whatsappData["session"];
@@ -150,12 +132,6 @@ const whatsappData = {
 
   const handleChangeQueue = (e) => {
     setSelectedQueueIds(e);
-    setSelectedPrompt(null);
-  };
-
-  const handleChangePrompt = (e) => {
-    setSelectedPrompt(e.target.value);
-    setSelectedQueueIds([]);
   };
 
   const handleClose = () => {
@@ -314,44 +290,6 @@ const whatsappData = {
                   selectedQueueIds={selectedQueueIds}
                   onChange={(selectedIds) => handleChangeQueue(selectedIds)}
                 />
-                <FormControl
-                  margin="dense"
-                  variant="outlined"
-                  fullWidth
-                >
-                  <InputLabel>
-                    {i18n.t("whatsappModal.form.prompt")}
-                  </InputLabel>
-                  <Select
-                    labelId="dialog-select-prompt-label"
-                    id="dialog-select-prompt"
-                    name="promptId"
-                    value={selectedPrompt || ""}
-                    onChange={handleChangePrompt}
-                    label={i18n.t("whatsappModal.form.prompt")}
-                    fullWidth
-                    MenuProps={{
-                      anchorOrigin: {
-                        vertical: "bottom",
-                        horizontal: "left",
-                      },
-                      transformOrigin: {
-                        vertical: "top",
-                        horizontal: "left",
-                      },
-                      getContentAnchorEl: null,
-                    }}
-                  >
-                    {prompts.map((prompt) => (
-                      <MenuItem
-                        key={prompt.id}
-                        value={prompt.id}
-                      >
-                        {prompt.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
                 <div>
                   <h3>{i18n.t("whatsappModal.form.queueRedirection")}</h3>
                   <p>{i18n.t("whatsappModal.form.queueRedirectionDesc")}</p>

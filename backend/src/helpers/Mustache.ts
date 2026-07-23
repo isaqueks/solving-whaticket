@@ -16,9 +16,20 @@ export const firstName = (contact?: Contact): string => {
   return '';
 };
 
-export default (body: string, contact: Contact): string => {
-  let ms = "";
+const periodGreeting = (hour: number): string => {
+  if (hour < 6) {
+    return "Boa madrugada";
+  }
+  if (hour > 17) {
+    return "Boa noite";
+  }
+  if (hour > 11) {
+    return "Boa tarde";
+  }
+  return "Bom dia";
+};
 
+export default (body: string, contact: Contact): string => {
   const Hr = new Date();
 
   const dd: string = `0${Hr.getDate()}`.slice(-2);
@@ -28,18 +39,7 @@ export default (body: string, contact: Contact): string => {
   const min: string = `0${Hr.getMinutes()}`.slice(-2);
   const ss: string = `0${Hr.getSeconds()}`.slice(-2);
 
-  if (hh >= 6) {
-    ms = "Bom dia";
-  }
-  if (hh > 11) {
-    ms = "Boa tarde";
-  }
-  if (hh > 17) {
-    ms = "Boa noite";
-  }
-  if (hh > 23 || hh < 6) {
-    ms = "Boa madrugada";
-  }
+  const ms = periodGreeting(hh);
 
   const protocol = yy + mm + dd + String(hh) + min + ss;
 
@@ -49,6 +49,7 @@ export default (body: string, contact: Contact): string => {
     firstName: firstName(contact),
     name: contact ? contact.name : "",
     gretting: greeting(),
+    greeting: greeting(),
     ms,
     protocol,
     hora

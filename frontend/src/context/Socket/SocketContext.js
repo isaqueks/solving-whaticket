@@ -89,7 +89,6 @@ const SocketManager = {
     }
 
     if (!companyId && !this.currentSocket) {
-      console.log(1)
       return new DummySocket();
     }
 
@@ -164,9 +163,11 @@ const SocketManager = {
         console.warn("socket connected", params);
       })
       
-      this.currentSocket.onAny((event, ...args) => {
-        console.debug("Event: ", { socket: this.currentSocket, event, args });
-      });
+      if (process.env.NODE_ENV !== "production") {
+        this.currentSocket.onAny((event, ...args) => {
+          console.debug("Event: ", { socket: this.currentSocket, event, args });
+        });
+      }
       
       this.onReady(() => {
         this.socketReady = true;

@@ -20,7 +20,7 @@ const DeleteUserService = async (
   });
 
   if (userOpenTickets.length > 0) {
-    UpdateDeletedUserOpenTicketsStatus(userOpenTickets, companyId);
+    await UpdateDeletedUserOpenTicketsStatus(userOpenTickets, companyId);
   }
 
   await user.destroy();

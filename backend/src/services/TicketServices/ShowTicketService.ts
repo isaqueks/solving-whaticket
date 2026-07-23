@@ -5,7 +5,6 @@ import User from "../../models/User";
 import Queue from "../../models/Queue";
 import Tag from "../../models/Tag";
 import Whatsapp from "../../models/Whatsapp";
-import Prompt from "../../models/Prompt";
 import GroupParticipant from "../../models/GroupParticipant";
 
 const ShowTicketService = async (
@@ -42,7 +41,7 @@ const ShowTicketService = async (
         model: Queue,
         as: "queue",
         attributes: ["id", "name", "color"],
-        include: ["prompt", "queueIntegrations"]
+        include: ["queueIntegrations"]
       },
       {
         model: Whatsapp,

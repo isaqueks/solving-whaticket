@@ -149,9 +149,6 @@ const CreateOrUpdateContactService = async (data: Request): Promise<Contact> => 
 
   let contact = await getCachedByNumber(variations, companyId);
 
-  console.log('Variations considered:', variations);
-  console.log('Is Group:', GP);
-
   if (contact) {
     if (keepName) {
       name = contact.name;
@@ -190,8 +187,6 @@ const CreateOrUpdateContactService = async (data: Request): Promise<Contact> => 
   } else {
 
     const correctNumber = GP ? number : (await getOnWhatsappNumber(number, companyId));
-
-    console.log('Correct number found:', correctNumber, 'for input number:', number);
 
     if (!correctNumber) {
       throw new Error(`Contact with number ${number} does not exist on WhatsApp.`);

@@ -52,6 +52,7 @@ const useAuth = () => {
 
     }, 2000);
 
+    return () => window.clearInterval(handler);
   }, []);
 
   // api.interceptors.request.use(
@@ -222,7 +223,7 @@ Entre em contato com o Suporte para mais informações! `);
       localStorage.removeItem("cshow");
       api.defaults.headers.Authorization = undefined;
       setLoading(false);
-      window.location.href = `https://solving.com.br/login?redirect=${encodeURIComponent(window.location.href)}`;
+      window.location.href = `${process.env.REACT_APP_LOGIN_URL || "https://solving.com.br/login"}?redirect=${encodeURIComponent(window.location.href)}`;
     } catch (err) {
       toastError(err);
       setLoading(false);

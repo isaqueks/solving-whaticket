@@ -1,4 +1,5 @@
 import CheckContactNumber from "../services/WbotServices/CheckNumber";
+import { logger } from "../utils/logger";
 
 export function getBrazilianNumberVariations(number: string): string[] {
   if (!number.startsWith("55")) {
@@ -55,7 +56,7 @@ export async function getOnWhatsappNumber(
       return result;
     }
     catch {
-      console.log(`Number ${num} not found on WhatsApp.`);
+      logger.error(`Number ${num} not found on WhatsApp.`);
     }
   }
 

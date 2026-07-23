@@ -5,8 +5,6 @@ import {
 } from "baileys";
 import * as Sentry from "@sentry/node";
 
-import { Op } from "sequelize";
-// import { getIO } from "../../libs/socket";
 import { Store } from "../../libs/store";
 import Contact from "../../models/Contact";
 import Setting from "../../models/Setting";
@@ -33,11 +31,6 @@ const wbotMonitor = async (
   try {
     wbot.ws.on("CB:call", async (node: BinaryNode) => {
       const content = node.content[0] as any;
-
-      if (content.tag === "offer") {
-        const { from, id } = node.attrs;
-
-      }
 
       if (content.tag === "terminate") {
         const sendMsgCall = await Setting.findOne({

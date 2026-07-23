@@ -22,7 +22,6 @@ import Company from "./Company";
 import Whatsapp from "./Whatsapp";
 import WhatsappQueue from "./WhatsappQueue";
 import QueueOption from "./QueueOption";
-import Prompt from "./Prompt";
 import QueueIntegrations from "./QueueIntegrations";
 
 @Table
@@ -92,13 +91,9 @@ class Queue extends Model<Queue> {
   @BelongsTo(() => QueueIntegrations)
   queueIntegrations: QueueIntegrations;
 
-  @ForeignKey(() => Prompt)
   @Column
   promptId: number;
 
-  @BelongsTo(() => Prompt)
-  prompt: Prompt;
-  
   @Column
   mediaPath: string;
 

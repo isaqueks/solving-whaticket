@@ -22,7 +22,6 @@ const CheckContactOpenTickets = async (contactId: number, whatsappId?: string): 
       }
     });
   }
-  console.log(ticket)
   if (ticket) {
     throw new AppError("ERR_OTHER_OPEN_TICKET");
   }

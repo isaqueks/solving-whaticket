@@ -1,9 +1,9 @@
 import { Router } from "express";
 
-import * as VerssionController from "../controllers/VersionController";
+import * as VersionController from "../controllers/VersionController";
 
 const versionRouter = Router();
 
-versionRouter.get("/version", VerssionController.index);
+versionRouter.get("/version", VersionController.index);
 
 export default versionRouter;

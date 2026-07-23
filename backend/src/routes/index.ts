@@ -24,11 +24,8 @@ import campaignRoutes from "./campaignRoutes";
 import campaignSettingRoutes from "./campaignSettingRoutes";
 import announcementRoutes from "./announcementRoutes";
 import chatRoutes from "./chatRoutes";
-import invoiceRoutes from "./invoicesRoutes";
-import subscriptionRoutes from "./subScriptionRoutes";
 import ticketTagRoutes from "./ticketTagRoutes";
 import filesRoutes from "./filesRoutes";
-import promptRoutes from "./promptRouter";
 import queueIntegrationRoutes from "./queueIntegrationRoutes";
 import forgotsRoutes from "./forgotPasswordRoutes";
 import versionRouter from "./versionRoutes";
@@ -37,8 +34,8 @@ import getTicketByNumberRoutes from "./ticketByNumberRoutes";
 import integrationRoutes from "./integrationRoutes";
 import publicMessageRoutes from "./publicMessageRoutes";
 import groupParticipantRoutes from "./groupParticipantRoutes";
-import { fixWPP } from "../services/fixWPP";
 import { fixTickets } from "../services/fixTicket";
+import isAuth from "../middleware/isAuth";
 const routes = Router();
 
 routes.use(userRoutes);
@@ -48,7 +45,6 @@ routes.use(settingRoutes);
 routes.use(contactRoutes);
 routes.use(ticketRoutes);
 routes.use(whatsappRoutes);
-routes.use(messageRoutes);
 routes.use(messageRoutes);
 routes.use(whatsappSessionRoutes);
 routes.use(queueRoutes);
@@ -67,11 +63,8 @@ routes.use(campaignRoutes);
 routes.use(campaignSettingRoutes);
 routes.use(announcementRoutes);
 routes.use(chatRoutes);
-routes.use(subscriptionRoutes);
-routes.use(invoiceRoutes);
 routes.use(ticketTagRoutes);
 routes.use(filesRoutes);
-routes.use(promptRoutes);
 routes.use(queueIntegrationRoutes);
 routes.use(forgotsRoutes);
 routes.use(versionRouter);
@@ -81,10 +74,11 @@ routes.use(publicMessageRoutes);
 routes.use(groupParticipantRoutes);
 
 
-routes.get('/fixTickets', () => {
+routes.get('/fixTickets', isAuth, (req, res) => {
   fixTickets()
-  .then(console.log)
-  .catch(console.error);
+    .then(console.log)
+    .catch(console.error);
+  return res.json({ started: true });
 });
 
 export default routes;

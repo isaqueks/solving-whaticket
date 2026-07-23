@@ -1,4 +1,5 @@
 import * as Yup from "yup";
+import { randomBytes } from "crypto";
 import AppError from "../../errors/AppError";
 import Company from "../../models/Company";
 import Setting from "../../models/Setting";
@@ -70,7 +71,7 @@ const CreateCompanyService = async (
   const user = await User.create({
     name: company.name,
     email: company.email,
-    password: password || "mudar123",
+    password: password || randomBytes(16).toString("hex"),
     profile: "admin",
     companyId: company.id
   });
@@ -160,16 +161,16 @@ const CreateCompanyService = async (
     },
     defaults: {
       companyId: company.id,
-      key: "enabled",
+      key: "CheckMsgIsGroup",
       value: ""
     },
   });
 
-  //CheckMsgIsGroup
+  //call
   await Setting.findOrCreate({
     where: {
       companyId: company.id,
-      key: ""
+      key: "call"
     },
     defaults: {
       companyId: company.id,

@@ -9,7 +9,6 @@ import Signup from "../pages/Signup/";
 import Login from "../pages/Login/";
 import Connections from "../pages/Connections/";
 import SettingsCustom from "../pages/SettingsCustom/";
-import Financeiro from "../pages/Financeiro/";
 import Users from "../pages/Users";
 import Contacts from "../pages/Contacts/";
 import Queues from "../pages/Queues/";
@@ -18,7 +17,6 @@ import MessagesAPI from "../pages/MessagesAPI/";
 import Helps from "../pages/Helps/";
 import ContactLists from "../pages/ContactLists/";
 import ContactListItems from "../pages/ContactListItems/";
-// import Companies from "../pages/Companies/";
 import QuickMessages from "../pages/QuickMessages/";
 import Kanban from "../pages/Kanban";
 import { AuthProvider } from "../context/Auth/AuthContext";
@@ -32,9 +30,7 @@ import CampaignReport from "../pages/CampaignReport";
 import Annoucements from "../pages/Annoucements";
 import Chat from "../pages/Chat";
 import ToDoList from "../pages/ToDoList/";
-import Subscription from "../pages/Subscription/";
 import Files from "../pages/Files/";
-import Prompts from "../pages/Prompts";
 import QueueIntegration from "../pages/QueueIntegration";
 import ForgetPassword from "../pages/ForgetPassWord/"; // Reset PassWd
 import { Embed } from "../pages/Embed";
@@ -57,7 +53,6 @@ const Routes = () => {
             <Route exact path="/login" component={Login} />
             <Route exact path="/signup" component={Signup} />
 			<Route exact path="/forgetpsw" component={ForgetPassword} /> 
-            {/* <Route exact path="/create-company" component={Companies} /> */}
             <WhatsAppsProvider>
               <LoggedInLayout>
                 <Route exact path="/embed/:phoneNumber" component={Embed} isPrivate />
@@ -97,7 +92,6 @@ const Routes = () => {
                 <Route exact path="/helps" component={Helps} isPrivate />
                 <Route exact path="/users" component={Users} isPrivate />
                 <Route exact path="/files" component={Files} isPrivate />
-                <Route exact path="/prompts" component={Prompts} isPrivate />
                 <Route exact path="/queue-integration" component={QueueIntegration} isPrivate />
 
                 <Route
@@ -123,12 +117,6 @@ const Routes = () => {
                   exact
                   path="/announcements"
                   component={Annoucements}
-                  isPrivate
-                />
-                <Route
-                  exact
-                  path="/subscription"
-                  component={Subscription}
                   isPrivate
                 />
                 <Route exact path="/chats/:id?" component={Chat} isPrivate />

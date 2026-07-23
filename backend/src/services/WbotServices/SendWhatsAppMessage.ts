@@ -6,11 +6,11 @@ import Message from "../../models/Message";
 import Ticket from "../../models/Ticket";
 
 import formatBody from "../../helpers/Mustache";
-import { map_msg } from "../../utils/global";
 import UpdateTicketService from "../TicketServices/UpdateTicketService";
 import { getIO } from "../../libs/socket";
 import { getContactJid } from "../../helpers/getContactJid";
 import { QUEUES } from "../../utils/queueConsts";
+import { logger } from "../../utils/logger";
 
 interface Request {
   body: string;
@@ -30,7 +30,6 @@ const SendWhatsAppMessage = async ({
   let options = {};
   const wbot = await GetTicketWbot(ticket);
   const jid = getContactJid(ticket.contact);
-  console.log("number", jid);
 
   let changed = false;
 
@@ -106,10 +105,6 @@ const SendWhatsAppMessage = async ({
   }
 
   try {
-    console.log('body:::::::::::::::::::::::::::', body)
-    map_msg.set(ticket.contact.number, { lastSystemMsg: body })
-    console.log('lastSystemMsg:::::::::::::::::::::::::::', ticket.contact.number);
-
     let extra = {};
     if (editMessageObject) {
       extra = {
@@ -125,12 +120,10 @@ const SendWhatsAppMessage = async ({
         ...options
       }
     );
-    // await ticket.update({ lastMessage: formatBody(body, ticket.contact) });
-    console.log("Message sent", sentMessage);
     return sentMessage;
   } catch (err) {
     Sentry.captureException(err);
-    console.log(err);
+    logger.error(err);
     throw new AppError("ERR_SENDING_WAPP_MSG");
   }
 };

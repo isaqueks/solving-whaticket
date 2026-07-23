@@ -79,7 +79,6 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   const { name, color, greetingMessage, outOfHoursMessage, schedules, orderQueue, integrationId, promptId } =
     req.body;
   const { companyId } = req.user;
-  console.log("queue", integrationId, promptId)
   const queue = await CreateQueueService({
     name,
     color,

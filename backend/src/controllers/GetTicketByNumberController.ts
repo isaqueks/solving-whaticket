@@ -6,27 +6,57 @@ import Contact from "../models/Contact";
 import User from "../models/User";
 import CheckContactNumber from "../services/WbotServices/CheckNumber";
 
-const numExistCache = new Map<string, boolean>();
+const NUM_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const NUM_CACHE_MAX_SIZE = 5000;
+
+const numExistCache = new Map<string, { exists: boolean; timestamp: number }>();
+
+function pruneNumCache() {
+  const now = Date.now();
+  for (const [key, value] of numExistCache) {
+    if ((now - value.timestamp) >= NUM_CACHE_TTL) {
+      numExistCache.delete(key);
+    }
+  }
+
+  // Hard cap: if still over the limit, evict oldest (insertion-ordered) entries.
+  if (numExistCache.size > NUM_CACHE_MAX_SIZE) {
+    const excess = numExistCache.size - NUM_CACHE_MAX_SIZE;
+    let removed = 0;
+    for (const key of numExistCache.keys()) {
+      if (removed >= excess) break;
+      numExistCache.delete(key);
+      removed += 1;
+    }
+  }
+}
+
 async function checkValid(num: string, cpId: number): Promise<boolean> {
-  if (numExistCache.has(num)) {
-    return numExistCache.get(num);
+  const cached = numExistCache.get(num);
+  if (cached && (Date.now() - cached.timestamp) < NUM_CACHE_TTL) {
+    return cached.exists;
+  }
+  if (cached) {
+    numExistCache.delete(num);
   }
 
   try {
     const valid = await CheckContactNumber(num, cpId);
-    numExistCache.set(num, valid.exists);
+    numExistCache.set(num, { exists: valid.exists, timestamp: Date.now() });
+    pruneNumCache();
     return valid.exists;
   }
   catch (err) {
     if (err.message.includes("ERR_CHECK_NUMBER")) {
-      numExistCache.set(num, false);
+      numExistCache.set(num, { exists: false, timestamp: Date.now() });
+      pruneNumCache();
       return false;
     }
     throw err;
   }
 }
 
-export class GetTickerByNumberController {
+export class GetTicketByNumberController {
 
 
   public async get(req: Request, res: Response) {
@@ -48,13 +78,6 @@ export class GetTickerByNumberController {
       }
     });
     if (!contact) {
-      // let exist;
-      // if (GetTickerByNumberController.numExistCache.has(phone)) {
-      //   exist = GetTickerByNumberController.numExistCache.get(phone);
-      // }
-      // else {
-      //   exist = 
-      // }
       const nums = numRegex.test(phone) ? [phone.replace(numRegex, "$1$2"), phone] : [phone];
       let exist = false;
       for (const num of nums) {

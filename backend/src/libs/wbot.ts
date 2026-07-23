@@ -62,16 +62,18 @@ export const removeWbot = async (
 };
 
 export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      (async () => {
+  return new Promise<Session>((resolve, reject) => {
+    (async () => {
         const io = getIO();
 
         const whatsappUpdate = await Whatsapp.findOne({
           where: { id: whatsapp.id }
         });
 
-        if (!whatsappUpdate) return;
+        if (!whatsappUpdate) {
+          reject(new AppError("ERR_WAPP_NOT_FOUND"));
+          return;
+        }
 
         const { id, name, provider } = whatsappUpdate;
 
@@ -86,20 +88,14 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
           versionObj = await fetchLatestBaileysVersion();
         }
 
-        console.log(`WPP Version`, versionObj);
-
         const { version, isLatest } = versionObj;
         const isLegacy = provider === "stable" ? true : false;
 
         logger.info(`using WA v${version.join(".")}, isLatest: ${isLatest}`);
         logger.info(`isLegacy: ${isLegacy}`);
         logger.info(`Starting session ${name}`);
-        let retriesQrCode = 0;
 
         let wsocket: Session = null;
-        // const store = makeInMemoryStore({
-        //   logger: loggerBaileys
-        // });
 
         const { state, saveState } = await authState(whatsapp);
 
@@ -119,9 +115,6 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
           syncHistory: {
             days: 5
           },
-          // defaultQueryTimeoutMs: 60000,
-          // retryRequestDelayMs: 250,
-          // keepAliveIntervalMs: 1000 * 60 * 10 * 3,
           msgRetryCounterCache,
           shouldIgnoreJid: jid => isJidBroadcast(jid),
         });
@@ -143,6 +136,7 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
                   session: whatsapp
                 });
                 removeWbot(id, false);
+                reject(new AppError("ERR_WAPP_FORBIDDEN"));
                 return;
               }
               if (
@@ -154,6 +148,9 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
                   () => StartWhatsAppSession(whatsapp, whatsapp.companyId),
                   2000
                 );
+                // rejeição tardia (pós-resolve) é ignorada pela Promise; só
+                // afeta o caso em que a conexão fecha antes de abrir
+                reject(new AppError("ERR_WAPP_CONNECTION_CLOSED"));
               } else {
                 await whatsapp.update({ status: "PENDING", session: "" });
                 await DeleteBaileysService(whatsapp.id);
@@ -166,10 +163,12 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
                   () => StartWhatsAppSession(whatsapp, whatsapp.companyId),
                   2000
                 );
+                reject(new AppError("ERR_WAPP_LOGGED_OUT"));
               }
             }
 
             if (connection === "open") {
+              retriesQrCodeMap.delete(id);
               await whatsapp.update({
                 status: "CONNECTED",
                 qrcode: "",
@@ -199,7 +198,7 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
                   qrcode: ""
                 });
                 await DeleteBaileysService(whatsappUpdate.id);
-                io.to(`company-${whatsapp.companyId}-mainchannel`).emit("whatsappSession", {
+                io.to(`company-${whatsapp.companyId}-mainchannel`).emit(`company-${whatsapp.companyId}-whatsappSession`, {
                   action: "update",
                   session: whatsappUpdate
                 });
@@ -213,9 +212,10 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
                 }
                 wsocket = null;
                 retriesQrCodeMap.delete(id);
+                reject(new AppError("ERR_WAPP_QRCODE_RETRIES_EXCEEDED"));
               } else {
                 logger.info(`Session QRCode Generate ${name}`);
-                retriesQrCodeMap.set(id, (retriesQrCode += 1));
+                retriesQrCodeMap.set(id, (retriesQrCodeMap.get(id) ?? 0) + 1);
 
                 await whatsapp.update({
                   qrcode: qr,
@@ -240,13 +240,10 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
           }
         );
         wsocket.ev.on("creds.update", saveState);
-
-        // store.bind(wsocket.ev);
-      })();
-    } catch (error) {
+    })().catch(error => {
       Sentry.captureException(error);
-      console.log(error);
+      logger.error(error);
       reject(error);
-    }
+    });
   });
 };

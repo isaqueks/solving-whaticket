@@ -56,22 +56,6 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
   return res.json({ contacts, count, hasMore });
 };
 
-export const getContact = async (
-  req: Request,
-  res: Response
-): Promise<Response> => {
-  const { name, number } = req.body as IndexGetContactQuery;
-  const { companyId } = req.user;
-
-  const contact = await GetContactService({
-    name,
-    number,
-    companyId
-  });
-
-  return res.status(200).json(contact);
-};
-
 export const store = async (req: Request, res: Response): Promise<Response> => {
   const { companyId } = req.user;
   const newContact: ContactData = req.body;
@@ -219,23 +203,6 @@ export const getContactVcard = async (
 ): Promise<Response> => {
   const { name, number } = req.query as IndexGetContactQuery;
   const { companyId } = req.user;
-
-  let vNumber = number;
-  const numberDDI = vNumber.toString().substr(0, 2);
-  const numberDDD = vNumber.toString().substr(2, 2);
-  const numberUser = vNumber.toString().substr(-8, 8);
-
-  if (numberDDD <= '30' && numberDDI === '55') {
-    console.log("menor 30")
-    vNumber = `${numberDDI + numberDDD + 9 + numberUser}@s.whatsapp.net`;
-  } else if (numberDDD > '30' && numberDDI === '55') {
-    console.log("maior 30")
-    vNumber = `${numberDDI + numberDDD + numberUser}@s.whatsapp.net`;
-  } else {
-    vNumber = `${number}@s.whatsapp.net`;
-  }
-
-  console.log(vNumber);
 
   const contact = await GetContactService({
     name,

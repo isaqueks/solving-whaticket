@@ -6,8 +6,6 @@ import { useHistory, useParams } from "react-router-dom";
 import {
   Avatar,
   Badge,
-  Box,
-  Divider,
   IconButton,
   ListItem,
   ListItemAvatar,
@@ -19,18 +17,16 @@ import {
   Tooltip,
   Typography,
 } from "@material-ui/core";
-import { blue, green, grey } from "@material-ui/core/colors";
+import { green, grey } from "@material-ui/core/colors";
 import { makeStyles } from "@material-ui/core/styles";
 import { v4 as uuidv4 } from "uuid";
 
 import AndroidIcon from "@material-ui/icons/Android";
-import VisibilityIcon from "@material-ui/icons/Visibility";
 
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { TicketsContext } from "../../context/Tickets/TicketsContext";
 import toastError from "../../errors/toastError";
 import api from "../../services/api";
-import ButtonWithSpinner from "../ButtonWithSpinner";
 import MarkdownWrapper from "../MarkdownWrapper";
 import ContactTag from "../ContactTag";
 import TicketMessagesDialog from "../TicketMessagesDialog";
@@ -302,13 +298,10 @@ const TicketListItemCustom = ({ ticket }) => {
 
       <Paper
 
-        dense
-        button
         onClick={(e) => {
           // if (ticket.status === "pending") return;
           handleSelectTicket(ticket);
         }}
-        selected={ticketId && +ticketId === ticket.id}
         className={clsx(classes.ticket/*, {
           [classes.pendingTicket]: ticket.status === "pending",
         }*/)}
@@ -436,7 +429,6 @@ const TicketListItemCustom = ({ ticket }) => {
                 {/* Se estiver pendente, mostra "ACEITAR" */}
                 {ticket.status === "pending" && (
                   <MenuItem
-                    loading={loading}
                     onClick={(e) => (e.stopPropagation(),handleAcepptTicket(ticket.id))}
                   >
                     Aceitar Atendimento
@@ -445,7 +437,6 @@ const TicketListItemCustom = ({ ticket }) => {
                 {/* Se não estiver fechado, mostra "FINALIZAR" */}
                 {ticket.status !== "closed" && (
                   <MenuItem
-                    loading={loading}
                     onClick={(e) => (e.stopPropagation(),handleCloseTicket(ticket.id))}
                   >
                     Finalizar Atendimento
@@ -455,7 +446,6 @@ const TicketListItemCustom = ({ ticket }) => {
                 {/* Se estiver fechado, mostra "REABRIR" */}
                 {ticket.status === "closed" && (
                   <MenuItem
-                    loading={loading}
                     onClick={(e) => (e.stopPropagation(),handleReopenTicket(ticket.id))}
                   >
                     Reabrir Atendimento
@@ -468,18 +458,6 @@ const TicketListItemCustom = ({ ticket }) => {
                   >
                     Espiar Conversa
                   </MenuItem>
-                  // <Tooltip title="Espiar Conversa">
-                  //   <VisibilityIcon
-                  //     onClick={() => setOpenTicketMessageDialog(true)}
-                  //     fontSize="small"
-                  //     style={{
-                  //       color: blue[700],
-                  //       cursor: "pointer",
-                  //       marginLeft: 10,
-                  //       verticalAlign: "middle",
-                  //     }}
-                  //   />
-                  // </Tooltip>
                 )}
               </Menu>
             </div>

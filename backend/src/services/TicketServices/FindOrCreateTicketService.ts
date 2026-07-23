@@ -4,7 +4,6 @@ import Contact from "../../models/Contact";
 import Ticket from "../../models/Ticket";
 import ShowTicketService from "./ShowTicketService";
 import FindOrCreateATicketTrakingService from "./FindOrCreateATicketTrakingService";
-import Setting from "../../models/Setting";
 import Whatsapp from "../../models/Whatsapp";
 
 interface TicketData {
@@ -75,11 +74,6 @@ const FindOrCreateTicketService = async (
         userId: ticket.userId
       });
     }
-    const msgIsGroupBlock = await Setting.findOne({
-      where: { key: "timeCreateNewTicket" }
-    });
-  
-    const value = msgIsGroupBlock ? parseInt(msgIsGroupBlock.value, 10) : 7200;
   }
 
   if (!ticket && !groupContact) {

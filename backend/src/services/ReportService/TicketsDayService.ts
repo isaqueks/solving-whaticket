@@ -22,6 +22,7 @@ export const TicketsDayService = async ({ initialDate, finalDate, companyId }: R
 
   let sql = '';
   let count = 0;
+  let replacements: { [key: string]: any } = {};
 
   if (initialDate && initialDate.trim() === finalDate && finalDate.trim()) {
     sql = `
@@ -32,15 +33,20 @@ export const TicketsDayService = async ({ initialDate, finalDate, companyId }: R
     FROM
       "TicketTraking" tick
     WHERE
-      tick."companyId" = ${companyId}
-      and DATE(tick."createdAt") >= '${initialDate} 00:00:00'
-      AND DATE(tick."createdAt") <= '${finalDate} 23:59:59'
+      tick."companyId" = :companyId
+      and DATE(tick."createdAt") >= :initialDate
+      AND DATE(tick."createdAt") <= :finalDate
     GROUP BY
       extract(hour from tick."createdAt")
       --to_char(DATE(tick."createdAt"), 'dd-mm-YYYY')
     ORDER BY
       horario asc;
     `
+    replacements = {
+      companyId,
+      initialDate: `${initialDate} 00:00:00`,
+      finalDate: `${finalDate} 23:59:59`
+    };
   } else {
     sql = `
     SELECT
@@ -49,17 +55,25 @@ export const TicketsDayService = async ({ initialDate, finalDate, companyId }: R
   FROM
     "TicketTraking" tick
   WHERE
-    tick."companyId" = ${companyId}
-    and DATE(tick."createdAt") >= '${initialDate}'
-    AND DATE(tick."createdAt") <= '${finalDate}'
+    tick."companyId" = :companyId
+    and DATE(tick."createdAt") >= :initialDate
+    AND DATE(tick."createdAt") <= :finalDate
   GROUP BY
     to_char(DATE(tick."createdAt"), 'dd/mm/YYYY')
   ORDER BY
     data asc;
   `
+    replacements = {
+      companyId,
+      initialDate,
+      finalDate
+    };
   }
 
-  const data: DataReturn[] = await sequelize.query(sql, { type: QueryTypes.SELECT });
+  const data: DataReturn[] = await sequelize.query(sql, {
+    replacements,
+    type: QueryTypes.SELECT
+  });
 
   data.forEach((register) => {
     count += Number(register.total);

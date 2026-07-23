@@ -141,7 +141,7 @@ const Announcements = () => {
     const companyId = user.companyId;
     const socket = socketManager.getSocket(companyId);
 
-    socket.on(`company-announcement`, (data) => {
+    socket.on(`company-${companyId}-announcement`, (data) => {
       if (data.action === "update" || data.action === "create") {
         dispatch({ type: "UPDATE_ANNOUNCEMENTS", payload: data.record });
       }

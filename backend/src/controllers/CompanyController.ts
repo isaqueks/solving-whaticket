@@ -1,11 +1,9 @@
 import { Request, Response } from "express";
 import * as Yup from "yup";
 // import { getIO } from "../libs/socket";
-import authConfig from "../config/auth";
 import AppError from "../errors/AppError";
 import Company from "../models/Company";
 
-import { verify } from "jsonwebtoken";
 import User from "../models/User";
 import CreateCompanyService from "../services/CompanyService/CreateCompanyService";
 import DeleteCompanyService from "../services/CompanyService/DeleteCompanyService";
@@ -21,15 +19,6 @@ type IndexQuery = {
   searchParam: string;
   pageNumber: string;
 };
-
-interface TokenPayload {
-  id: string;
-  username: string;
-  profile: string;
-  companyId: number;
-  iat: number;
-  exp: number;
-}
 
 type CompanyData = {
   name: string;
