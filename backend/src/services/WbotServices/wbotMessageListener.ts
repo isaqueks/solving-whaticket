@@ -339,6 +339,22 @@ const getSenderMessage = (
   return senderId && jidNormalizedUser(senderId);
 };
 
+// Reduz o nome enviado pelo remetente a um nome de arquivo seguro dentro de
+// public/ (sem separadores de diretorio, sem ".." e sem caracteres invalidos).
+const sanitizeMediaFileName = (name: string): string => {
+  if (!name) {
+    return "";
+  }
+
+  const base = path
+    .basename(String(name).replace(/\\/g, "/"))
+    .replace(/[/\\:*?"<>|\u0000-\u001f]/g, "_")
+    .replace(/^\.+/, "")
+    .trim();
+
+  return base.slice(0, 180);
+};
+
 const downloadMedia = async (msg: WAMessage) => {
 
   let buffer
@@ -356,7 +372,11 @@ const downloadMedia = async (msg: WAMessage) => {
     // Trate o erro de acordo com as suas necessidades
   }
 
-  let filename = msg.message?.documentMessage?.fileName || "";
+  let filename =
+    msg.message?.documentMessage?.fileName ||
+    msg.message?.documentWithCaptionMessage?.message?.documentMessage
+      ?.fileName ||
+    "";
 
   const mineType =
     msg.message?.imageMessage ||
@@ -368,8 +388,19 @@ const downloadMedia = async (msg: WAMessage) => {
     msg.message?.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage ||
     msg.message?.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage;
 
-  if (!mineType)
-    console.log(msg)
+  if (!mineType) {
+    logger.warn(
+      `Nao foi possivel identificar o mimetype da midia: ${JSON.stringify(
+        msg.key
+      )}`
+    );
+    return null;
+  }
+
+  // O nome vem do remetente: barras e ".." fazem o writeFile apontar para fora
+  // de public/ (ou para um diretorio inexistente) e a midia nunca e gravada.
+  // Ex.: "NF 001/2024.pdf" -> ENOENT silencioso e mediaUrl orfa no banco.
+  filename = sanitizeMediaFileName(filename);
 
   if (!filename) {
     const ext = mineType.mimetype.split("/")[1].split(";")[0];
@@ -780,14 +811,24 @@ const verifyMediaMessage = async (
     media.filename = `${new Date().getTime()}.${ext}`;
   }
 
+  // Se a gravacao falhar (download vazio, disco cheio, permissao), a mensagem
+  // ainda e registrada, mas sem mediaUrl: um ponteiro para um arquivo que nao
+  // existe quebra o download no painel e o encaminhamento.
+  let mediaStored = false;
   try {
+    if (!media.data) {
+      throw new Error("midia sem conteudo (download falhou)");
+    }
     await writeFileAsync(
       join(__dirname, "..", "..", "..", "public", media.filename),
       media.data,
       "base64"
     );
+    mediaStored = true;
   } catch (err) {
-    logger.error(err);
+    logger.error(
+      `Falha ao gravar a midia ${media.filename} do ticket ${ticket.id}: ${err}`
+    );
   }
 
   const body = getBodyMessage(msg);
@@ -800,7 +841,7 @@ const verifyMediaMessage = async (
     body: body ? formatBody(body, ticket.contact) : media.filename,
     fromMe: msg.key.fromMe,
     read: msg.key.fromMe,
-    mediaUrl: media.filename,
+    mediaUrl: mediaStored ? media.filename : null,
     mediaType: media.mimetype.split("/")[0],
     quotedMsgId: quotedMsg?.id,
     ack: msg.status,

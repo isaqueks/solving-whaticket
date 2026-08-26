@@ -71,13 +71,14 @@ export const forward = async (req: Request, res: Response): Promise<Response> =>
   const { contactId, whatsappId, messagesId }: ForwardData = req.body;
   const { companyId } = req.user;
 
-  await ForwardWhatsAppMessage({
+  const result = await ForwardWhatsAppMessage({
     contactId,
     whatsappId,
     messagesId,
+    companyId
   });
 
-  return res.send();
+  return res.status(200).json(result);
 }
 
 export const store = async (req: Request, res: Response): Promise<Response> => {

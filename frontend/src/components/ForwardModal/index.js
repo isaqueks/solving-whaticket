@@ -135,40 +135,62 @@ const ForwardModal = ({ modalOpen, onClose, initialContact, messages }) => {
     setUserTicketOpen("");
   };
 
+  // O backend responde com um ticket serializado em `error` quando o contato ja
+  // tem um atendimento aberto. Qualquer outro erro e uma string comum, entao o
+  // parse precisa ser tolerante -- antes ele estourava dentro do catch e a
+  // falha real nunca chegava na tela.
+  const parseOpenTicketError = err => {
+    const payload = err?.response?.data?.error;
+    if (typeof payload !== "string") return null;
+    try {
+      const ticket = JSON.parse(payload);
+      return ticket && typeof ticket === "object" && ticket.userId
+        ? ticket
+        : null;
+    } catch {
+      return null;
+    }
+  };
+
   const handleForward = async contactId => {
     if (!contactId) return;
-    
+
+    if (!selectedWhatsapp) {
+      toast.warn("Selecione uma conexão para encaminhar.");
+      return;
+    }
+
     setLoading(true);
     try {
-      const whatsappId = selectedWhatsapp !== "" ? selectedWhatsapp : null;
-      
-      console.log({
+      const { data } = await api.post("/messages/forward", {
         contactId,
-        whatsappId,
-        messages
-      });
-
-      await api.post("/messages/forward", {
-        contactId,
-        whatsappId,
+        whatsappId: selectedWhatsapp,
         messagesId: messages.map(m => m.id)
       });
 
+      const notSent = [...(data?.failed || []), ...(data?.skipped || [])];
+      if (notSent.length > 0) {
+        toast.warn(
+          `${notSent.length} de ${messages.length} mensagens não foram encaminhadas: ${notSent[0].reason}`
+        );
+      }
+
       onClose(true);
     } catch (err) {
-      
-      const ticket  = JSON.parse(err.response.data.error);
+      const ticket = parseOpenTicketError(err);
 
-      if (ticket.userId !== user?.id) {
+      if (!ticket) {
+        toastError(err);
+      } else if (ticket.userId !== user?.id) {
         setOpenAlert(true);
-        setUserTicketOpen(ticket.user.name);
+        setUserTicketOpen(ticket.user?.name);
       } else {
         setOpenAlert(false);
         setUserTicketOpen("");
         setLoading(false);
         onClose(ticket);
       }
-    }  
+    }
     setLoading(false);
   };
 
