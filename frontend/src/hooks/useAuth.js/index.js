@@ -9,50 +9,12 @@ import api from "../../services/api";
 import toastError from "../../errors/toastError";
 import { SocketContext } from "../../context/Socket/SocketContext";
 import moment from "moment";
-import Swal from 'sweetalert2';
-import { SocketManager } from '../../context/Socket/SocketContext'
 
 const useAuth = () => {
   const history = useHistory();
   const [isAuth, setIsAuth] = useState(false);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState({});
-
-  useEffect(() => {
-    if (window['WINDOW_HASH']) {
-      return;
-    }
-
-    window['WINDOW_HASH'] = (Date.now() + Math.random()*100).toFixed(5);
-    const WINDOW_HASH = window['WINDOW_HASH'];
-    
-    localStorage.setItem('activeWindow', WINDOW_HASH);
-
-    let handler = window.setInterval(() => {
-
-      if (localStorage.getItem('activeWindow') !== WINDOW_HASH) {
-        window.clearInterval(handler);
-        Swal.fire({
-          title: 'Você abriu o TalkChat em outra aba',
-          text: 'Você só pode usar uma aba por vez',
-          icon: "warning",
-          confirmButtonText: 'Usar esta aba',
-          allowOutsideClick: false,
-        }).then(() => {
-          window.location.reload();
-        });
-
-        SocketManager.manageds.forEach(m => {
-          try {
-            m.disconnect(false);
-          }
-          catch {}
-        });
-      }
-
-    }, 2000);
-
-  }, []);
 
   // api.interceptors.request.use(
   //   (config) => {
