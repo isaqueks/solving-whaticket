@@ -44,11 +44,27 @@ import {
  * preservada linha a linha do CreateOrUpdateContactService original.
  */
 export class ContactsService {
+  private _numberResolver?: OnWhatsappNumberResolver;
+
   constructor(
     private readonly repository = new ContactsRepository(),
-    private readonly numberResolver = new OnWhatsappNumberResolver(),
+    numberResolver?: OnWhatsappNumberResolver,
     private readonly realtime: RealtimeGateway = realtimeGateway
-  ) {}
+  ) {
+    this._numberResolver = numberResolver;
+  }
+
+  // Instanciação LAZY: nunca dereferenciar OnWhatsappNumberResolver em escopo
+  // de módulo. O singleton `contactsService` (fim do arquivo) é construído
+  // durante o ciclo de imports contacts ⇄ whatsapp-session, momento em que o
+  // binding da classe ainda pode estar `undefined` (=> "is not a constructor").
+  // Criar sob demanda, na 1ª chamada de método, garante que já esteja definido.
+  private get numberResolver(): OnWhatsappNumberResolver {
+    if (!this._numberResolver) {
+      this._numberResolver = new OnWhatsappNumberResolver();
+    }
+    return this._numberResolver;
+  }
 
   public async list(filters: ListContactsFilters): Promise<ListContactsResult> {
     const { contacts, count, offset } =
