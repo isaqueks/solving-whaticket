@@ -96,6 +96,14 @@ const messages = {
 				form: {
 					name: "Name",
 					default: "Default",
+					queueRedirection: "Queue Redirection",
+					queueRedirectionDesc: "Queue where the contact is sent when they don't choose a valid menu option. Optionally, it also transfers them automatically after X minutes without a queue.",
+					timeToTransferHelper: "Optional. Leave empty or 0 to not transfer by time.",
+					skipMenuAfterHumanHours: "Skip the menu if an agent replied in the last X hours",
+					skipMenuAfterHumanHoursHelper: "If an agent talked to the contact in this period, they go straight to the Transfer Queue, without receiving the menu. Requires a Transfer Queue to be selected. 0 disables it.",
+					skipMenuAfterHumanHoursInvalid: "Enter a whole number greater than or equal to 0",
+					expiresTicket: "Close open chats after X minutes",
+					expiresInactiveMessage: "Closing message for inactivity",
 				},
 				buttons: {
 					okAdd: "Add",

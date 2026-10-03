@@ -11,6 +11,7 @@ import {
   jidNormalizedUser,
   MessageUpsertType,
   proto,
+  toNumber,
   WAMessage,
   WAMessageStubType,
   WAMessageUpdate,
@@ -54,9 +55,11 @@ import FindOrCreateTicketService from "../TicketServices/FindOrCreateTicketServi
 import UpdateTicketService from "../TicketServices/UpdateTicketService";
 import typebotListener from "../TypebotServices/typebotListener";
 import ShowWhatsAppService from "../WhatsappService/ShowWhatsAppService";
+import { MAX_SKIP_MENU_AFTER_HUMAN_HOURS } from "../WhatsappService/CreateWhatsAppService";
 import SendWhatsAppMessage from "./SendWhatsAppMessage";
 import NotifyWppReceiveMessage from "./NotifyWppReceiveMessage";
 import { getMessageOptions } from "./SendWhatsAppMedia";
+import { isMainMenuRequest, resolveChatbotMenuReply } from "./ResolveChatbotMenuReply";
 import { getCachedPFP } from "./GetCachedPFP";
 import { getContactMetadata, getGroupMetadata } from "../getContactMetadata";
 import { getContactJid } from "../../helpers/getContactJid";
@@ -1033,6 +1036,10 @@ ${JSON.stringify(msg?.message)}`);
 const Push = (msg: proto.IWebMessageInfo) => {
   return msg.pushName;
 }
+// Tolerância entre o envio do menu e a resposta do cliente: timestamp do
+// WhatsApp truncado em segundos, diferença de relógio e latência do envio.
+const MENU_REPLY_GRACE_MS = 3000;
+
 const verifyQueue = async (
   wbot: Session,
   msg: proto.IWebMessageInfo,
@@ -1042,7 +1049,14 @@ const verifyQueue = async (
 ) => {
   const companyId = ticket.companyId;
 
-  const { queues, greetingMessage, maxUseBotQueues, timeUseBotQueues } = await ShowWhatsAppService(
+  const {
+    queues,
+    greetingMessage,
+    maxUseBotQueues,
+    timeUseBotQueues,
+    transferQueueId,
+    skipMenuAfterHumanHours
+  } = await ShowWhatsAppService(
     wbot.id!,
     ticket.companyId
   )
@@ -1120,7 +1134,6 @@ const verifyQueue = async (
   }
 
   const selectedOption = getBodyMessage(msg);
-  const choosenQueue = queues[+selectedOption - 1];
 
   const buttonActive = await Setting.findOne({
     where: {
@@ -1146,34 +1159,15 @@ const verifyQueue = async (
     const textMessage = {
       text: formatBody(`\u200e${greetingMessage}\n\n${options}`, contact),
     };
-    // let lastMsg = map_msg.get(contact.number)
-    const lastMsg = await Message.findOne({
-      where: {
-        remoteJid: `${contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
-        fromMe: true
-      },
-      order: [["createdAt", "DESC"]],
-      limit: 1
-    })
-    let invalidOption = "Opção inválida, por favor, escolha uma opção válida."
-    
-    if (!lastMsg || getBodyMessage(msg).includes('#') || textMessage.text === 'concluido' || lastMsg.body !== textMessage.text) {
-      const sendMsg = await wbot.sendMessage(getContactJid(contact),
-        textMessage
-      );
-      await verifyMessage(sendMsg, ticket, ticket.contact);
 
-    } else if (lastMsg.body !== invalidOption) {
-      textMessage.text = invalidOption
-      const sendMsg = await wbot.sendMessage(getContactJid(contact),
-        textMessage
-      );
-      await verifyMessage(sendMsg, ticket, ticket.contact);
-    }
-
+    const sendMsg = await wbot.sendMessage(getContactJid(contact),
+      textMessage
+    );
+    await verifyMessage(sendMsg, ticket, ticket.contact);
   };
 
-  if (choosenQueue) {
+  // entra na fila escolhida no menu (ou na fila de redirecionamento)
+  const enterQueue = async (choosenQueue: Queue, keepQueueWhenOutOfHours = false) => {
     let chatbot = false;
     if (choosenQueue?.options) {
       chatbot = choosenQueue.options.length > 0;
@@ -1210,12 +1204,18 @@ const verifyQueue = async (
           }
           );
           await verifyMessage(sentMessage, ticket, contact);
-          await UpdateTicketService({
-            ticketData: { queueId: null, chatbot },
-            ticketId: ticket.id,
-            companyId: ticket.companyId,
-          });
-          return;
+          // No redirecionamento o ticket fica na fila de transferência: voltar
+          // para "sem fila" faria cada mensagem cair de novo no redirecionamento
+          // (ou na D4) e reenviar esta mensagem.
+          if (!keepQueueWhenOutOfHours) {
+            await UpdateTicketService({
+              ticketData: { queueId: null, chatbot },
+              ticketId: ticket.id,
+              companyId: ticket.companyId,
+            });
+          }
+          // true = fora do expediente já avisado e o ticket continua na fila
+          return keepQueueWhenOutOfHours;
         }
       }
 
@@ -1270,39 +1270,184 @@ const verifyQueue = async (
         await verifyMediaMessage(sentMessage, ticket, contact);
       }
     }
+  };
 
-  } else {
+  // O ticket recebido pode estar desatualizado: o messages.upsert processa as
+  // mensagens em paralelo e o cliente costuma mandar várias seguidas.
+  const freshTicket = await Ticket.findByPk(ticket.id, {
+    attributes: ["id", "queueId", "amountUsedBotQueues"]
+  });
 
-    if (maxUseBotQueues && maxUseBotQueues !== 0 && ticket.amountUsedBotQueues >= maxUseBotQueues) {
-      // await UpdateTicketService({
-      //   ticketData: { queueId: queues[0].id },
-      //   ticketId: ticket.id
-      // });
+  if (!freshTicket || !isNil(freshTicket.queueId)) {
+    return;
+  }
 
+  const menuSentCount = freshTicket.amountUsedBotQueues;
+  const menuRequested = isMainMenuRequest(selectedOption);
+
+  // Mensagem enviada antes do menu (rajada processada depois do envio, reação,
+  // entrega atrasada) não é resposta a ele. chatbotAt marca o envio do menu;
+  // nulo com contador > 0 = menu sendo enviado.
+  let sentBeforeMenu = false;
+  if (menuSentCount > 0 && !menuRequested) {
+    const menuTraking = await FindOrCreateATicketTrakingService({ ticketId: ticket.id, companyId });
+    const menuAt = menuTraking.chatbotAt ? new Date(menuTraking.chatbotAt).getTime() : 0;
+    const msgAt = toNumber(msg.messageTimestamp) * 1000;
+    sentBeforeMenu =
+      !menuAt ||
+      (msgAt > 0 && msgAt < menuAt + MENU_REPLY_GRACE_MS) ||
+      getTypeMessage(msg) === "reactionMessage";
+  }
+
+  const decide = (hadRecentHumanMessage: boolean, fallbackQueueId: number | null) =>
+    resolveChatbotMenuReply({
+      selectedOption,
+      queues,
+      menuSentCount,
+      fallbackQueueId,
+      maxUseBotQueues,
+      hadRecentHumanMessage,
+      sentBeforeMenu
+    });
+
+  let decision = decide(false, transferQueueId);
+
+  // Cliente respondendo a um atendimento humano recente: vai direto para a fila
+  // de redirecionamento, sem menu. Mensagens do bot/sistema começam com \u200e;
+  // body nulo conta como humano (as mensagens automáticas sempre têm texto).
+  // Os avisos "*Mensagem automática*" (transferência) e "*Mensagem Automática:*"
+  // (chamada recusada) não têm \u200e e também contam como automáticos.
+  // Limite: uma janela enorme geraria um timestamp fora do range do Postgres.
+  const skipMenuHours = Math.min(Number(skipMenuAfterHumanHours) || 0, MAX_SKIP_MENU_AFTER_HUMAN_HOURS);
+  if (
+    decision.action === "sendMenu" &&
+    !menuRequested &&
+    !menuSentCount &&
+    transferQueueId &&
+    skipMenuHours > 0
+  ) {
+    const recentHumanMessage = await Message.findOne({
+      where: {
+        companyId,
+        ticketId: ticket.id,
+        fromMe: true,
+        createdAt: { [Op.gte]: moment().subtract(skipMenuHours, "hours").toDate() },
+        [Op.or]: [
+          { body: null },
+          {
+            [Op.and]: [
+              { body: { [Op.notLike]: "\u200e%" } },
+              { body: { [Op.notLike]: "*Mensagem automática*%" } },
+              { body: { [Op.notLike]: "*Mensagem Automática:*%" } }
+            ]
+          }
+        ]
+      },
+      attributes: ["id"],
+      order: [["createdAt", "DESC"]]
+    });
+
+    if (recentHumanMessage) {
+      decision = decide(true, transferQueueId);
+    }
+  }
+
+  let fallbackQueue: Queue | null = null;
+  if (decision.action === "fallback") {
+    // não precisa estar vinculada à conexão, mas precisa ser da mesma empresa
+    fallbackQueue = await Queue.findOne({
+      where: { id: decision.queueId, companyId },
+      include: [{ model: QueueOption, as: "options" }]
+    });
+
+    if (!fallbackQueue) {
+      logger.warn(`verifyQueue: fila de transferência ${decision.queueId} não encontrada na empresa ${companyId} (ticket ${ticket.id}); seguindo sem redirecionamento`);
+      decision = decide(false, null);
+    }
+  }
+
+  switch (decision.action) {
+    case "select":
+    case "fallback": {
+      const queue = decision.action === "select" ? decision.queue : fallbackQueue;
+      if (!queue) {
+        return;
+      }
+
+      // claim atômico: só uma das mensagens concorrentes coloca o ticket na fila
+      // (evita saudação/integração duplicadas). Não mexe em ticket que um
+      // atendente acabou de aceitar ou encerrar.
+      const [claimed] = await Ticket.update(
+        { queueId: queue.id },
+        { where: { id: ticket.id, queueId: null, userId: null, status: { [Op.ne]: "closed" } } }
+      );
+
+      if (claimed !== 1) {
+        return;
+      }
+
+      if (decision.action === "fallback") {
+        logger.info(`verifyQueue: ticket ${ticket.id} redirecionado para a fila de transferência ${queue.id} (${menuSentCount ? "resposta inválida ao menu" : "atendimento humano recente"})`);
+      }
+
+      // devolve true quando o aviso de fora do expediente já foi enviado, para o
+      // handleMessage não enviar de novo (scheduleType "queue")
+      return enterQueue(queue, decision.action === "fallback");
+    }
+
+    case "sendMenu": {
+      // o menu de filas só é enviado no modo texto
+      if (buttonActive?.value !== "text") {
+        return;
+      }
+
+      //Regra para desabilitar o chatbot por x minutos após o envio do menu.
+      //Só vale entre reenvios: nunca bloqueia o 1º menu nem o "#".
+      const ticketTraking = await FindOrCreateATicketTrakingService({ ticketId: ticket.id, companyId });
+      const minutesBetweenMenus = Number(timeUseBotQueues) || 0;
+
+      if (minutesBetweenMenus > 0 && menuSentCount > 0 && !menuRequested && ticketTraking.chatbotAt) {
+        const dataLimite = new Date(ticketTraking.chatbotAt).getTime() + minutesBetweenMenus * 60000;
+        if (Date.now() < dataLimite) {
+          return;
+        }
+      }
+
+      // chatbotAt = envio do último menu (base da regra acima e do sentBeforeMenu).
+      // Gravado antes do claim: mensagens processadas durante o envio já o veem.
+      await ticketTraking.update({
+        chatbotAt: moment().toDate()
+      });
+
+      // o "#" é pedido do cliente e vale mesmo com atendente; fora dele, não
+      // envia o menu para ticket que um atendente acabou de aceitar ou encerrar
+      const humanGuard = menuRequested ? {} : { userId: null, status: { [Op.ne]: "closed" } };
+
+      // claim atômico (compare-and-set do contador): se outra mensagem
+      // concorrente já enviou o menu, esta não é uma resposta a ele
+      const [claimed] = await Ticket.update(
+        { amountUsedBotQueues: (menuSentCount || 0) + 1 },
+        {
+          where: {
+            id: ticket.id,
+            queueId: null,
+            amountUsedBotQueues: isNil(menuSentCount) ? null : menuSentCount,
+            ...humanGuard
+          }
+        }
+      );
+
+      if (claimed !== 1) {
+        return;
+      }
+
+      await botText();
       return;
     }
 
-    //Regra para desabilitar o chatbot por x minutos/horas após o primeiro envio
-    const ticketTraking = await FindOrCreateATicketTrakingService({ ticketId: ticket.id, companyId });
-    let dataLimite = new Date();
-    let Agora = new Date();
-
-
-    if (ticketTraking.chatbotAt !== null) {
-      dataLimite.setMinutes(ticketTraking.chatbotAt.getMinutes() + (Number(timeUseBotQueues)));
-
-      if (ticketTraking.chatbotAt !== null && Agora < dataLimite && timeUseBotQueues !== "0" && ticket.amountUsedBotQueues !== 0) {
-        return
-      }
-    }
-    await ticketTraking.update({
-      chatbotAt: null
-    })
-
-    if (buttonActive.value === "text") {
-      return botText();
-    }
-
+    case "silence":
+    default:
+      return;
   }
 
 };
@@ -1409,8 +1554,22 @@ const handleChartbot = async (ticket: Ticket, msg: WAMessage, wbot: Session, don
 
 
   if (messageBody == "#") {
-    // voltar para o menu inicial
-    await ticket.update({ queueOptionId: null, chatbot: false, queueId: null });
+    // voltar para o menu inicial (update estático: ver o "#" do handleMessage)
+    await Ticket.update(
+      {
+        queueOptionId: null,
+        chatbot: false,
+        queueId: null,
+        amountUsedBotQueues: 0,
+        useIntegration: false,
+        integrationId: null,
+        typebotSessionId: null,
+        typebotStatus: false,
+        promptId: null
+      },
+      { where: { id: ticket.id } }
+    );
+    await ticket.reload();
     await verifyQueue(wbot, msg, ticket, ticket.contact);
     return;
   }
@@ -1808,11 +1967,25 @@ const handleMessage = async (
 
     // voltar para o menu inicial
     if (bodyMessage == "#") {
-      await ticket.update({
-        queueOptionId: null,
-        chatbot: false,
-        queueId: null,
-      });
+      // Update estático: o update da instância só grava o que mudou em memória e
+      // perderia um queueId/contador gravado por uma mensagem concorrente.
+      // Também encerra a integração/typebot da fila: com useIntegration ainda
+      // true e sem fila, as respostas ao menu seriam ignoradas.
+      await Ticket.update(
+        {
+          queueOptionId: null,
+          chatbot: false,
+          queueId: null,
+          amountUsedBotQueues: 0,
+          useIntegration: false,
+          integrationId: null,
+          typebotSessionId: null,
+          typebotStatus: false,
+          promptId: null
+        },
+        { where: { id: ticket.id } }
+      );
+      await ticket.reload();
       await verifyQueue(wbot, msg, ticket, ticket.contact);
       return;
     }
@@ -2002,6 +2175,9 @@ const handleMessage = async (
 
     }
 
+    // o redirecionamento do verifyQueue já avisou o fora do expediente desta mensagem
+    let outOfHoursNotified = false;
+
     if (
       !ticket.queue &&
       !ticket.isGroup &&
@@ -2011,7 +2187,7 @@ const handleMessage = async (
       !ticket.useIntegration
     ) {
 
-      await verifyQueue(wbot, msg, ticket, contact);
+      outOfHoursNotified = (await verifyQueue(wbot, msg, ticket, contact)) === true;
 
       if (ticketTraking.chatbotAt === null) {
         await ticketTraking.update({
@@ -2026,7 +2202,7 @@ const handleMessage = async (
 
     try {
       //Fluxo fora do expediente
-      if (!msg.key.fromMe && scheduleType && ticket.queueId !== null) {
+      if (!msg.key.fromMe && scheduleType && ticket.queueId !== null && !outOfHoursNotified) {
         /**
          * Tratamento para envio de mensagem quando a fila está fora do expediente
          */

@@ -176,7 +176,8 @@ const UpdateTicketService = async ({
         useIntegration,
         typebotStatus: useIntegration ? undefined : false,
         typebotSessionId: useIntegration ? undefined : null,
-        
+        // zera os menus do chatbot de filas enviados neste ciclo
+        amountUsedBotQueues: 0
       })
 
       ticketTraking.finishedAt = moment().toDate();

@@ -60,6 +60,11 @@ const SessionSchema = Yup.object().shape({
     .min(2, "Too Short!")
     .max(50, "Too Long!")
     .required("Required"),
+  // Vazio é aceito (o Formik converte "" em undefined antes de validar) e é enviado como 0
+  skipMenuAfterHumanHours: Yup.number()
+    .typeError(() => i18n.t("whatsappModal.form.skipMenuAfterHumanHoursInvalid"))
+    .integer(() => i18n.t("whatsappModal.form.skipMenuAfterHumanHoursInvalid"))
+    .min(0, () => i18n.t("whatsappModal.form.skipMenuAfterHumanHoursInvalid")),
 });
 
 const WhatsAppModal = ({ open, onClose, whatsAppId }) => {
@@ -78,7 +83,8 @@ const WhatsAppModal = ({ open, onClose, whatsAppId }) => {
     expiresInactiveMessage: "",
     expiresTicket: 0,
     timeUseBotQueues: 0,
-    maxUseBotQueues: 3
+    maxUseBotQueues: 3,
+    skipMenuAfterHumanHours: 24
   };
   const [whatsApp, setWhatsApp] = useState(initialState);
   const [selectedQueueIds, setSelectedQueueIds] = useState([]);
@@ -93,7 +99,11 @@ const WhatsAppModal = ({ open, onClose, whatsAppId }) => {
 
       try {
         const { data } = await api.get(`whatsapp/${whatsAppId}?session=0`);
-        setWhatsApp(data);
+        // Conexão sem o campo (null/undefined) usa o padrão 24, para o input não ficar sem valor; 0 é mantido
+        setWhatsApp({
+          ...data,
+          skipMenuAfterHumanHours: data.skipMenuAfterHumanHours ?? 24,
+        });
 
         const whatsQueueIds = data.queues?.map((queue) => queue.id);
         setSelectedQueueIds(whatsQueueIds);
@@ -130,7 +140,14 @@ const WhatsAppModal = ({ open, onClose, whatsAppId }) => {
   const handleSaveWhatsApp = async (values) => {
 const whatsappData = {
       ...values, queueIds: selectedQueueIds, transferQueueId: selectedQueueId,
-      promptId: selectedPrompt ? selectedPrompt : null
+      promptId: selectedPrompt ? selectedPrompt : null,
+      // "Transferir após x (minutos)" é opcional: vazio vira null (coluna INTEGER não aceita "")
+      timeToTransfer: values.timeToTransfer === "" ? null : values.timeToTransfer,
+      // Input numérico vazio chega como "": envia 0 (desativado)
+      skipMenuAfterHumanHours:
+        values.skipMenuAfterHumanHours === "" || values.skipMenuAfterHumanHours == null
+          ? 0
+          : Number(values.skipMenuAfterHumanHours)
     };
     delete whatsappData["queues"];
     delete whatsappData["session"];
@@ -364,11 +381,15 @@ const whatsappData = {
                       label='Transferir após x (minutos)'
                       name="timeToTransfer"
                       error={touched.timeToTransfer && Boolean(errors.timeToTransfer)}
-                      helperText={touched.timeToTransfer && errors.timeToTransfer}
+                      helperText={
+                        touched.timeToTransfer && errors.timeToTransfer
+                          ? errors.timeToTransfer
+                          : i18n.t("whatsappModal.form.timeToTransferHelper")
+                      }
                       variant="outlined"
                       margin="dense"
                       className={classes.textField}
-                      InputLabelProps={{ shrink: values.timeToTransfer ? true : false }}
+                      InputLabelProps={{ shrink: values.timeToTransfer != null && values.timeToTransfer !== "" }}
                     />
 
                   </Grid>
@@ -381,6 +402,27 @@ const whatsappData = {
                       }}
                       multiple={false}
                       title={'Fila de Transferência'}
+                    />
+                  </Grid>
+
+                  {/* PULAR MENU SE HOUVE ATENDIMENTO HUMANO NAS ÚLTIMAS X HORAS */}
+                  <Grid item xs={12}>
+                    <Field
+                      fullWidth
+                      type="number"
+                      as={TextField}
+                      label={i18n.t("whatsappModal.form.skipMenuAfterHumanHours")}
+                      name="skipMenuAfterHumanHours"
+                      inputProps={{ min: 0, step: 1 }}
+                      error={touched.skipMenuAfterHumanHours && Boolean(errors.skipMenuAfterHumanHours)}
+                      helperText={
+                        touched.skipMenuAfterHumanHours && errors.skipMenuAfterHumanHours
+                          ? errors.skipMenuAfterHumanHours
+                          : i18n.t("whatsappModal.form.skipMenuAfterHumanHoursHelper")
+                      }
+                      variant="outlined"
+                      margin="dense"
+                      className={classes.textField}
                     />
                   </Grid>
 

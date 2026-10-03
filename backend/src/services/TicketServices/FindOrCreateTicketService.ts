@@ -42,7 +42,8 @@ const FindOrCreateTicketService = async (
       userId: null,
       queueId: null,
       unreadMessages,
-      companyId
+      companyId,
+      amountUsedBotQueues: 0
     });
     await FindOrCreateATicketTrakingService({
       ticketId: ticket.id,
@@ -66,7 +67,8 @@ const FindOrCreateTicketService = async (
         userId: null,
         unreadMessages,
         queueId: null,
-        companyId
+        companyId,
+        amountUsedBotQueues: 0
       });
       await FindOrCreateATicketTrakingService({
         ticketId: ticket.id,
@@ -99,7 +101,8 @@ const FindOrCreateTicketService = async (
         userId: null,
         unreadMessages,
         queueId: null,
-        companyId
+        companyId,
+        amountUsedBotQueues: 0
       });
       await FindOrCreateATicketTrakingService({
         ticketId: ticket.id,
@@ -123,7 +126,8 @@ const FindOrCreateTicketService = async (
       unreadMessages,
       whatsappId,
       whatsapp,
-      companyId
+      companyId,
+      amountUsedBotQueues: 0
     });
     await FindOrCreateATicketTrakingService({
       ticketId: ticket.id,

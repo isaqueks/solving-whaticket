@@ -19,7 +19,7 @@ export const ClosedAllOpenTickets = async (companyId: number): Promise<void> => 
         status: "closed",
         //userId: ticket.userId || null,
         unreadMessages: 0,
-        amountUseBotQueues: 0
+        amountUsedBotQueues: 0
       });
 
     } else if (currentStatus === 'open') {
@@ -28,7 +28,7 @@ export const ClosedAllOpenTickets = async (companyId: number): Promise<void> => 
         status: "closed",
         //  userId: ticket.userId || null,
         unreadMessages: 0,
-        amountUseBotQueues: 0
+        amountUsedBotQueues: 0
       });
 
     } else {

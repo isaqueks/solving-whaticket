@@ -27,12 +27,28 @@ interface Request {
   timeUseBotQueues?: number;
   expiresTicket?: number;
   expiresInactiveMessage?: string;
+  skipMenuAfterHumanHours?: number | string | null;
 }
 
 interface Response {
   whatsapp: Whatsapp;
   oldDefaultWhatsapp: Whatsapp | null;
 }
+
+// Janela (horas) da regra "pular o menu após atendimento humano" (verifyQueue).
+// Só aceita inteiro positivo; vazio, negativo, fracionário ou inválido vira 0 (desligado).
+// Valores enormes ("sempre") ficam no limite de 10 anos, que já cobre qualquer
+// histórico do ticket e evita timestamp fora do range do Postgres.
+export const MAX_SKIP_MENU_AFTER_HUMAN_HOURS = 87600;
+
+export const normalizeSkipMenuAfterHumanHours = (value: unknown): number => {
+  let hours = NaN;
+  if (typeof value === "number") hours = value;
+  if (typeof value === "string") hours = Number(value.trim());
+  return Number.isInteger(hours) && hours > 0
+    ? Math.min(hours, MAX_SKIP_MENU_AFTER_HUMAN_HOURS)
+    : 0;
+};
 
 const CreateWhatsAppService = async ({
   name,
@@ -54,7 +70,8 @@ const CreateWhatsAppService = async ({
   maxUseBotQueues = 3,
   timeUseBotQueues = 0,
   expiresTicket = 0,
-  expiresInactiveMessage = ""
+  expiresInactiveMessage = "",
+  skipMenuAfterHumanHours = 24
 }: Request): Promise<Response> => {
   const company = await Company.findOne({
     where: {
@@ -165,7 +182,8 @@ const CreateWhatsAppService = async ({
       maxUseBotQueues,
       timeUseBotQueues,
       expiresTicket,
-      expiresInactiveMessage
+      expiresInactiveMessage,
+      skipMenuAfterHumanHours: normalizeSkipMenuAfterHumanHours(skipMenuAfterHumanHours)
     },
     { include: ["queues"] }
   );

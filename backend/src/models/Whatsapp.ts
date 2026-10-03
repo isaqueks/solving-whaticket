@@ -136,13 +136,18 @@ class Whatsapp extends Model<Whatsapp> {
   maxUseBotQueues: number;
 
   @Column
-  timeUseBotQueues: string;
+  timeUseBotQueues: number;
 
   @Column
   expiresTicket: number;
 
   @Column
   expiresInactiveMessage: string;
+
+  // horas; 0/null desativa (ver verifyQueue)
+  @Default(24)
+  @Column
+  skipMenuAfterHumanHours: number;
 }
 
 export default Whatsapp;

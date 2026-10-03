@@ -5,6 +5,7 @@ import AppError from "../../errors/AppError";
 import Whatsapp from "../../models/Whatsapp";
 import ShowWhatsAppService from "./ShowWhatsAppService";
 import AssociateWhatsappQueue from "./AssociateWhatsappQueue";
+import { normalizeSkipMenuAfterHumanHours } from "./CreateWhatsAppService";
 
 interface WhatsappData {
   name?: string;
@@ -26,7 +27,7 @@ interface WhatsappData {
   timeUseBotQueues?: number;
   expiresTicket?: number;
   expiresInactiveMessage?: string;
-
+  skipMenuAfterHumanHours?: number | string | null;
 }
 
 interface Request {
@@ -70,7 +71,8 @@ const UpdateWhatsAppService = async ({
     maxUseBotQueues,
     timeUseBotQueues,
     expiresTicket,
-    expiresInactiveMessage
+    expiresInactiveMessage,
+    skipMenuAfterHumanHours
   } = whatsappData;
 
   try {
@@ -119,7 +121,12 @@ const UpdateWhatsAppService = async ({
     maxUseBotQueues,
     timeUseBotQueues,
     expiresTicket,
-    expiresInactiveMessage
+    expiresInactiveMessage,
+    // ausente no payload: mantém o valor gravado (o update ignora undefined)
+    skipMenuAfterHumanHours:
+      skipMenuAfterHumanHours === undefined
+        ? undefined
+        : normalizeSkipMenuAfterHumanHours(skipMenuAfterHumanHours)
   });
 
   if (queueIds) {
