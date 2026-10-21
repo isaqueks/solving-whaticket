@@ -9,7 +9,7 @@ interface Request {
   companyId: number;
   group?: string;
   // "true": só contatos cujo responsável (attachedToEmail) é o usuário `userId`
-  myClients?: string;
+  myPortfolio?: string;
   userId?: number;
 }
 
@@ -24,7 +24,7 @@ const ListContactsService = async ({
   pageNumber = "1",
   companyId,
   group = "",
-  myClients,
+  myPortfolio,
   userId
 }: Request): Promise<Response> => {
   const whereCondition = {
@@ -53,7 +53,7 @@ const ListContactsService = async ({
     };
   }
 
-  if (myClients === "true") {
+  if (myPortfolio === "true") {
     const me = userId
       ? await User.findByPk(userId, { attributes: ["email"] })
       : null;

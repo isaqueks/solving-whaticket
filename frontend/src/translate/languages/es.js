@@ -173,7 +173,7 @@ contacts: {
     importMessage: "¿Desea importar todos los contactos del teléfono?",
   },
   buttons: {
-    myClients: "Mis Clientes",
+    myPortfolio: "Solo Mi Cartera",
     import: "Importar Contactos",
     add: "Agregar Contacto",
     export: "Exportar Contactos",
@@ -403,7 +403,7 @@ tickets: {
   },
   buttons: {
     showAll: "Todos",
-    myClients: "Mis Clientes",
+    myPortfolio: "Solo Mi Cartera",
   },
 },
 transferTicketModal: {

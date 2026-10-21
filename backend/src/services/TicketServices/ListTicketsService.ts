@@ -29,7 +29,7 @@ interface Request {
   unread?: 'unread' | 'read';
   // "true": só tickets de contatos cujo responsável (Contacts.attachedToEmail)
   // é o usuário logado, independente de fila, status ou atendente atual
-  myClients?: string;
+  myPortfolio?: string;
 }
 
 interface Response {
@@ -52,24 +52,24 @@ const ListTicketsService = async ({
   withUnreadMessages,
   companyId,
   unread,
-  myClients
+  myPortfolio
 }: Request): Promise<Response> => {
   let whereCondition: Filterable["where"] = {
     [Op.or]: [{ userId }, { status: "pending" }],
     queueId: { [Op.or]: [queueIds, null] }
   };
 
-  // Filtro "Meus Clientes": o vínculo contato -> colaborador é por e-mail.
+  // Filtro "Só Minha Carteira": o vínculo contato -> colaborador é por e-mail.
   // Sem e-mail (usuário inexistente) o filtro não casa com nenhum contato.
-  let myClientsCondition: Filterable["where"] | null = null;
-  if (myClients === "true") {
+  let myPortfolioCondition: Filterable["where"] | null = null;
+  if (myPortfolio === "true") {
     const me = await User.findByPk(userId, { attributes: ["email"] });
     const email = (me?.email || "").trim().toLowerCase();
     if (!email) {
       // sem e-mail não há vínculo possível (null casaria com "sem responsável")
       return { tickets: [], count: 0, hasMore: false };
     }
-    myClientsCondition = {
+    myPortfolioCondition = {
       "$contact.attachedToEmail$": where(
         fn("LOWER", col("contact.attachedToEmail")),
         email
@@ -110,8 +110,8 @@ const ListTicketsService = async ({
     whereCondition = { queueId: { [Op.or]: [queueIds, null] } };
   }
 
-  if (myClientsCondition) {
-    whereCondition = { ...myClientsCondition };
+  if (myPortfolioCondition) {
+    whereCondition = { ...myPortfolioCondition };
   }
 
   if (status) {
@@ -195,9 +195,9 @@ const ListTicketsService = async ({
       unreadMessages: { [Op.gt]: 0 }
     };
 
-    if (myClientsCondition) {
+    if (myPortfolioCondition) {
       whereCondition = {
-        ...myClientsCondition,
+        ...myPortfolioCondition,
         unreadMessages: { [Op.gt]: 0 }
       };
     }

@@ -110,10 +110,10 @@ const Contacts = () => {
   const [hasMore, setHasMore] = useState(false);
   const fileUploadRef = useRef(null);
 
-  // "Meus Clientes": só contatos cujo responsável (attachedToEmail) sou eu
-  const [myClients, setMyClients] = useState(() => {
+  // "Só Minha Carteira": só contatos cujo responsável (attachedToEmail) sou eu
+  const [myPortfolio, setMyPortfolio] = useState(() => {
     try {
-      const saved = localStorage.getItem("myClientsContacts");
+      const saved = localStorage.getItem("myPortfolioContacts");
       return saved ? JSON.parse(saved) : false;
     } catch (e) {
       return false;
@@ -121,15 +121,15 @@ const Contacts = () => {
   });
 
   useEffect(() => {
-    localStorage.setItem("myClientsContacts", JSON.stringify(myClients));
-  }, [myClients]);
+    localStorage.setItem("myPortfolioContacts", JSON.stringify(myPortfolio));
+  }, [myPortfolio]);
 
   const socketManager = useContext(SocketContext);
 
   useEffect(() => {
     dispatch({ type: "RESET" });
     setPageNumber(1);
-  }, [searchParam, myClients]);
+  }, [searchParam, myPortfolio]);
 
   useEffect(() => {
     setLoading(true);
@@ -137,7 +137,7 @@ const Contacts = () => {
       const fetchContacts = async () => {
         try {
           const { data } = await api.get("/contacts/", {
-            params: { searchParam, pageNumber, myClients },
+            params: { searchParam, pageNumber, myPortfolio },
           });
           dispatch({ type: "LOAD_CONTACTS", payload: data.contacts });
           setHasMore(data.hasMore);
@@ -149,7 +149,7 @@ const Contacts = () => {
       fetchContacts();
     }, 500);
     return () => clearTimeout(delayDebounceFn);
-  }, [searchParam, pageNumber, myClients]);
+  }, [searchParam, pageNumber, myPortfolio]);
 
   useEffect(() => {
     const companyId = localStorage.getItem("companyId");
@@ -294,14 +294,14 @@ const Contacts = () => {
         <Title>{i18n.t("contacts.title")}</Title>
         <MainHeaderButtonsWrapper>
           <FormControlLabel
-            label={i18n.t("contacts.buttons.myClients")}
+            label={i18n.t("contacts.buttons.myPortfolio")}
             labelPlacement="start"
             control={
               <Switch
                 size="small"
-                checked={myClients}
-                onChange={() => setMyClients((prev) => !prev)}
-                name="myClientsContacts"
+                checked={myPortfolio}
+                onChange={() => setMyPortfolio((prev) => !prev)}
+                name="myPortfolioContacts"
                 color="primary"
               />
             }

@@ -165,7 +165,7 @@ const TicketsListCustom = (props) => {
     updateCount,
     style,
     unread,
-    myClients
+    myPortfolio
   } = props;
   const classes = useStyles();
   const [pageNumber, setPageNumber] = useState(1);
@@ -198,7 +198,7 @@ const TicketsListCustom = (props) => {
   useEffect(() => {
     dispatch({ type: "RESET" });
     setPageNumber(1);
-  }, [status, searchParam, dispatch, showAll, tags, users, selectedQueueIds, myClients]);
+  }, [status, searchParam, dispatch, showAll, tags, users, selectedQueueIds, myPortfolio]);
 
   const { tickets, hasMore, loading } = useTickets({
     pageNumber,
@@ -209,13 +209,13 @@ const TicketsListCustom = (props) => {
     users: JSON.stringify(users),
     queueIds: JSON.stringify(selectedQueueIds),
     unread,
-    myClients
+    myPortfolio
   });
 
-  // "Meus Clientes": o vínculo é com o contato, não com a fila. O ticket de um
+  // "Só Minha Carteira": o vínculo é com o contato, não com a fila. O ticket de um
   // cliente meu aparece mesmo sem fila (ex.: enquanto o chatbot atende) ou numa
   // fila que não é minha.
-  const isMyClient = (ticket) =>
+  const isInMyPortfolio = (ticket) =>
     !!ticket?.contact?.attachedToEmail &&
     !!user?.email &&
     ticket.contact.attachedToEmail.trim().toLowerCase() === user.email.trim().toLowerCase();
@@ -229,26 +229,26 @@ const TicketsListCustom = (props) => {
     if (pageNumber === 1) {
       dispatch({ type: "RESET" });
     }
-    if (profile === "user" && !myClients) {
+    if (profile === "user" && !myPortfolio) {
       dispatch({ type: "LOAD_TICKETS", payload: filteredTickets });
     } else {
       dispatch({ type: "LOAD_TICKETS", payload: tickets });
     }
-  }, [(tickets || []).map(t => `${t.id}:${t.updatedAt}`).join(","), status, searchParam, queues, profile, myClients]);
+  }, [(tickets || []).map(t => `${t.id}:${t.updatedAt}`).join(","), status, searchParam, queues, profile, myPortfolio]);
 
   useEffect(() => {
     const companyId = localStorage.getItem("companyId");
     const socket = socketManager.getSocket(companyId);
 
     const shouldUpdateTicket = (ticket) =>
-      myClients
-        ? isMyClient(ticket)
+      myPortfolio
+        ? isInMyPortfolio(ticket)
         : (!ticket.userId || ticket.userId === user?.id || showAll) &&
           (!ticket.queueId || selectedQueueIds.indexOf(ticket.queueId) > -1);
 
     const notBelongsToUserQueues = (ticket) =>
-      myClients
-        ? !isMyClient(ticket)
+      myPortfolio
+        ? !isInMyPortfolio(ticket)
         : ticket.queueId && selectedQueueIds.indexOf(ticket.queueId) === -1;
 
     socket.on("ready", () => {
@@ -288,7 +288,7 @@ const TicketsListCustom = (props) => {
       const queueIds = queues.map((q) => q.id);
       if (
         profile === "user" &&
-        !myClients &&
+        !myPortfolio &&
         (queueIds.indexOf(data.ticket?.queue?.id) === -1 ||
           data.ticket.queue === null)
       ) {
@@ -315,7 +315,7 @@ const TicketsListCustom = (props) => {
     return () => {
       socket.disconnect();
     };
-  }, [status, showAll, user, selectedQueueIds, tags, users, profile, queues, socketManager, myClients]);
+  }, [status, showAll, user, selectedQueueIds, tags, users, profile, queues, socketManager, myPortfolio]);
 
   useEffect(() => {
     if (typeof updateCount === "function") {

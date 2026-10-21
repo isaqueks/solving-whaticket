@@ -129,7 +129,7 @@ const messages = {
 					importMessage: "Do you want to import all contacts from the phone?",
 				},
 				buttons: {
-					myClients: "My Clients",
+					myPortfolio: "My Portfolio Only",
 					import: "Import Contacts",
 					add: "Add Contact",
 				},
@@ -225,7 +225,7 @@ const messages = {
 				},
 				buttons: {
 					showAll: "All",
-					myClients: "My Clients",
+					myPortfolio: "My Portfolio Only",
 				},
 			},
 			transferTicketModal: {

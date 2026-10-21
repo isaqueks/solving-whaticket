@@ -20,7 +20,6 @@ import TabPanel from "../TabPanel";
 
 import { i18n } from "../../translate/i18n";
 import { AuthContext } from "../../context/Auth/AuthContext";
-import { Can } from "../Can";
 import TicketsQueueSelect from "../TicketsQueueSelect";
 import { Button } from "@material-ui/core";
 import { TagsFilter } from "../TagsFilter";
@@ -148,15 +147,14 @@ const TicketsManagerTabs = () => {
   const [tabOpen, setTabOpen] = useState("read");
   const [newTicketModalOpen, setNewTicketModalOpen] = useState(false);
   
-  // Carrega o valor do localStorage ou usa false como padrão
-  const [showAllTickets, setShowAllTickets] = useState(() => {
-    const saved = localStorage.getItem("showAllTickets");
-    return saved ? JSON.parse(saved) : false;
-  });
-  
   const searchInputRef = useRef();
   const { user } = useContext(AuthContext);
   const { profile } = user;
+
+  // Base da lista, pelo perfil: admin vê todos os tickets; usuário vê os seus
+  // e os pendentes. O antigo switch "Todos" (só admin) foi substituído pelo
+  // "Só Minha Carteira", que refina essa base pelo responsável do contato.
+  const showAllTickets = profile.toUpperCase() === "ADMIN";
 
   const [openCount, setOpenCount] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
@@ -166,29 +164,19 @@ const TicketsManagerTabs = () => {
   const [selectedTags, setSelectedTags] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
 
-  useEffect(() => {
-    if (user.profile.toUpperCase() === "ADMIN") {
-      const saved = localStorage.getItem("showAllTickets");
-      const savedValue = saved ? JSON.parse(saved) : true;
-      setShowAllTickets(savedValue);
+  // "Só Minha Carteira": só tickets de contatos cujo responsável é o usuário logado
+  const [myPortfolio, setMyPortfolio] = useState(() => {
+    try {
+      const saved = localStorage.getItem("myPortfolioTickets");
+      return saved ? JSON.parse(saved) : false;
+    } catch (e) {
+      return false;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Salva no localStorage sempre que showAllTickets mudar
-  useEffect(() => {
-    localStorage.setItem("showAllTickets", JSON.stringify(showAllTickets));
-  }, [showAllTickets]);
-
-  // "Meus Clientes": só tickets de contatos cujo responsável é o usuário logado
-  const [myClients, setMyClients] = useState(() => {
-    const saved = localStorage.getItem("myClientsTickets");
-    return saved ? JSON.parse(saved) : false;
   });
 
   useEffect(() => {
-    localStorage.setItem("myClientsTickets", JSON.stringify(myClients));
-  }, [myClients]);
+    localStorage.setItem("myPortfolioTickets", JSON.stringify(myPortfolio));
+  }, [myPortfolio]);
 
   useEffect(() => {
     if (tab === "search") {
@@ -305,38 +293,17 @@ const TicketsManagerTabs = () => {
               {i18n.t("ticketsManager.buttons.newTicket")}
             </Button>
             <FormControlLabel
-              label={i18n.t("tickets.buttons.myClients")}
+              label={i18n.t("tickets.buttons.myPortfolio")}
               labelPlacement="start"
               control={
                 <Switch
                   size="small"
-                  checked={myClients}
-                  onChange={() => setMyClients((prevState) => !prevState)}
-                  name="myClientsTickets"
+                  checked={myPortfolio}
+                  onChange={() => setMyPortfolio((prevState) => !prevState)}
+                  name="myPortfolioTickets"
                   color="primary"
                 />
               }
-            />
-            <Can
-              role={user.profile}
-              perform="tickets-manager:showall"
-              yes={() => (
-                <FormControlLabel
-                  label={i18n.t("tickets.buttons.showAll")}
-                  labelPlacement="start"
-                  control={
-                    <Switch
-                      size="small"
-                      checked={showAllTickets}
-                      onChange={() =>
-                        setShowAllTickets((prevState) => !prevState)
-                      }
-                      name="showAllTickets"
-                      color="primary"
-                    />
-                  }
-                />
-              )}
             />
           </>
         )}
@@ -385,7 +352,7 @@ const TicketsManagerTabs = () => {
             // status="open"
             unread="read"
             showAll={showAllTickets}
-            myClients={myClients}
+            myPortfolio={myPortfolio}
             selectedQueueIds={selectedQueueIds}
             updateCount={(val) => setOpenCount(val)}
             style={applyPanelStyle("read")}
@@ -394,7 +361,7 @@ const TicketsManagerTabs = () => {
             // status="pending"
             unread="unread"
             showAll={showAllTickets}
-            myClients={myClients}
+            myPortfolio={myPortfolio}
             selectedQueueIds={selectedQueueIds}
             updateCount={(val) => setPendingCount(val)}
             style={applyPanelStyle("unread")}
@@ -405,7 +372,7 @@ const TicketsManagerTabs = () => {
         <TicketsList
           status="closed"
           showAll={true}
-          myClients={myClients}
+          myPortfolio={myPortfolio}
           selectedQueueIds={selectedQueueIds}
         />
       </TabPanel>
@@ -417,7 +384,7 @@ const TicketsManagerTabs = () => {
         <TicketsList
           searchParam={searchParam}
           showAll={true}
-          myClients={myClients}
+          myPortfolio={myPortfolio}
           tags={selectedTags}
           users={selectedUsers}
           selectedQueueIds={selectedQueueIds}

@@ -181,7 +181,7 @@ const messages = {
           add: "Adicionar Contato",
           export: "Exportar Contatos",
           delete: "Excluir Todos Contatos",
-          myClients: "Meus Clientes",
+          myPortfolio: "Só Minha Carteira",
         },
         table: {
           name: "Nome",
@@ -411,7 +411,7 @@ const messages = {
         },
         buttons: {
           showAll: "Todos",
-          myClients: "Meus Clientes",
+          myPortfolio: "Só Minha Carteira",
         },
       },
       transferTicketModal: {
