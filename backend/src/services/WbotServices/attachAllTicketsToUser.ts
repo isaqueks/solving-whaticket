@@ -4,8 +4,19 @@ import { Op } from "sequelize";
 import User from "../../models/User";
 import { getIO } from "../../libs/socket";
 
-const QUEUE_FALAR_COM_ATENDENTE = 1;
-
+/**
+ * Rede de segurança (cron de 10 min): devolve ao colaborador responsável
+ * (Contacts.attachedToEmail) os tickets que ficaram sem usuário já dentro de
+ * uma fila, em qualquer fila. O caminho normal é o UpdateTicketService, que
+ * grava o responsável sempre que o ticket entra numa fila; aqui entram os
+ * casos que gravam a fila direto (ex.: transferência por tempo).
+ *
+ * Fica de fora:
+ * - ticket sem fila: o chatbot de filas só roda com userId nulo; atribuir aqui
+ *   interromperia o menu;
+ * - ticket em integração/prompt (typebot, OpenAI): a automação ainda atende;
+ * - ticket encerrado.
+ */
 export async function attachAllTicketsToUser(companyId: number) {
 
   const nonAttached = await Ticket.findAll({
@@ -14,7 +25,10 @@ export async function attachAllTicketsToUser(companyId: number) {
         [Op.is]: null
       },
       companyId,
-      queueId: QUEUE_FALAR_COM_ATENDENTE,
+      queueId: { [Op.not]: null },
+      useIntegration: { [Op.not]: true },
+      promptId: { [Op.is]: null },
+      status: { [Op.ne]: "closed" }
     },
     include: [
       {

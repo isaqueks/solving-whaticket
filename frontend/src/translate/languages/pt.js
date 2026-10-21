@@ -180,12 +180,14 @@ const messages = {
 		  importSheet: "Import. Excel",
           add: "Adicionar Contato",
           export: "Exportar Contatos",
-          delete: "Excluir Todos Contatos"
+          delete: "Excluir Todos Contatos",
+          myClients: "Meus Clientes",
         },
         table: {
           name: "Nome",
           whatsapp: "WhatsApp",
           email: "Email",
+          responsible: "Responsável",
           actions: "Ações",
         },
       },
@@ -409,6 +411,7 @@ const messages = {
         },
         buttons: {
           showAll: "Todos",
+          myClients: "Meus Clientes",
         },
       },
       transferTicketModal: {
@@ -423,6 +426,8 @@ const messages = {
         },
       },
       ticketsList: {
+        responsible: "Colaborador responsável pelo contato",
+        responsibleShort: "RESP.",
         pendingHeader: "Aguardando",
         assignedHeader: "Atendendo",
         noTicketsTitle: "Nada aqui!",

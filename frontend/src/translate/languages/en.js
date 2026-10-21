@@ -129,6 +129,7 @@ const messages = {
 					importMessage: "Do you want to import all contacts from the phone?",
 				},
 				buttons: {
+					myClients: "My Clients",
 					import: "Import Contacts",
 					add: "Add Contact",
 				},
@@ -136,6 +137,7 @@ const messages = {
 					name: "Name",
 					whatsapp: "WhatsApp",
 					email: "Email",
+					responsible: "Owner",
 					actions: "Actions",
 				},
 			},
@@ -223,6 +225,7 @@ const messages = {
 				},
 				buttons: {
 					showAll: "All",
+					myClients: "My Clients",
 				},
 			},
 			transferTicketModal: {
@@ -235,6 +238,8 @@ const messages = {
 				},
 			},
 			ticketsList: {
+				responsible: "User responsible for this contact",
+				responsibleShort: "OWNER",
 				pendingHeader: "Queue",
 				assignedHeader: "Working on",
 				noTicketsTitle: "Nothing here!",

@@ -28,7 +28,8 @@ export class TicketCache {
         showAll,
         queueIds,
         withUnreadMessages,
-        unread
+        unread,
+        myClients
     } = params;
 
     const { data } = await api.get("/tickets", {
@@ -43,7 +44,8 @@ export class TicketCache {
         showAll,
         queueIds,
         withUnreadMessages,
-        unread
+        unread,
+        myClients
       },
     });
 

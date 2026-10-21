@@ -15,7 +15,8 @@ const useTickets = ({
   showAll,
   queueIds,
   withUnreadMessages,
-  unread
+  unread,
+  myClients
 }) => {
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(false);
@@ -52,7 +53,8 @@ const useTickets = ({
             showAll,
             queueIds,
             withUnreadMessages,
-            unread
+            unread,
+            myClients
           };
           const data = await TicketCache.getTickets(params);
           setTickets(data.tickets);
@@ -82,6 +84,7 @@ const useTickets = ({
     showAll,
     queueIds,
     withUnreadMessages,
+    myClients,
   ]);
 
   return { tickets, loading, hasMore };

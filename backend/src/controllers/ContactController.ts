@@ -24,6 +24,7 @@ type IndexQuery = {
   searchParam: string;
   pageNumber: string;
   group?: string;
+  myClients?: string;
 };
 
 type IndexGetContactQuery = {
@@ -43,14 +44,16 @@ interface ContactData {
 }
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
-  const { searchParam, pageNumber, group } = req.query as IndexQuery;
-  const { companyId } = req.user;
+  const { searchParam, pageNumber, group, myClients } = req.query as IndexQuery;
+  const { companyId, id: userId } = req.user;
 
   const { contacts, count, hasMore } = await ListContactsService({
     searchParam,
     pageNumber,
     companyId,
-    group
+    group,
+    myClients,
+    userId: Number(userId)
   });
 
   return res.json({ contacts, count, hasMore });

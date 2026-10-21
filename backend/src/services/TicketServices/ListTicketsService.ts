@@ -11,6 +11,7 @@ import Tag from "../../models/Tag";
 import TicketTag from "../../models/TicketTag";
 import { intersection } from "lodash";
 import Whatsapp from "../../models/Whatsapp";
+import AttachResponsibleUsers from "../ContactServices/AttachResponsibleUsers";
 
 interface Request {
   searchParam?: string;
@@ -26,6 +27,9 @@ interface Request {
   users: number[];
   companyId: number;
   unread?: 'unread' | 'read';
+  // "true": só tickets de contatos cujo responsável (Contacts.attachedToEmail)
+  // é o usuário logado, independente de fila, status ou atendente atual
+  myClients?: string;
 }
 
 interface Response {
@@ -47,19 +51,38 @@ const ListTicketsService = async ({
   userId,
   withUnreadMessages,
   companyId,
-  unread
+  unread,
+  myClients
 }: Request): Promise<Response> => {
   let whereCondition: Filterable["where"] = {
     [Op.or]: [{ userId }, { status: "pending" }],
     queueId: { [Op.or]: [queueIds, null] }
   };
+
+  // Filtro "Meus Clientes": o vínculo contato -> colaborador é por e-mail.
+  // Sem e-mail (usuário inexistente) o filtro não casa com nenhum contato.
+  let myClientsCondition: Filterable["where"] | null = null;
+  if (myClients === "true") {
+    const me = await User.findByPk(userId, { attributes: ["email"] });
+    const email = (me?.email || "").trim().toLowerCase();
+    if (!email) {
+      // sem e-mail não há vínculo possível (null casaria com "sem responsável")
+      return { tickets: [], count: 0, hasMore: false };
+    }
+    myClientsCondition = {
+      "$contact.attachedToEmail$": where(
+        fn("LOWER", col("contact.attachedToEmail")),
+        email
+      )
+    };
+  }
   let includeCondition: Includeable[];
 
   includeCondition = [
     {
       model: Contact,
       as: "contact",
-      attributes: ["id", "name", "number", "email", "profilePicUrl"]
+      attributes: ["id", "name", "number", "email", "profilePicUrl", "attachedToEmail"]
     },
     {
       model: Queue,
@@ -85,6 +108,10 @@ const ListTicketsService = async ({
 
   if (showAll === "true") {
     whereCondition = { queueId: { [Op.or]: [queueIds, null] } };
+  }
+
+  if (myClientsCondition) {
+    whereCondition = { ...myClientsCondition };
   }
 
   if (status) {
@@ -167,6 +194,13 @@ const ListTicketsService = async ({
       queueId: { [Op.or]: [userQueueIds, null] },
       unreadMessages: { [Op.gt]: 0 }
     };
+
+    if (myClientsCondition) {
+      whereCondition = {
+        ...myClientsCondition,
+        unreadMessages: { [Op.gt]: 0 }
+      };
+    }
   }
 
   if (unread) {
@@ -239,6 +273,9 @@ const ListTicketsService = async ({
   });
 
   const hasMore = count > offset + tickets.length;
+
+  // responsável pelo contato (badge na lista), resolvido em uma consulta
+  await AttachResponsibleUsers(tickets.map(t => t.contact), companyId);
 
   return {
     tickets,

@@ -180,6 +180,16 @@ const TicketsManagerTabs = () => {
     localStorage.setItem("showAllTickets", JSON.stringify(showAllTickets));
   }, [showAllTickets]);
 
+  // "Meus Clientes": só tickets de contatos cujo responsável é o usuário logado
+  const [myClients, setMyClients] = useState(() => {
+    const saved = localStorage.getItem("myClientsTickets");
+    return saved ? JSON.parse(saved) : false;
+  });
+
+  useEffect(() => {
+    localStorage.setItem("myClientsTickets", JSON.stringify(myClients));
+  }, [myClients]);
+
   useEffect(() => {
     if (tab === "search") {
       searchInputRef.current.focus();
@@ -294,6 +304,19 @@ const TicketsManagerTabs = () => {
             >
               {i18n.t("ticketsManager.buttons.newTicket")}
             </Button>
+            <FormControlLabel
+              label={i18n.t("tickets.buttons.myClients")}
+              labelPlacement="start"
+              control={
+                <Switch
+                  size="small"
+                  checked={myClients}
+                  onChange={() => setMyClients((prevState) => !prevState)}
+                  name="myClientsTickets"
+                  color="primary"
+                />
+              }
+            />
             <Can
               role={user.profile}
               perform="tickets-manager:showall"
@@ -362,6 +385,7 @@ const TicketsManagerTabs = () => {
             // status="open"
             unread="read"
             showAll={showAllTickets}
+            myClients={myClients}
             selectedQueueIds={selectedQueueIds}
             updateCount={(val) => setOpenCount(val)}
             style={applyPanelStyle("read")}
@@ -370,6 +394,7 @@ const TicketsManagerTabs = () => {
             // status="pending"
             unread="unread"
             showAll={showAllTickets}
+            myClients={myClients}
             selectedQueueIds={selectedQueueIds}
             updateCount={(val) => setPendingCount(val)}
             style={applyPanelStyle("unread")}
@@ -380,6 +405,7 @@ const TicketsManagerTabs = () => {
         <TicketsList
           status="closed"
           showAll={true}
+          myClients={myClients}
           selectedQueueIds={selectedQueueIds}
         />
       </TabPanel>
@@ -391,6 +417,7 @@ const TicketsManagerTabs = () => {
         <TicketsList
           searchParam={searchParam}
           showAll={true}
+          myClients={myClients}
           tags={selectedTags}
           users={selectedUsers}
           selectedQueueIds={selectedQueueIds}

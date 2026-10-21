@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
+import { i18n } from "../../translate/i18n";
 import clsx from "clsx";
 import { format, isSameDay, parseISO } from "date-fns";
 import { useHistory, useParams } from "react-router-dom";
@@ -504,6 +505,18 @@ const TicketListItemCustom = ({ ticket }) => {
                 className={classes.connectionTag}
               >
                 {ticketUser}
+              </Badge>
+            )}
+            {/* responsável pelo contato (Contacts.attachedToEmail): vem do
+                contato, não do ticket, então aparece mesmo com o ticket sem
+                atendente (chatbot, pendente) */}
+            {ticket.contact?.attachedUser?.name && (
+              <Badge
+                style={{ backgroundColor: "#1565c0" }}
+                className={classes.connectionTag}
+                title={i18n.t("ticketsList.responsible")}
+              >
+                {`${i18n.t("ticketsList.responsibleShort")} ${ticket.contact.attachedUser.name.toUpperCase()}`}
               </Badge>
             )}
             <Badge

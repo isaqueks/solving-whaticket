@@ -2,7 +2,7 @@ import React, { useState, useEffect, useReducer, useContext, useRef } from "reac
 
 import { toast } from "react-toastify";
 import { useHistory } from "react-router-dom";
-import { Tooltip } from "@material-ui/core";
+import { Tooltip, FormControlLabel, Switch } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
 import Table from "@material-ui/core/Table";
 import TableBody from "@material-ui/core/TableBody";
@@ -110,12 +110,26 @@ const Contacts = () => {
   const [hasMore, setHasMore] = useState(false);
   const fileUploadRef = useRef(null);
 
+  // "Meus Clientes": só contatos cujo responsável (attachedToEmail) sou eu
+  const [myClients, setMyClients] = useState(() => {
+    try {
+      const saved = localStorage.getItem("myClientsContacts");
+      return saved ? JSON.parse(saved) : false;
+    } catch (e) {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem("myClientsContacts", JSON.stringify(myClients));
+  }, [myClients]);
+
   const socketManager = useContext(SocketContext);
 
   useEffect(() => {
     dispatch({ type: "RESET" });
     setPageNumber(1);
-  }, [searchParam]);
+  }, [searchParam, myClients]);
 
   useEffect(() => {
     setLoading(true);
@@ -123,7 +137,7 @@ const Contacts = () => {
       const fetchContacts = async () => {
         try {
           const { data } = await api.get("/contacts/", {
-            params: { searchParam, pageNumber },
+            params: { searchParam, pageNumber, myClients },
           });
           dispatch({ type: "LOAD_CONTACTS", payload: data.contacts });
           setHasMore(data.hasMore);
@@ -135,7 +149,7 @@ const Contacts = () => {
       fetchContacts();
     }, 500);
     return () => clearTimeout(delayDebounceFn);
-  }, [searchParam, pageNumber]);
+  }, [searchParam, pageNumber, myClients]);
 
   useEffect(() => {
     const companyId = localStorage.getItem("companyId");
@@ -279,6 +293,19 @@ const Contacts = () => {
       <MainHeader>
         <Title>{i18n.t("contacts.title")}</Title>
         <MainHeaderButtonsWrapper>
+          <FormControlLabel
+            label={i18n.t("contacts.buttons.myClients")}
+            labelPlacement="start"
+            control={
+              <Switch
+                size="small"
+                checked={myClients}
+                onChange={() => setMyClients((prev) => !prev)}
+                name="myClientsContacts"
+                color="primary"
+              />
+            }
+          />
           <TextField
             placeholder={i18n.t("contacts.searchPlaceholder")}
             type="search"
@@ -355,6 +382,9 @@ const Contacts = () => {
                 {i18n.t("contacts.table.email")}
               </TableCell>
               <TableCell align="center">
+                {i18n.t("contacts.table.responsible")}
+              </TableCell>
+              <TableCell align="center">
                 {i18n.t("contacts.table.actions")}
               </TableCell>
             </TableRow>
@@ -369,6 +399,9 @@ const Contacts = () => {
                   <TableCell>{contact.name}</TableCell>
                   <TableCell align="center">{contact.number}</TableCell>
                   <TableCell align="center">{contact.email}</TableCell>
+                  <TableCell align="center" title={contact.attachedToEmail || ""}>
+                    {contact.attachedUser?.name || contact.attachedToEmail || ""}
+                  </TableCell>
                   <TableCell align="center">
                     <IconButton
                       size="small"
@@ -403,7 +436,7 @@ const Contacts = () => {
                   </TableCell>
                 </TableRow>
               ))}
-              {loading && <TableRowSkeleton avatar columns={3} />}
+              {loading && <TableRowSkeleton avatar columns={4} />}
             </>
           </TableBody>
         </Table>

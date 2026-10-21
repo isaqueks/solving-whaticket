@@ -173,6 +173,7 @@ contacts: {
     importMessage: "¿Desea importar todos los contactos del teléfono?",
   },
   buttons: {
+    myClients: "Mis Clientes",
     import: "Importar Contactos",
     add: "Agregar Contacto",
     export: "Exportar Contactos",
@@ -182,6 +183,7 @@ contacts: {
     name: "Nombre",
     whatsapp: "WhatsApp",
     email: "Correo electrónico",
+    responsible: "Responsable",
     actions: "Acciones",
   },
 },
@@ -401,6 +403,7 @@ tickets: {
   },
   buttons: {
     showAll: "Todos",
+    myClients: "Mis Clientes",
   },
 },
 transferTicketModal: {
@@ -415,6 +418,8 @@ transferTicketModal: {
     },
   },
   ticketsList: {
+    responsible: "Colaborador responsable del contacto",
+    responsibleShort: "RESP.",
     pendingHeader: "Pendiente",
     assignedHeader: "Atendiendo",
     noTicketsTitle: "¡Nada aquí!",

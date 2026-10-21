@@ -64,13 +64,16 @@ const CreateTicketService = async ({
 
   const { id } = _ticket;
 
+  // O ticket de um contato vinculado a um colaborador fica sempre com ele,
+  // independente de quem abriu. (`_ticket.contact` não vem carregado do
+  // findOrCreate, por isso o e-mail é o do ShowContactService acima.)
   let attachedUser: User = null;
 
-  if (_ticket.contact?.attachedToEmail) {
+  if (attachedToEmail) {
     attachedUser = await User.findOne({
       where: {
         companyId,
-        email: _ticket.contact.attachedToEmail
+        email: attachedToEmail
       }
     });
 
