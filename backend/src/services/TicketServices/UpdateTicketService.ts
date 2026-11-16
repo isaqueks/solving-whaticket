@@ -40,6 +40,9 @@ interface Request {
   ticketData: TicketData;
   ticketId: string | number;
   companyId: number;
+  // false = mudança feita pelo bot (menu de filas, typebot, transferência
+  // automática): a conversa continua não lida até uma pessoa abrir ou responder.
+  markAsRead?: boolean;
 }
 
 interface Response {
@@ -51,7 +54,8 @@ interface Response {
 const UpdateTicketService = async ({
   ticketData,
   ticketId,
-  companyId
+  companyId,
+  markAsRead = true
 }: Request): Promise<Response> => {
 
   try {
@@ -88,7 +92,9 @@ const UpdateTicketService = async ({
       whatsappId = ticket.whatsappId.toString();
     }
 
-    await SetTicketMessagesAsRead(ticket);
+    if (markAsRead) {
+      await SetTicketMessagesAsRead(ticket);
+    }
 
     const oldStatus = ticket.status;
     const oldUserId = ticket.user?.id;
