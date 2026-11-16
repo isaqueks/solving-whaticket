@@ -16,6 +16,7 @@ import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import UndoRoundedIcon from '@material-ui/icons/UndoRounded';
 import Tooltip from '@material-ui/core/Tooltip';
 import { green } from '@material-ui/core/colors';
+import WhatsAppWebButton from "../WhatsAppWebButton";
 
 
 const useStyles = makeStyles(theme => ({
@@ -30,7 +31,7 @@ const useStyles = makeStyles(theme => ({
 	},
 }));
 
-const TicketActionButtonsCustom = ({ ticket, small }) => {
+const TicketActionButtonsCustom = ({ ticket, contact, small }) => {
 	const classes = useStyles();
 	const history = useHistory();
 	const [anchorEl, setAnchorEl] = useState(null);
@@ -82,6 +83,7 @@ const TicketActionButtonsCustom = ({ ticket, small }) => {
 
 	return (
 		<div className={classes.actionButtons}>
+			<WhatsAppWebButton contact={contact || ticket.contact} />
 			{ticket.status === "closed" && (
 				<ButtonWithSpinner
 					loading={loading}

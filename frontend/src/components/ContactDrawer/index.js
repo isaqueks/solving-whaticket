@@ -21,6 +21,7 @@ import { ContactForm } from "../ContactForm";
 import ContactModal from "../ContactModal";
 import { ContactNotes } from "../ContactNotes";
 import GroupParticipantsList from "../GroupParticipantsList";
+import WhatsAppWebButton from "../WhatsAppWebButton";
 
 const drawerWidth = 320;
 
@@ -144,6 +145,7 @@ const ContactDrawer = ({ open, handleDrawerClose, contact, ticket, loading }) =>
 									<>
 										<Typography style={{fontSize: 12}}>
 											<Link href={`tel:${contact.number}`}>{contact.number}</Link>
+											<WhatsAppWebButton contact={contact} size="small" />
 										</Typography>
 										<Typography style={{fontSize: 12}}>
 											<Link href={`mailto:${contact.email}`}>{contact.email}</Link>

@@ -207,7 +207,7 @@ const Ticket = (props) => {
       >
         <TicketHeader loading={loading}>
           {renderTicketInfo()}
-          <TicketActionButtons ticket={ticket} small={smallMode} />
+          <TicketActionButtons ticket={ticket} contact={contact} small={smallMode} />
         </TicketHeader>
         <Paper>
           <TagsContainer ticket={ticket} />
