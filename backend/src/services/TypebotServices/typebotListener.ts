@@ -29,7 +29,8 @@ const transferQueue = async (
     await UpdateTicketService({
         ticketData: { queueId: queueId, useIntegration: false, promptId: null },
         ticketId: ticket.id,
-        companyId: ticket.companyId
+        companyId: ticket.companyId,
+        markAsRead: false
     });
 };
 
@@ -330,7 +331,8 @@ const typebotListener = async ({
                                             integrationId: null
                                         },
                                         ticketId: ticket.id,
-                                        companyId: ticket.companyId
+                                        companyId: ticket.companyId,
+                                        markAsRead: false
                                     })
 
                                     return;
@@ -346,7 +348,8 @@ const typebotListener = async ({
                                             integrationId: null
                                         },
                                         ticketId: ticket.id,
-                                        companyId: ticket.companyId
+                                        companyId: ticket.companyId,
+                                        markAsRead: false
                                     })
 
                                     return;
@@ -518,7 +521,8 @@ const typebotListener = async ({
                         queueId: q.id
                     },
                     ticketId: ticket.id,
-                    companyId: ticket.companyId
+                    companyId: ticket.companyId,
+                    markAsRead: false
                 })
             }
 
