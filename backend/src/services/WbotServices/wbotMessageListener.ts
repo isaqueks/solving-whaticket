@@ -792,7 +792,8 @@ const transferQueue = async (
   await UpdateTicketService({
     ticketData: { queueId: queueId, useIntegration: false, promptId: null },
     ticketId: ticket.id,
-    companyId: ticket.companyId
+    companyId: ticket.companyId,
+    markAsRead: false
   });
 };
 
@@ -1128,6 +1129,7 @@ const verifyQueue = async (
       ticketData: { queueId: firstQueue.id, chatbot, status: "pending" },
       ticketId: ticket.id,
       companyId: ticket.companyId,
+      markAsRead: false
     });
 
     return;
@@ -1177,6 +1179,7 @@ const verifyQueue = async (
       ticketData: { queueId: choosenQueue.id, chatbot },
       ticketId: ticket.id,
       companyId: ticket.companyId,
+      markAsRead: false
     });
 
 
@@ -1212,6 +1215,7 @@ const verifyQueue = async (
               ticketData: { queueId: null, chatbot },
               ticketId: ticket.id,
               companyId: ticket.companyId,
+              markAsRead: false
             });
           }
           // true = fora do expediente já avisado e o ticket continua na fila
