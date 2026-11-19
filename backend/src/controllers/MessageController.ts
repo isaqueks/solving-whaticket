@@ -11,6 +11,7 @@ import Whatsapp from "../models/Whatsapp";
 
 import CreateOrUpdateContactService from "../services/ContactServices/CreateOrUpdateContactService";
 import ListMessagesService from "../services/MessageServices/ListMessagesService";
+import SearchMessagesService from "../services/MessageServices/SearchMessagesService";
 import FindOrCreateTicketService from "../services/TicketServices/FindOrCreateTicketService";
 import ShowTicketService from "../services/TicketServices/ShowTicketService";
 import UpdateTicketService from "../services/TicketServices/UpdateTicketService";
@@ -20,8 +21,15 @@ import GetProfilePicUrl from "../services/WbotServices/GetProfilePicUrl";
 import SendWhatsAppMedia from "../services/WbotServices/SendWhatsAppMedia";
 import SendWhatsAppMessage from "../services/WbotServices/SendWhatsAppMessage";
 import ForwardWhatsAppMessage from "../services/WbotServices/ForwardWhatsAppMessage";
-type IndexQuery = {
-  pageNumber: string;
+// Parâmetro de query como string; repetido/array (?x[]=1) vira undefined.
+const queryString = (value: unknown): string | undefined =>
+  typeof value === "string" ? value : undefined;
+
+const getUserQueueIds = async (userId: string): Promise<number[]> => {
+  const user = await User.findByPk(userId, {
+    include: [{ model: Queue, as: "queues" }]
+  });
+  return user.queues.map(queue => queue.id);
 };
 
 type MessageData = {
@@ -36,29 +44,44 @@ type MessageData = {
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
   const { ticketId } = req.params;
-  const { pageNumber } = req.query as IndexQuery;
   const { companyId, profile } = req.user;
-  const queues: number[] = [];
+  const queues =
+    profile !== "admin" ? await getUserQueueIds(req.user.id) : [];
 
-  if (profile !== "admin") {
-    const user = await User.findByPk(req.user.id, {
-      include: [{ model: Queue, as: "queues" }]
+  const { count, messages, ticket, hasMore, hasNewer } =
+    await ListMessagesService({
+      pageNumber: queryString(req.query.pageNumber),
+      ticketId,
+      companyId,
+      queues,
+      aroundId: queryString(req.query.aroundId),
+      beforeId: queryString(req.query.beforeId),
+      afterId: queryString(req.query.afterId)
     });
-    user.queues.forEach(queue => {
-      queues.push(queue.id);
-    });
-  }
-
-  const { count, messages, ticket, hasMore } = await ListMessagesService({
-    pageNumber,
-    ticketId,
-    companyId,
-    queues
-  });
 
   SetTicketMessagesAsRead(ticket);
 
-  return res.json({ count, messages, ticket, hasMore });
+  return res.json({ count, messages, ticket, hasMore, hasNewer });
+};
+
+export const search = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { companyId, profile } = req.user;
+  const isAdmin = profile === "admin";
+  const queues = isAdmin ? [] : await getUserQueueIds(req.user.id);
+
+  const { messages, hasMore } = await SearchMessagesService({
+    searchParam: queryString(req.query.searchParam),
+    ticketId: queryString(req.query.ticketId),
+    pageNumber: queryString(req.query.pageNumber),
+    companyId,
+    isAdmin,
+    queues
+  });
+
+  return res.json({ messages, hasMore });
 };
 
 type ForwardData = {
