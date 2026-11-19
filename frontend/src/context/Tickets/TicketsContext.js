@@ -9,7 +9,17 @@ const TicketsContextProvider = ({ children }) => {
 
     useEffect(() => {
         if (currentTicket.id !== null) {
-            history.push(`/tickets/${currentTicket.uuid}`);
+            // Chamado #95: ao abrir a conversa a partir de um resultado da busca
+            // de mensagens, leva junto a mensagem a focar
+            const { focusMessageId } = currentTicket;
+            history.push(
+                focusMessageId
+                    ? {
+                        pathname: `/tickets/${currentTicket.uuid}`,
+                        state: { focusMessageId, focusTicketId: currentTicket.id },
+                    }
+                    : `/tickets/${currentTicket.uuid}`
+            );
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentTicket])

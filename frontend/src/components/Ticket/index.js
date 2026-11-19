@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { useHistory, useParams } from "react-router-dom";
+import { useHistory, useLocation, useParams } from "react-router-dom";
 
 import clsx from "clsx";
 import { toast } from "react-toastify";
@@ -12,6 +12,7 @@ import { SocketContext } from "../../context/Socket/SocketContext";
 import toastError from "../../errors/toastError";
 import api from "../../services/api";
 import ContactDrawer from "../ContactDrawer";
+import MessageSearchDrawer from "../MessageSearchDrawer";
 import MessageInput from "../MessageInputCustom/";
 import MessagesList from "../MessagesList";
 import { TagsContainer } from "../TagsContainer";
@@ -63,11 +64,15 @@ const Ticket = (props) => {
   const ticketId = props?.ticketId || params.ticketId;
 
   const history = useHistory();
+  const location = useLocation();
   const classes = useStyles();
 
   const { user } = useContext(AuthContext);
 
   const [drawerOpen, setDrawerOpen] = useState(false);
+  // Chamado #95: painel "Pesquisar mensagens" e mensagem a focar na lista
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [focusTarget, setFocusTarget] = useState(null);
   const [loading, setLoading] = useState(true);
   const [contact, setContact] = useState({});
   const [ticket, setTicket] = useState({});
@@ -153,10 +158,36 @@ const Ticket = (props) => {
 
   useEffect(() => {
     setPendingMessages([]);
+    setSearchOpen(false);
   }, [ticketId])
 
+  // Resultado da busca global clicado: a rota chega com a mensagem a focar
+  // (ver TicketsContext). No modo small (sem rota própria) não se aplica.
+  // Depois de usado, o state sai da rota para F5/Voltar não repetirem o salto.
+  const routeState = props?.ticketId ? null : location.state;
+  useEffect(() => {
+    if (routeState?.focusMessageId) {
+      setFocusTarget({
+        messageId: routeState.focusMessageId,
+        ticketId: routeState.focusTicketId,
+      });
+      history.replace(location.pathname);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeState]);
+
   const handleDrawerOpen = () => {
+    setSearchOpen(false);
     setDrawerOpen(true);
+  };
+
+  const handleToggleSearch = () => {
+    setDrawerOpen(false);
+    setSearchOpen((prev) => !prev);
+  };
+
+  const handleSearchSelect = (message) => {
+    setFocusTarget({ messageId: message.id, ticketId: ticket.id });
   };
 
   const handleDrawerClose = () => {
@@ -184,6 +215,7 @@ const Ticket = (props) => {
           isGroup={ticket.isGroup}
           pendingMessages={pendingMessages}
           setPendingMessages={setPendingMessages}
+          focusTarget={focusTarget}
         ></MessagesList>
         <MessageInput 
           ticket={ticket}
@@ -197,17 +229,29 @@ const Ticket = (props) => {
   };
 
   return (
-    <div className={classes.root} id="drawer-container">
+    <div
+      className={classes.root}
+      id="drawer-container"
+      // focar um campo do painel enquanto ele desliza faz o navegador rolar
+      // este contêiner (overflow hidden) na horizontal, deslocando a conversa
+      onScroll={(e) => (e.currentTarget.scrollLeft = 0)}
+    >
       <Paper
         variant="outlined"
         elevation={0}
         className={clsx(classes.mainWrapper, {
-          [classes.mainWrapperShift]: drawerOpen,
+          [classes.mainWrapperShift]: drawerOpen || searchOpen,
         })}
       >
         <TicketHeader loading={loading}>
           {renderTicketInfo()}
-          <TicketActionButtons ticket={ticket} contact={contact} small={smallMode} />
+          <TicketActionButtons
+            ticket={ticket}
+            contact={contact}
+            small={smallMode}
+            onSearchClick={ticket.id ? handleToggleSearch : undefined}
+            searchOpen={searchOpen}
+          />
         </TicketHeader>
         <Paper>
           <TagsContainer ticket={ticket} />
@@ -220,6 +264,12 @@ const Ticket = (props) => {
         contact={contact}
         loading={loading}
         ticket={ticket}
+      />
+      <MessageSearchDrawer
+        open={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        ticket={ticket}
+        onSelectMessage={handleSearchSelect}
       />
     </div>
   );

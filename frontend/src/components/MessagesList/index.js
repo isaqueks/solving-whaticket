@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useReducer, useRef, useContext, useMemo } from "react";
+import React, { useState, useEffect, useLayoutEffect, useReducer, useRef, useContext, useMemo } from "react";
 
 import { isSameDay, parseISO, format } from "date-fns";
 import clsx from "clsx";
@@ -8,9 +8,13 @@ import {
   Button,
   CircularProgress,
   Divider,
+  Fab,
   IconButton,
+  Tooltip,
   makeStyles,
 } from "@material-ui/core";
+import { alpha, useTheme } from "@material-ui/core/styles";
+import { toast } from "react-toastify";
 
 import {
   AccessTime,
@@ -19,6 +23,7 @@ import {
   DoneAll,
   ExpandMore,
   GetApp,
+  KeyboardArrowDown,
   CheckCircle,
   RadioButtonUnchecked,
 } from "@material-ui/icons";
@@ -34,6 +39,7 @@ import api from "../../services/api";
 import toastError from "../../errors/toastError";
 import { SocketContext } from "../../context/Socket/SocketContext";
 import { ReplyMessageContext } from "../../context/ReplyingMessage/ReplyingMessageContext";
+import { i18n } from "../../translate/i18n";
 
 const useStyles = makeStyles((theme) => ({
   messagesListWrapper: {
@@ -64,6 +70,30 @@ const useStyles = makeStyles((theme) => ({
     top: 0,
     left: "50%",
     marginTop: 12,
+  },
+
+  circleLoadingBottom: {
+    top: "auto",
+    bottom: 0,
+    marginTop: 0,
+    marginBottom: 12,
+  },
+
+  // Chamado #95: botão para voltar às mensagens mais recentes quando a lista
+  // está mostrando um trecho antigo da conversa (após pular para um resultado)
+  jumpToLatest: {
+    position: "absolute",
+    right: 28,
+    bottom: 16,
+    zIndex: 2,
+    color: theme.palette.text.secondary,
+    backgroundColor: theme.palette.background.paper,
+    "&:hover": { backgroundColor: theme.palette.background.default },
+  },
+
+  // espaço livre no fim da lista para o botão acima não cobrir o último balão
+  messagesListWithJump: {
+    paddingBottom: 72,
   },
 
   messageLeft: {
@@ -319,20 +349,30 @@ const useSelectStyles = makeStyles((theme) => ({
 const ACK_SENDING = 0;
 
 const reducer = (state, action) => {
-  if (action.type === "LOAD_MESSAGES") {
-    const messages = action.payload;
+  // LOAD_MESSAGES: mais antigas, entram no início; APPEND_MESSAGES (chamado
+  // #95): mais novas (rolando para baixo num trecho antigo), entram no fim.
+  // As que já estão na lista só são atualizadas.
+  if (action.type === "LOAD_MESSAGES" || action.type === "APPEND_MESSAGES") {
+    const next = [...state];
     const newMessages = [];
 
-    messages.forEach((message) => {
-      const messageIndex = state.findIndex((m) => m.id === message.id);
+    action.payload.forEach((message) => {
+      const messageIndex = next.findIndex((m) => m.id === message.id);
       if (messageIndex !== -1) {
-        state[messageIndex] = message;
+        next[messageIndex] = message;
       } else {
         newMessages.push(message);
       }
     });
 
-    return [...newMessages, ...state];
+    return action.type === "LOAD_MESSAGES"
+      ? [...newMessages, ...next]
+      : [...next, ...newMessages];
+  }
+
+  // Chamado #95: troca a lista inteira (janela em volta de uma mensagem)
+  if (action.type === "SET_MESSAGES") {
+    return [...action.payload];
   }
 
   if (action.type === "ADD_MESSAGE") {
@@ -367,6 +407,35 @@ const reducer = (state, action) => {
   if (action.type === "RESET") {
     return [];
   }
+};
+
+// Id da mensagem original que uma linha de edição (isEdited) sobrescreve.
+const getEditedTargetId = (msg) => {
+  try {
+    const raw = JSON.parse(msg.dataJson);
+    return (
+      raw?.message?.editedMessage?.message?.protocolMessage?.key?.id ||
+      raw?.message?.protocolMessage?.key?.id ||
+      null
+    );
+  } catch {
+    return null;
+  }
+};
+
+// Maps a message id to the most recent edited message that overwrites it.
+const buildOverwrittenMessages = (messages) => {
+  const map = new Map();
+  for (const msg of messages) {
+    if (!msg.isEdited) continue;
+    const targetId = getEditedTargetId(msg);
+    if (!targetId) continue;
+    const existing = map.get(targetId);
+    if (!existing || new Date(msg.createdAt) > new Date(existing.createdAt)) {
+      map.set(targetId, msg);
+    }
+  }
+  return map;
 };
 
 function MessageSelect({
@@ -432,16 +501,24 @@ const MessagesList = ({
   isGroup,
   pendingMessages = [],
   setPendingMessages = () => 0,
+  // Chamado #95: { messageId, ticketId } — pular até essa mensagem (cada
+  // pedido é um objeto novo: clicar de novo no mesmo resultado salta de novo)
+  focusTarget = null,
   // allowSelection = false,
   // selection = [], 
   // setSelection = (arr) => {} 
 }) => {
   const classes = useStyles();
+  const theme = useTheme();
 
   const [messagesList, dispatch] = useReducer(reducer, []);
-  const [pageNumber, setPageNumber] = useState(1);
   const [hasMore, setHasMore] = useState(false);
+  // Chamado #95: há mensagens mais novas que as carregadas (a lista está num
+  // trecho antigo da conversa, depois de pular para um resultado da busca)
+  const [hasNewer, setHasNewer] = useState(false);
+  // false | "latest" | "older" | "newer" | "around"
   const [loading, setLoading] = useState(false);
+  const [scrollRequest, setScrollRequest] = useState(0);
 
   const [selectedMessage, setSelectedMessage] = useState({});
   const [anchorEl, setAnchorEl] = useState(null);
@@ -450,7 +527,18 @@ const MessagesList = ({
   const loadingRef = useRef(false);
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
   const socketManager = useContext(SocketContext);
-  const lastMessageRef = useRef();
+  const listRef = useRef();
+
+  const messagesRef = useRef(messagesList);
+  messagesRef.current = messagesList;
+  const hasNewerRef = useRef(false);
+  // cada carga ganha um id; resposta de carga substituída (troca de conversa,
+  // novo salto, "ir para as mais recentes") é descartada
+  const requestIdRef = useRef(0);
+  const loadedTicketRef = useRef();
+  const handledFocusRef = useRef(null);
+  const pendingScrollRef = useRef(null);
+  const pendingCountRef = useRef(pendingMessages.length);
 
   const {
     isForwarding,
@@ -459,47 +547,237 @@ const MessagesList = ({
     setSelectedForwardMessages
   } = useContext(ReplyMessageContext);
 
-  useEffect(() => {
+  const updateHasNewer = (value) => {
+    hasNewerRef.current = value;
+    setHasNewer(value);
+  };
+
+  const scrollToBottom = () => {
+    if (listRef.current) {
+      listRef.current.scrollTop = listRef.current.scrollHeight;
+    }
+  };
+
+  const startRequest = (kind) => {
+    const requestId = ++requestIdRef.current;
+    loadingRef.current = true;
+    setLoading(kind);
+    return requestId;
+  };
+
+  const isCurrentRequest = (requestId) => requestId === requestIdRef.current;
+
+  const finishRequest = (requestId) => {
+    if (!isCurrentRequest(requestId)) return;
+    loadingRef.current = false;
+    setLoading(false);
+  };
+
+  // Mensagens mais recentes (como sempre foi ao abrir a conversa; também ao
+  // voltar do histórico para o fim). A lista é zerada antes de pedir: o que
+  // chegar pelo socket enquanto isso entra no fim e a resposta é mesclada.
+  const loadLatest = async () => {
+    if (ticketId === undefined) return;
+    const requestId = startRequest("latest");
     dispatch({ type: "RESET" });
-    setPageNumber(1);
-    setSelectedForwardMessages([]);
-    setIsForwarding(false);
+    updateHasNewer(false);
+    try {
+      const { data } = await api.get("/messages/" + ticketId, {
+        params: { pageNumber: 1 },
+      });
+      if (!isCurrentRequest(requestId)) return;
 
-    currentTicketId.current = ticketId;
-  }, [ticketId]);
+      dispatch({ type: "LOAD_MESSAGES", payload: data.messages });
+      setHasMore(!!data.hasMore);
+      finishRequest(requestId);
 
-  useEffect(() => {
-    setLoading(true);
-    const delayDebounceFn = setTimeout(() => {
-      const fetchMessages = async () => {
-        if (ticketId === undefined) return;
-        try {
-          const { data } = await api.get("/messages/" + ticketId, {
-            params: { pageNumber },
-          });
+      if (data.messages.length > 1) {
+        scrollToBottom();
+      }
+    } catch (err) {
+      if (!isCurrentRequest(requestId)) return;
+      finishRequest(requestId);
+      toastError(err);
+    }
+  };
 
-          if (currentTicketId.current === ticketId) {
-            dispatch({ type: "LOAD_MESSAGES", payload: data.messages });
-            setHasMore(data.hasMore);
-            setLoading(false);
-            loadingRef.current = false;
-          }
+  // Mais antigas que a primeira carregada (rolando para cima)
+  const loadOlder = async () => {
+    const first = messagesRef.current[0];
+    if (!first || ticketId === undefined) return;
+    const requestId = startRequest("older");
+    try {
+      const { data } = await api.get("/messages/" + ticketId, {
+        params: { beforeId: first.id },
+      });
+      if (!isCurrentRequest(requestId)) return;
 
-          if (pageNumber === 1 && data.messages.length > 1) {
-            scrollToBottom();
-          }
-        } catch (err) {
-          setLoading(false);
-          loadingRef.current = false;
-          toastError(err);
-        }
-      };
-      fetchMessages();
-    }, 20);
-    return () => {
-      clearTimeout(delayDebounceFn);
+      dispatch({ type: "LOAD_MESSAGES", payload: data.messages });
+      setHasMore(!!data.hasMore && data.messages.length > 0);
+      finishRequest(requestId);
+    } catch (err) {
+      if (!isCurrentRequest(requestId)) return;
+      finishRequest(requestId);
+      toastError(err);
+    }
+  };
+
+  // Mais novas que a última carregada (rolando para baixo num trecho antigo)
+  const loadNewer = async () => {
+    const list = messagesRef.current;
+    const last = list[list.length - 1];
+    if (!last || ticketId === undefined) return;
+    const requestId = startRequest("newer");
+    try {
+      const { data } = await api.get("/messages/" + ticketId, {
+        params: { afterId: last.id },
+      });
+      if (!isCurrentRequest(requestId)) return;
+
+      dispatch({ type: "APPEND_MESSAGES", payload: data.messages });
+      updateHasNewer(!!data.hasNewer && data.messages.length > 0);
+      finishRequest(requestId);
+    } catch (err) {
+      if (!isCurrentRequest(requestId)) return;
+      finishRequest(requestId);
+      toastError(err);
+    }
+  };
+
+  // Janela em volta de uma mensagem. Devolve as mensagens carregadas, ou null
+  // se a carga foi substituída por outra no meio do caminho. Erros sobem.
+  const loadAround = async (messageId) => {
+    const requestId = startRequest("around");
+    let data;
+    try {
+      ({ data } = await api.get("/messages/" + ticketId, {
+        params: { aroundId: messageId },
+      }));
+    } catch (err) {
+      if (!isCurrentRequest(requestId)) return null;
+      finishRequest(requestId);
+      throw err;
+    }
+    if (!isCurrentRequest(requestId)) return null;
+
+    dispatch({ type: "SET_MESSAGES", payload: data.messages });
+    setHasMore(!!data.hasMore);
+    updateHasNewer(!!data.hasNewer);
+    finishRequest(requestId);
+    return data.messages;
+  };
+
+  // Chamado #95: pula até a mensagem. Se já está carregada só rola até ela;
+  // senão carrega a janela em volta dela. O resultado da busca pode ser a
+  // mensagem original ou uma linha de edição: o balão exibido é o da
+  // mensagem original com o id da edição mais recente (overwrittenMessages).
+  const jumpToMessage = async (targetId) => {
+    if (ticketId === undefined) return;
+    // não achou: avisa e cai para o carregamento normal (mais recentes)
+    const fail = () => {
+      toast.warn(i18n.t("messageSearch.notFound"));
+      loadLatest();
     };
-  }, [pageNumber, ticketId]);
+
+    try {
+      let list = messagesRef.current;
+      let target = list.find((m) => m.id === targetId);
+      if (!target) {
+        list = await loadAround(targetId);
+        if (!list) return;
+        target = list.find((m) => m.id === targetId);
+        if (!target) return fail();
+      }
+
+      let baseId = targetId;
+      if (target.isEdited) {
+        baseId = getEditedTargetId(target);
+        if (!baseId) return fail();
+        if (!list.some((m) => m.id === baseId)) {
+          list = await loadAround(baseId);
+          if (!list) return;
+          if (!list.some((m) => m.id === baseId)) return fail();
+        }
+      }
+
+      const overwritten = buildOverwrittenMessages(list).get(baseId);
+      pendingScrollRef.current = overwritten ? overwritten.id : baseId;
+      setScrollRequest((n) => n + 1);
+    } catch (err) {
+      // mensagem não encontrada (404) ou erro
+      console.error(err);
+      fail();
+    }
+  };
+
+  // Rola centralizando a mensagem pedida (a lista já está renderizada quando
+  // o pedido chega). Layout effect para não pintar a posição errada antes.
+  useLayoutEffect(() => {
+    const renderedId = pendingScrollRef.current;
+    const container = listRef.current;
+    pendingScrollRef.current = null;
+    if (!renderedId || !container) return;
+
+    const element = Array.from(
+      container.querySelectorAll("[data-message-id]")
+    ).find((el) => el.getAttribute("data-message-id") === renderedId);
+    if (!element) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const elementRect = element.getBoundingClientRect();
+    container.scrollTop +=
+      elementRect.top -
+      containerRect.top -
+      Math.max(16, (container.clientHeight - elementRect.height) / 2);
+    // pisca o balão (contorno âmbar) sem re-renderizar a lista
+    const base = { boxShadow: "0 1px 1px #b3b3b3", filter: "none" };
+    const lit = {
+      boxShadow: `0 0 0 4px ${alpha(theme.palette.warning.main, 0.85)}`,
+      filter: "brightness(0.92)",
+    };
+    element.animate(
+      [base, { ...lit, offset: 0.2 }, { ...base, offset: 0.45 }, { ...lit, offset: 0.7 }, base],
+      { duration: 2000, easing: "ease-in-out" }
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scrollRequest]);
+
+  // Troca de conversa e pedidos de salto
+  useEffect(() => {
+    const wantsFocus =
+      ticketId !== undefined &&
+      !!focusTarget &&
+      focusTarget.ticketId === ticketId &&
+      handledFocusRef.current !== focusTarget;
+
+    if (loadedTicketRef.current !== ticketId || ticketId === undefined) {
+      loadedTicketRef.current = ticketId;
+      currentTicketId.current = ticketId;
+      requestIdRef.current++;
+      loadingRef.current = false;
+      pendingScrollRef.current = null;
+      dispatch({ type: "RESET" });
+      messagesRef.current = [];
+      setHasMore(false);
+      updateHasNewer(false);
+      setSelectedForwardMessages([]);
+      setIsForwarding(false);
+
+      if (ticketId === undefined) {
+        setLoading("latest");
+        return;
+      }
+      if (!wantsFocus) {
+        loadLatest();
+      }
+    }
+
+    if (wantsFocus) {
+      handledFocusRef.current = focusTarget;
+      jumpToMessage(focusTarget.messageId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ticketId, focusTarget]);
 
   useEffect(() => {
     const companyId = localStorage.getItem("companyId");
@@ -509,6 +787,10 @@ const MessagesList = ({
 
     socket.on(`company-${companyId}-appMessage`, (data) => {
       if (data.action === "create" && data.message.ticketId === currentTicketId.current) {
+        // num trecho antigo da conversa a mensagem nova não entra no fim da
+        // lista (deixaria um buraco); ela vem ao rolar para baixo ou no botão
+        // "ir para as mais recentes"
+        if (hasNewerRef.current) return;
         dispatch({ type: "ADD_MESSAGE", payload: data.message });
         scrollToBottom();
       }
@@ -524,9 +806,16 @@ const MessagesList = ({
   }, [ticketId, ticket, socketManager]);
 
   useEffect(() => {
-    if (pendingMessages?.length > 0) {
+    const sentNew = pendingMessages.length > pendingCountRef.current;
+    pendingCountRef.current = pendingMessages.length;
+
+    if (hasNewerRef.current) {
+      // a usuária mandou mensagem enquanto via o histórico: volta para o fim
+      if (sentNew) loadLatest();
+    } else if (pendingMessages.length > 0) {
       scrollToBottom();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingMessages]);
 
   useEffect(() => {
@@ -557,55 +846,29 @@ const MessagesList = ({
   // Maps a message id to the most recent edited message that overwrites it.
   // Computed once per messagesList change (O(edited)) instead of parsing every
   // edited message's dataJson for every rendered message on every render.
-  const overwrittenMessages = useMemo(() => {
-    const map = new Map();
-    for (const msg of messagesList) {
-      if (!msg.isEdited) continue;
-      try {
-        const raw = JSON.parse(msg.dataJson);
-        const targetId = (
-          raw?.message?.editedMessage?.message?.protocolMessage?.key?.id ||
-          raw?.message?.protocolMessage?.key?.id
-        );
-        if (!targetId) continue;
-        const existing = map.get(targetId);
-        if (!existing || new Date(msg.createdAt) > new Date(existing.createdAt)) {
-          map.set(targetId, msg);
-        }
-      } catch {
-        // ignore malformed dataJson
-      }
-    }
-    return map;
-  }, [messagesList]);
-
-  const loadMore = () => {
-    setPageNumber((prevPageNumber) => prevPageNumber + 1);
-  };
-
-  const scrollToBottom = () => {
-    if (lastMessageRef.current) {
-      const lastMessageElement = lastMessageRef.current;
-      // 1. Tenta scrollar de forma segura, sem mexer no host
-      lastMessageElement.parentElement.scrollTop = Number.MAX_SAFE_INTEGER;
-    }
-  };
+  const overwrittenMessages = useMemo(
+    () => buildOverwrittenMessages(messagesList),
+    [messagesList]
+  );
 
   const handleScroll = (e) => {
-    if (!hasMore) return;
-    const { scrollTop } = e.currentTarget;
+    const container = e.currentTarget;
+    const { scrollTop, scrollHeight, clientHeight } = container;
 
-    if (scrollTop === 0) {
-      document.getElementById("messagesList").scrollTop = 1;
+    // mantém o scroll fora do 0 para o navegador preservar a posição quando
+    // as mensagens antigas entram no topo
+    if (hasMore && scrollTop === 0) {
+      container.scrollTop = 1;
     }
 
-    if (loading || loadingRef.current) {
+    if (loadingRef.current) {
       return;
     }
 
-    if (scrollTop < 50) {
-      loadingRef.current = true;
-      loadMore();
+    if (hasMore && scrollTop < 50) {
+      loadOlder();
+    } else if (hasNewer && scrollHeight - (scrollTop + clientHeight) < 50) {
+      loadNewer();
     }
   };
 
@@ -745,15 +1008,6 @@ const MessagesList = ({
         );
       }
     }
-    if (index === messagesList.length - 1) {
-      return (
-        <div
-          key={`ref-${message.createdAt}`}
-          ref={lastMessageRef}
-          style={{ float: "left", clear: "both" }}
-        />
-      );
-    }
   };
 
   const renderNumberTicket = (message, index) => {
@@ -881,7 +1135,10 @@ const MessagesList = ({
               {renderDailyTimestamps(message, index)}
               {renderNumberTicket(message, index)}
               {renderMessageDivider(message, index)}
-              <div className={classes.messageCenter}>
+              <div
+                className={classes.messageCenter}
+                data-message-id={message.id}
+              >
                 <IconButton
                   variant="contained"
                   size="small"
@@ -914,7 +1171,10 @@ const MessagesList = ({
               {renderNumberTicket(message, index)}
               {renderMessageDivider(message, index)}
               <MessageSelect selectedList={selectedForwardMessages} setSelectedList={setSelectedForwardMessages} isSelectionEnabled={isForwarding} message={message}>
-                <div className={classes.messageLeft}>
+                <div
+                  className={classes.messageLeft}
+                  data-message-id={message.id}
+                >
                   <IconButton
                     variant="contained"
                     size="small"
@@ -968,7 +1228,11 @@ const MessagesList = ({
               {renderNumberTicket(message, index)}
               {renderMessageDivider(message, index)}
               <MessageSelect selectedList={selectedForwardMessages} setSelectedList={setSelectedForwardMessages} isSelectionEnabled={isForwarding} message={message}>
-                <div className={classes.messageRight} style={message.isEdited ? { minWidth: '170px' } : {}}>
+                <div
+                  className={classes.messageRight}
+                  style={message.isEdited ? { minWidth: '170px' } : {}}
+                  data-message-id={message.id}
+                >
                   <IconButton
                     variant="contained"
                     size="small"
@@ -1023,15 +1287,34 @@ const MessagesList = ({
       />
       <div
         id="messagesList"
-        className={classes.messagesList}
+        ref={listRef}
+        className={clsx(classes.messagesList, {
+          [classes.messagesListWithJump]: hasNewer,
+        })}
         onScroll={handleScroll}
       >
         {messagesList.length > 0 ? renderMessages() : []}
       </div>
       {loading && (
         <div>
-          <CircularProgress className={classes.circleLoading} />
+          <CircularProgress
+            className={clsx(classes.circleLoading, {
+              [classes.circleLoadingBottom]: loading === "newer",
+            })}
+          />
         </div>
+      )}
+      {hasNewer && (
+        <Tooltip title={i18n.t("messageSearch.jumpToLatest")} placement="left">
+          <Fab
+            size="small"
+            className={classes.jumpToLatest}
+            onClick={() => loadLatest()}
+            aria-label={i18n.t("messageSearch.jumpToLatest")}
+          >
+            <KeyboardArrowDown />
+          </Fab>
+        </Tooltip>
       )}
     </div>
   );

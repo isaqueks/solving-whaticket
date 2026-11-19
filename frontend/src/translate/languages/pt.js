@@ -407,7 +407,7 @@ const messages = {
           search: { title: "Busca" },
         },
         search: {
-          placeholder: "Buscar atendimento e mensagens",
+          placeholder: "Conversas ou mensagens",
         },
         buttons: {
           showAll: "Todos",
@@ -876,6 +876,35 @@ const messages = {
             accept: "Aceitar",
           },
         },
+      },
+      messageSearch: {
+        tabs: {
+          tickets: "Conversas",
+          messages: "Mensagens",
+        },
+        headerButton: "Pesquisar mensagens",
+        drawer: {
+          title: "Pesquisar mensagens",
+          placeholder: "Pesquisar nesta conversa",
+          close: "Fechar",
+        },
+        hint: "Digite uma palavra para procurar nas mensagens das conversas.",
+        hintTicket: "Digite uma palavra para procurar nas mensagens desta conversa.",
+        tooShort: "Digite pelo menos 3 letras para buscar mensagens.",
+        noResults: "Nenhuma mensagem encontrada com \"{{term}}\".",
+        error: "Não foi possível concluir a busca. Tente novamente.",
+        you: "Você",
+        yesterday: "Ontem",
+        media: {
+          image: "Foto",
+          audio: "Áudio",
+          video: "Vídeo",
+          document: "Documento",
+          contact: "Contato",
+          location: "Localização",
+        },
+        jumpToLatest: "Ir para as mensagens mais recentes",
+        notFound: "Não foi possível abrir essa mensagem. Mostrando as mais recentes.",
       },
       messagesInput: {
         placeholderOpen: "Digite uma mensagem",

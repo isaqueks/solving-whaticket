@@ -3,7 +3,7 @@ import { useHistory } from "react-router-dom";
 
 import { makeStyles, createTheme, ThemeProvider } from "@material-ui/core/styles";
 import { IconButton } from "@material-ui/core";
-import { MoreVert, Replay } from "@material-ui/icons";
+import { MoreVert, Replay, Search as SearchIcon } from "@material-ui/icons";
 
 import { i18n } from "../../translate/i18n";
 import api from "../../services/api";
@@ -31,7 +31,7 @@ const useStyles = makeStyles(theme => ({
 	},
 }));
 
-const TicketActionButtonsCustom = ({ ticket, contact, small }) => {
+const TicketActionButtonsCustom = ({ ticket, contact, small, onSearchClick, searchOpen }) => {
 	const classes = useStyles();
 	const history = useHistory();
 	const [anchorEl, setAnchorEl] = useState(null);
@@ -83,6 +83,17 @@ const TicketActionButtonsCustom = ({ ticket, contact, small }) => {
 
 	return (
 		<div className={classes.actionButtons}>
+			{onSearchClick && (
+				<Tooltip title={i18n.t("messageSearch.headerButton")}>
+					<IconButton
+						onClick={onSearchClick}
+						color={searchOpen ? "primary" : "default"}
+						aria-label={i18n.t("messageSearch.headerButton")}
+					>
+						<SearchIcon />
+					</IconButton>
+				</Tooltip>
+			)}
 			<WhatsAppWebButton contact={contact || ticket.contact} />
 			{ticket.status === "closed" && (
 				<ButtonWithSpinner

@@ -399,7 +399,7 @@ tickets: {
     search: { title: "Búsqueda" },
   },
   search: {
-    placeholder: "Buscar atención y mensajes",
+    placeholder: "Chats o mensajes",
   },
   buttons: {
     showAll: "Todos",
@@ -868,6 +868,35 @@ transferTicketModal: {
         accept: "Aceptar",
       },
     },
+  },
+  messageSearch: {
+    tabs: {
+      tickets: "Conversaciones",
+      messages: "Mensajes",
+    },
+    headerButton: "Buscar mensajes",
+    drawer: {
+      title: "Buscar mensajes",
+      placeholder: "Buscar en esta conversación",
+      close: "Cerrar",
+    },
+    hint: "Escribe una palabra para buscar en los mensajes de las conversaciones.",
+    hintTicket: "Escribe una palabra para buscar en los mensajes de esta conversación.",
+    tooShort: "Escribe al menos 3 letras para buscar mensajes.",
+    noResults: "No se encontraron mensajes con \"{{term}}\".",
+    error: "No fue posible completar la búsqueda. Inténtalo de nuevo.",
+    you: "Tú",
+    yesterday: "Ayer",
+    media: {
+      image: "Foto",
+      audio: "Audio",
+      video: "Video",
+      document: "Documento",
+      contact: "Contacto",
+      location: "Ubicación",
+    },
+    jumpToLatest: "Ir a los mensajes más recientes",
+    notFound: "No fue posible abrir este mensaje. Mostrando los más recientes.",
   },
   messagesInput: {
     placeholderOpen: "Escribe un mensaje",

@@ -17,6 +17,9 @@ import Switch from "@material-ui/core/Switch";
 import NewTicketModal from "../NewTicketModal";
 import TicketsList from "../TicketsListCustom";
 import TabPanel from "../TabPanel";
+import MessageSearchResults from "../MessageSearchResults";
+import useMessageSearch from "../../hooks/useMessageSearch";
+import { TicketsContext } from "../../context/Tickets/TicketsContext";
 
 import { i18n } from "../../translate/i18n";
 import { AuthContext } from "../../context/Auth/AuthContext";
@@ -128,6 +131,15 @@ const useStyles = makeStyles(theme => ({
 			display:'none'
 		}
 	},
+	badgeLabel: {
+		paddingRight: theme.spacing(2),
+	},
+	searchResultsPanel: {
+		display: "flex",
+		flexDirection: "column",
+		flex: 1,
+		minHeight: 0,
+	},
 	smallFormControl: {
 		'& .MuiOutlinedInput-input': {
 			padding: "12px 10px",
@@ -148,7 +160,9 @@ const TicketsManagerTabs = () => {
   const [newTicketModalOpen, setNewTicketModalOpen] = useState(false);
   
   const searchInputRef = useRef();
+  const searchTimeoutRef = useRef();
   const { user } = useContext(AuthContext);
+  const { setCurrentTicket } = useContext(TicketsContext);
   const { profile } = user;
 
   // Base da lista, pelo perfil: admin vê todos os tickets; usuário vê os seus
@@ -178,18 +192,45 @@ const TicketsManagerTabs = () => {
     localStorage.setItem("myPortfolioTickets", JSON.stringify(myPortfolio));
   }, [myPortfolio]);
 
+  // Chamado #95: a aba Busca procura conversas (nome/número do contato) e
+  // também mensagens, em duas sub-abas
+  const [searchTab, setSearchTab] = useState("tickets");
+  const [ticketsSearchResult, setTicketsSearchResult] = useState({ searchParam: null, count: 0 });
+  const [selectedMessageId, setSelectedMessageId] = useState(null);
+  const autoSwitchedTermRef = useRef(null);
+
+  const messageSearch = useMessageSearch({
+    searchParam,
+    enabled: tab === "search",
+  });
+
   useEffect(() => {
     if (tab === "search") {
       searchInputRef.current.focus();
     }
   }, [tab]);
 
-  let searchTimeout;
+  useEffect(() => () => clearTimeout(searchTimeoutRef.current), []);
+
+  // Nenhuma conversa corresponde ao termo mas há mensagens: vai sozinho para a
+  // sub-aba Mensagens (uma vez por termo, para não brigar com a usuária)
+  useEffect(() => {
+    if (!searchParam || autoSwitchedTermRef.current === searchParam) return;
+    if (
+      ticketsSearchResult.searchParam === searchParam &&
+      ticketsSearchResult.count === 0 &&
+      messageSearch.loaded &&
+      messageSearch.messages.length > 0
+    ) {
+      autoSwitchedTermRef.current = searchParam;
+      setSearchTab("messages");
+    }
+  }, [searchParam, ticketsSearchResult, messageSearch.loaded, messageSearch.messages.length]);
 
   const handleSearch = (e) => {
     const searchedTerm = e.target.value.toLowerCase();
 
-    clearTimeout(searchTimeout);
+    clearTimeout(searchTimeoutRef.current);
 
     if (searchedTerm === "") {
       setSearchParam(searchedTerm);
@@ -197,10 +238,29 @@ const TicketsManagerTabs = () => {
       return;
     }
 
-    searchTimeout = setTimeout(() => {
+    searchTimeoutRef.current = setTimeout(() => {
       setSearchParam(searchedTerm);
     }, 500);
   };
+
+  const handleSelectMessage = (message) => {
+    const ticket = message.ticket;
+    if (!ticket?.uuid) return;
+    setSelectedMessageId(message.id);
+    // objeto novo a cada clique: clicar de novo no mesmo resultado salta de novo
+    setCurrentTicket({
+      id: ticket.id ?? message.ticketId,
+      uuid: ticket.uuid,
+      focusMessageId: message.id,
+    });
+  };
+
+  const messagesBadge =
+    messageSearch.loaded && messageSearch.messages.length > 0
+      ? messageSearch.hasMore
+        ? `${messageSearch.messages.length}+`
+        : messageSearch.messages.length
+      : 0;
 
   const handleChangeTab = (e, newValue) => {
     setTab(newValue);
@@ -280,6 +340,7 @@ const TicketsManagerTabs = () => {
               inputRef={searchInputRef}
               placeholder={i18n.t("tickets.search.placeholder")}
               type="search"
+              defaultValue={searchParam}
               onChange={handleSearch}
             />
           </div>
@@ -377,10 +438,37 @@ const TicketsManagerTabs = () => {
         />
       </TabPanel>
       <TabPanel value={tab} name="search" className={classes.ticketsWrapper}>
-        <TagsFilter onFiltered={handleSelectedTags} />
-        {profile === "admin" && (
-          <UsersFilter onFiltered={handleSelectedUsers} />
-        )}
+        <Tabs
+          value={searchTab}
+          onChange={(e, newValue) => setSearchTab(newValue)}
+          indicatorColor="primary"
+          textColor="primary"
+          variant="fullWidth"
+        >
+          <Tab
+            label={i18n.t("messageSearch.tabs.tickets")}
+            value={"tickets"}
+          />
+          <Tab
+            label={
+              <Badge badgeContent={messagesBadge} color="primary">
+                {/* folga para o número não cobrir o fim do rótulo */}
+                <span className={classes.badgeLabel}>
+                  {i18n.t("messageSearch.tabs.messages")}
+                </span>
+              </Badge>
+            }
+            value={"messages"}
+          />
+        </Tabs>
+        {/* filtros de tags/usuários só valem para conversas; escondidos (e não
+            desmontados) para não perder o que já foi selecionado */}
+        <div style={searchTab === "tickets" ? undefined : { display: "none" }}>
+          <TagsFilter onFiltered={handleSelectedTags} />
+          {profile === "admin" && (
+            <UsersFilter onFiltered={handleSelectedUsers} />
+          )}
+        </div>
         <TicketsList
           searchParam={searchParam}
           showAll={true}
@@ -388,7 +476,19 @@ const TicketsManagerTabs = () => {
           tags={selectedTags}
           users={selectedUsers}
           selectedQueueIds={selectedQueueIds}
+          onSearchLoaded={setTicketsSearchResult}
+          style={searchTab === "tickets" ? undefined : { display: "none" }}
         />
+        {searchTab === "messages" && (
+          <div className={classes.searchResultsPanel}>
+            <MessageSearchResults
+              search={messageSearch}
+              onSelect={handleSelectMessage}
+              selectedId={selectedMessageId}
+              showContact
+            />
+          </div>
+        )}
       </TabPanel>
     </Paper>
   );

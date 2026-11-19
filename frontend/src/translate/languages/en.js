@@ -221,7 +221,7 @@ const messages = {
 					search: { title: "Search" },
 				},
 				search: {
-					placeholder: "Search tickets and messages.",
+					placeholder: "Chats or messages",
 				},
 				buttons: {
 					showAll: "All",
@@ -341,6 +341,35 @@ const messages = {
 						accept: "Accept",
 					},
 				},
+			},
+			messageSearch: {
+				tabs: {
+					tickets: "Chats",
+					messages: "Messages",
+				},
+				headerButton: "Search messages",
+				drawer: {
+					title: "Search messages",
+					placeholder: "Search this chat",
+					close: "Close",
+				},
+				hint: "Type a word to search the chats' messages.",
+				hintTicket: "Type a word to search this chat's messages.",
+				tooShort: "Type at least 3 letters to search messages.",
+				noResults: "No messages found with \"{{term}}\".",
+				error: "The search could not be completed. Please try again.",
+				you: "You",
+				yesterday: "Yesterday",
+				media: {
+					image: "Photo",
+					audio: "Audio",
+					video: "Video",
+					document: "Document",
+					contact: "Contact",
+					location: "Location",
+				},
+				jumpToLatest: "Go to the most recent messages",
+				notFound: "Could not open this message. Showing the most recent ones.",
 			},
 			messagesInput: {
 				placeholderOpen: "Type a message",

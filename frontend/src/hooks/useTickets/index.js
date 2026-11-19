@@ -56,7 +56,12 @@ const useTickets = ({
             unread,
             myPortfolio
           };
-          const data = await TicketCache.getTickets(params);
+          // Busca vai direto à rede: o resultado em cache de um termo pode
+          // estar velho, e a aba Busca usa a contagem para decidir se vai
+          // sozinha para "Mensagens" (chamado #95)
+          const data = searchParam
+            ? await TicketCache.getTicketsNetwork(params)
+            : await TicketCache.getTickets(params);
           setTickets(data.tickets);
           setHasMore(data.hasMore);
           setLoading(false);

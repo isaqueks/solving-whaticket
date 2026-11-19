@@ -165,7 +165,8 @@ const TicketsListCustom = (props) => {
     updateCount,
     style,
     unread,
-    myPortfolio
+    myPortfolio,
+    onSearchLoaded
   } = props;
   const classes = useStyles();
   const [pageNumber, setPageNumber] = useState(1);
@@ -323,6 +324,17 @@ const TicketsListCustom = (props) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [(ticketsList || []).map(t => t.id).join(",")]);
+
+  // Chamado #95: avisa quantas conversas a busca achou quando termina de
+  // carregar (a aba Busca usa isso para ir sozinha para "Mensagens" quando
+  // nenhuma conversa corresponde). Só na transição carregando -> carregado,
+  // para não atribuir a contagem do termo anterior ao termo novo.
+  useEffect(() => {
+    if (typeof onSearchLoaded === "function" && !loading) {
+      onSearchLoaded({ searchParam, count: ticketsList.length });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading]);
 
   const loadMore = () => {
     setPageNumber((prevState) => prevState + 1);
