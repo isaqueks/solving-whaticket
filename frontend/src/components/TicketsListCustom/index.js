@@ -121,7 +121,17 @@ const reducer = (state, action) => {
 
     const ticketIndex = state.findIndex((t) => t.id === ticket.id);
     if (ticketIndex !== -1) {
-      state[ticketIndex] = ticket;
+      // o ticket que vem junto da mensagem nova não traz atendente, tags nem
+      // o responsável do contato: mantém os que a lista já tinha, senão os
+      // badges somem até recarregar
+      const previous = state[ticketIndex];
+      state[ticketIndex] = {
+        ...previous,
+        ...ticket,
+        contact: ticket.contact
+          ? { ...previous.contact, ...ticket.contact }
+          : previous.contact,
+      };
       state.unshift(state.splice(ticketIndex, 1)[0]);
     } else {
       state.unshift(ticket);
@@ -235,7 +245,9 @@ const TicketsListCustom = (props) => {
     } else {
       dispatch({ type: "LOAD_TICKETS", payload: tickets });
     }
-  }, [(tickets || []).map(t => `${t.id}:${t.updatedAt}`).join(","), status, searchParam, queues, profile, myPortfolio]);
+  // userId entra na chave: a troca de atendente não mexe no updatedAt, e sem
+  // isso a lista ficava com o atendente do cache até o segundo recarregamento
+  }, [(tickets || []).map(t => `${t.id}:${t.updatedAt}:${t.userId}`).join(","), status, searchParam, queues, profile, myPortfolio]);
 
   useEffect(() => {
     const companyId = localStorage.getItem("companyId");

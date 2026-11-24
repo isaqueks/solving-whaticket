@@ -111,6 +111,28 @@ const useStyles = makeStyles((theme) => ({
     fontSize: "0.75rem",
     whiteSpace: "nowrap",
   },
+  // badge com rótulo (Atendente / Responsável / Fila): o rótulo fica menor e
+  // mais claro, o valor continua em destaque e trunca com reticências quando
+  // o nome não cabe na largura do item
+  labeledTag: {
+    display: "inline-flex",
+    alignItems: "baseline",
+    maxWidth: "100%",
+    minWidth: 0,
+    boxSizing: "border-box",
+  },
+  labeledTagLabel: {
+    flexShrink: 0,
+    marginRight: 5,
+    fontSize: "0.68rem",
+    opacity: 0.78,
+  },
+  labeledTagValue: {
+    minWidth: 0,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    fontWeight: 500,
+  },
   lastMessageTime: {
     color: "#333",
   },
@@ -137,10 +159,8 @@ const TicketListItemCustom = ({ ticket }) => {
   const classes = useStyles();
   const history = useHistory();
   const [loading, setLoading] = useState(false);
-  const [ticketUser, setTicketUser] = useState(null);
   const [ticketQueueName, setTicketQueueName] = useState(null);
   const [ticketQueueColor, setTicketQueueColor] = useState(null);
-  const [tag, setTag] = useState([]);
   const [whatsAppName, setWhatsAppName] = useState(null);
   const [openTicketMessageDialog, setOpenTicketMessageDialog] = useState(false);
   const { ticketId } = useParams();
@@ -150,19 +170,25 @@ const TicketListItemCustom = ({ ticket }) => {
   const [verpreview] = useState(false);
   const { profile } = user;
 
+  // Fileira de badges: derivada direto da prop a cada render (sem estado),
+  // para refletir na hora a troca de atendente/fila/tags que chega via socket
+  const attendantName =
+    ticket.userId && ticket.user?.id === ticket.userId && ticket.user.name
+      ? ticket.user.name.toUpperCase()
+      : null;
+  const responsibleName = ticket.contact?.attachedUser?.name?.toUpperCase() || null;
+  const queueName =
+    ticket.queue?.name?.toUpperCase() || i18n.t("ticketsList.badges.noQueue");
+  const ticketTags = ticket?.tags || [];
+
   // Carrega dados do ticket
   useEffect(() => {
-    if (ticket.userId && ticket.user) {
-      setTicketUser(ticket.user?.name?.toUpperCase());
-    }
     setTicketQueueName(ticket.queue?.name?.toUpperCase());
     setTicketQueueColor(ticket.queue?.color);
 
     if (ticket.whatsappId && ticket.whatsapp) {
       setWhatsAppName(ticket.whatsapp.name?.toUpperCase());
     }
-
-    setTag(ticket?.tags);
 
     return () => {
       isMounted.current = false;
@@ -172,7 +198,6 @@ const TicketListItemCustom = ({ ticket }) => {
 
   // Função para fechar ticket
   const handleCloseTicket = async (id) => {
-    setTag(ticket?.tags);
     setLoading(true);
     try {
       await api.put(`/tickets/${id}`, {
@@ -276,6 +301,20 @@ const TicketListItemCustom = ({ ticket }) => {
     e.stopPropagation();
     setAnchorEl(null);
   };
+
+  // Badge "rótulo valor" da fileira de baixo; o title (tooltip nativo) diz o
+  // que o badge significa e traz o valor inteiro, que pode estar truncado
+  const renderLabeledTag = ({ label, hint, value, color }) => (
+    <span
+      key={label}
+      className={clsx(classes.connectionTag, classes.labeledTag)}
+      style={{ backgroundColor: color }}
+      title={`${hint}: ${value}`}
+    >
+      <span className={classes.labeledTagLabel}>{label}</span>
+      <span className={classes.labeledTagValue}>{value}</span>
+    </span>
+  );
 
   // Renderiza ícones informativos (exemplo: Chatbot)
   const renderTicketInfo = () => {
@@ -499,37 +538,33 @@ const TicketListItemCustom = ({ ticket }) => {
                 {ticket?.whatsapp?.name?.toUpperCase()}
               </Badge>
             )} */}
-            {ticketUser && (
-              <Badge
-                style={{ backgroundColor: "#000" }}
-                className={classes.connectionTag}
-              >
-                {ticketUser}
-              </Badge>
-            )}
+            {/* atendente: quem está com o atendimento (ticket.user) */}
+            {attendantName &&
+              renderLabeledTag({
+                label: i18n.t("ticketsList.badges.attendant"),
+                hint: i18n.t("ticketsList.badges.attendantHint"),
+                value: attendantName,
+                color: "#000",
+              })}
             {/* responsável pelo contato (Contacts.attachedToEmail): vem do
                 contato, não do ticket, então aparece mesmo com o ticket sem
                 atendente (chatbot, pendente) */}
-            {ticket.contact?.attachedUser?.name && (
-              <Badge
-                style={{ backgroundColor: "#1565c0" }}
-                className={classes.connectionTag}
-                title={i18n.t("ticketsList.responsible")}
-              >
-                {`${i18n.t("ticketsList.responsibleShort")} ${ticket.contact.attachedUser.name.toUpperCase()}`}
-              </Badge>
-            )}
-            <Badge
-              style={{
-                backgroundColor: ticket.queue?.color || "#7c7c7c",
-              }}
-              className={classes.connectionTag}
-            >
-              {ticket.queue?.name?.toUpperCase() || "SEM FILA"}
-            </Badge>
+            {responsibleName &&
+              renderLabeledTag({
+                label: i18n.t("ticketsList.badges.responsible"),
+                hint: i18n.t("ticketsList.badges.responsibleHint"),
+                value: responsibleName,
+                color: "#1565c0",
+              })}
+            {renderLabeledTag({
+              label: i18n.t("ticketsList.badges.queue"),
+              hint: i18n.t("ticketsList.badges.queueHint"),
+              value: queueName,
+              color: ticket.queue?.color || "#7c7c7c",
+            })}
 
             {/* Se tiver tags personalizadas */}
-            {tag?.map((tg) => {
+            {ticketTags.map((tg) => {
               return (
                 <ContactTag
                   tag={tg}
