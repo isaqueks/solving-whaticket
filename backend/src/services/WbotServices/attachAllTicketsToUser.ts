@@ -1,39 +1,41 @@
-import { IsNull } from "sequelize-typescript";
-import Ticket from "../../models/Ticket";
 import { Op } from "sequelize";
+import Ticket from "../../models/Ticket";
 import User from "../../models/User";
 import { getIO } from "../../libs/socket";
+import { logger } from "../../utils/logger";
+import ShowTicketService from "../TicketServices/ShowTicketService";
+import AttachResponsibleUsers from "../ContactServices/AttachResponsibleUsers";
 
 /**
- * Rede de segurança (cron de 10 min): devolve ao colaborador responsável
- * (Contacts.attachedToEmail) os tickets que ficaram sem usuário já dentro de
- * uma fila, em qualquer fila. O caminho normal é o UpdateTicketService, que
- * grava o responsável sempre que o ticket entra numa fila; aqui entram os
- * casos que gravam a fila direto (ex.: transferência por tempo).
+ * Rede de segurança (cron de 10 min): mantém atendente (Tickets.userId) igual
+ * ao responsável do contato (Contacts.attachedToEmail, e-mail exato como no
+ * UpdateTicketService, para os dois não se desfazerem) nos tickets não
+ * encerrados e que não são de grupo.
  *
- * Fica de fora:
- * - ticket sem fila: o chatbot de filas só roda com userId nulo; atribuir aqui
- *   interromperia o menu;
- * - ticket em integração/prompt (typebot, OpenAI): a automação ainda atende;
- * - ticket encerrado.
+ * 1. Sem atendente: atribui ao responsável, mas só se o ticket já está numa
+ *    fila. Sem fila o chatbot de filas ainda está rodando (ele só roda com
+ *    userId nulo) e atribuir aqui interromperia o menu.
+ * 2. Com atendente diferente do responsável (ex.: o responsável mudou no
+ *    sync): troca para o responsável, com ou sem fila, porque uma pessoa já
+ *    assumiu o ticket (chamado #98).
+ *
+ * Em ambos ficam de fora os tickets em integração/prompt (typebot, OpenAI) e
+ * os contatos cujo e-mail não corresponde a nenhum usuário da empresa. Só o
+ * userId muda: status, leitura e mensagens ao cliente não são tocados.
  */
 export async function attachAllTicketsToUser(companyId: number) {
-
-  const nonAttached = await Ticket.findAll({
+  const candidates = await Ticket.findAll({
     where: {
-      userId: {
-        [Op.is]: null
-      },
       companyId,
-      queueId: { [Op.not]: null },
+      status: { [Op.ne]: "closed" },
+      isGroup: { [Op.not]: true },
       useIntegration: { [Op.not]: true },
-      promptId: { [Op.is]: null },
-      status: { [Op.ne]: "closed" }
+      promptId: { [Op.is]: null }
     },
     include: [
       {
-        association: 'contact',
-        required: true, // INNER JOIN (coloca false se quiser LEFT)
+        association: "contact",
+        required: true,
         where: {
           attachedToEmail: { [Op.not]: null }
         }
@@ -43,38 +45,50 @@ export async function attachAllTicketsToUser(companyId: number) {
 
   const io = getIO();
 
-  const userCache = new Map<string, User>();
-  async function getCachedUserByEmail(email: string, companyId: number): Promise<User | null> {
+  const userCache = new Map<string, User | null>();
+  async function getCachedUserByEmail(email: string): Promise<User | null> {
     if (userCache.has(email)) {
       return userCache.get(email) || null;
     }
 
     const user = await User.findOne({
-      where: {
-        email,
-        companyId
-      }
+      where: { companyId, email }
     });
 
     userCache.set(email, user);
     return user;
   }
 
-  for (const ticket of nonAttached) {
-    if (ticket.contact.attachedToEmail) {
-      const user = await getCachedUserByEmail(ticket.contact.attachedToEmail, companyId);
+  for (const ticket of candidates) {
+    try {
+      const email = ticket.contact.attachedToEmail;
+      if (!email) continue;
 
-      if (user) {
-        await ticket.update({
-          userId: user.id
-        });
+      const user = await getCachedUserByEmail(email);
+      if (!user || ticket.userId === user.id) continue;
 
-        io.to("open").emit(`company-${companyId}-ticket`, {
+      // caso 1 sem fila: o chatbot de filas ainda está atendendo
+      if (!ticket.userId && !ticket.queueId) continue;
+
+      const oldUserId = ticket.userId;
+      await ticket.update({ userId: user.id });
+
+      const fullTicket = await ShowTicketService(ticket.id, companyId);
+      await AttachResponsibleUsers([fullTicket.contact], companyId);
+
+      io.to(`company-${companyId}-${fullTicket.status}`)
+        .to(`queue-${fullTicket.queueId}-${fullTicket.status}`)
+        .to(fullTicket.id.toString())
+        .to(`user-${user.id}`)
+        .to(`user-${oldUserId}`)
+        .emit(`company-${companyId}-ticket`, {
           action: "update",
-          ticket
+          ticket: fullTicket
         });
-      }
+    } catch (err: any) {
+      logger.error(
+        `attachAllTicketsToUser: ticket ${ticket.id} (empresa ${companyId}): ${err?.message}`
+      );
     }
   }
-
 }
