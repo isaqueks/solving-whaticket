@@ -418,8 +418,15 @@ transferTicketModal: {
     },
   },
   ticketsList: {
-    responsible: "Colaborador responsable del contacto",
-    responsibleShort: "RESP.",
+    badges: {
+      attendant: "Agente",
+      attendantHint: "Quién está con esta atención",
+      responsible: "Responsable",
+      responsibleHint: "Responsable de la cartera de este cliente",
+      queue: "Cola",
+      queueHint: "Cola de la atención",
+      noQueue: "NINGUNA",
+    },
     pendingHeader: "Pendiente",
     assignedHeader: "Atendiendo",
     noTicketsTitle: "¡Nada aquí!",
@@ -860,7 +867,7 @@ transferTicketModal: {
   },
   messagesList: {
     header: {
-      assignedTo: "Asignado a:",
+      assignedTo: "Agente:",
       buttons: {
         return: "Volver",
         resolve: "Resolver",

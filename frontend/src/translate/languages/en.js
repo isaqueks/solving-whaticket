@@ -238,8 +238,15 @@ const messages = {
 				},
 			},
 			ticketsList: {
-				responsible: "User responsible for this contact",
-				responsibleShort: "OWNER",
+				badges: {
+					attendant: "Agent",
+					attendantHint: "Who is handling this ticket",
+					responsible: "Owner",
+					responsibleHint: "Account owner for this customer",
+					queue: "Queue",
+					queueHint: "Ticket queue",
+					noQueue: "NONE",
+				},
 				pendingHeader: "Queue",
 				assignedHeader: "Working on",
 				noTicketsTitle: "Nothing here!",
@@ -333,7 +340,7 @@ const messages = {
 			},
 			messagesList: {
 				header: {
-					assignedTo: "Assigned to:",
+					assignedTo: "Agent:",
 					buttons: {
 						return: "Return",
 						resolve: "Resolve",

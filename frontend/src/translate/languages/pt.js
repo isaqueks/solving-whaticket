@@ -426,8 +426,15 @@ const messages = {
         },
       },
       ticketsList: {
-        responsible: "Colaborador responsável pelo contato",
-        responsibleShort: "RESP.",
+        badges: {
+          attendant: "Atendente",
+          attendantHint: "Quem está com este atendimento",
+          responsible: "Responsável",
+          responsibleHint: "Responsável pela carteira deste cliente",
+          queue: "Fila",
+          queueHint: "Fila do atendimento",
+          noQueue: "NENHUMA",
+        },
         pendingHeader: "Aguardando",
         assignedHeader: "Atendendo",
         noTicketsTitle: "Nada aqui!",
@@ -868,7 +875,7 @@ const messages = {
       },
       messagesList: {
         header: {
-          assignedTo: "Atribuído à:",
+          assignedTo: "Atendente:",
           buttons: {
             return: "Retornar",
             resolve: "Resolver",
