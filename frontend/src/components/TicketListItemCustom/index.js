@@ -304,7 +304,8 @@ const TicketListItemCustom = ({ ticket }) => {
 
   // Badge "rótulo valor" da fileira de baixo; o title (tooltip nativo) diz o
   // que o badge significa e traz o valor inteiro, que pode estar truncado
-  const renderLabeledTag = ({ label, hint, value, color }) => (
+  // maxChars corta o nome para o badge não tomar a linha inteira
+  const renderLabeledTag = ({ label, hint, value, color, maxChars }) => (
     <span
       key={label}
       className={clsx(classes.connectionTag, classes.labeledTag)}
@@ -312,7 +313,11 @@ const TicketListItemCustom = ({ ticket }) => {
       title={`${hint}: ${value}`}
     >
       <span className={classes.labeledTagLabel}>{label}</span>
-      <span className={classes.labeledTagValue}>{value}</span>
+      <span className={classes.labeledTagValue}>
+        {maxChars && value.length > maxChars
+          ? `${value.slice(0, maxChars).trimEnd()}…`
+          : value}
+      </span>
     </span>
   );
 
@@ -544,6 +549,7 @@ const TicketListItemCustom = ({ ticket }) => {
                 label: i18n.t("ticketsList.badges.attendant"),
                 hint: i18n.t("ticketsList.badges.attendantHint"),
                 value: attendantName,
+                maxChars: 11,
                 color: "#000",
               })}
             {/* responsável pelo contato (Contacts.attachedToEmail): vem do
@@ -554,6 +560,7 @@ const TicketListItemCustom = ({ ticket }) => {
                 label: i18n.t("ticketsList.badges.responsible"),
                 hint: i18n.t("ticketsList.badges.responsibleHint"),
                 value: responsibleName,
+                maxChars: 11,
                 color: "#1565c0",
               })}
             {renderLabeledTag({
